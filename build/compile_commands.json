@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build",
+  "command": "/usr/bin/g++ -D__INSDIR__=\"\" -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/include -I/home/deborah/mpich/include -I/home/deborah/petsc/include -I/home/deborah/petsc/arch-linux2-c-debug/include -I/usr/include/hdf5/serial -I/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so -I/usr/lib/x86_64-linux-gnu/libcrypto.so -I/usr/lib/x86_64-linux-gnu/libcurl.so -I/usr/lib/x86_64-linux-gnu/libpthread.a -I/usr/lib/x86_64-linux-gnu/libsz.so -I/usr/lib/x86_64-linux-gnu/libz.so -I/usr/lib/x86_64-linux-gnu/libdl.a -I/usr/lib/x86_64-linux-gnu/libm.so -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/headers -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources -isystem /usr/include/eigen3  -std=c++2a -g   -w -o CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources/Geometry.cpp",
+  "file": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources/Geometry.cpp"
+},
+{
+  "directory": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build",
+  "command": "/usr/bin/g++ -D__INSDIR__=\"\" -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/include -I/home/deborah/mpich/include -I/home/deborah/petsc/include -I/home/deborah/petsc/arch-linux2-c-debug/include -I/usr/include/hdf5/serial -I/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so -I/usr/lib/x86_64-linux-gnu/libcrypto.so -I/usr/lib/x86_64-linux-gnu/libcurl.so -I/usr/lib/x86_64-linux-gnu/libpthread.a -I/usr/lib/x86_64-linux-gnu/libsz.so -I/usr/lib/x86_64-linux-gnu/libz.so -I/usr/lib/x86_64-linux-gnu/libdl.a -I/usr/lib/x86_64-linux-gnu/libm.so -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/headers -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources -isystem /usr/include/eigen3  -std=c++2a -g   -w -o CMakeFiles/solid_library.dir/mesh_interface/sources/Inclusion.cpp.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources/Inclusion.cpp",
+  "file": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources/Inclusion.cpp"
+},
+{
+  "directory": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build",
+  "command": "/usr/bin/g++ -D__INSDIR__=\"\" -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/include -I/home/deborah/mpich/include -I/home/deborah/petsc/include -I/home/deborah/petsc/arch-linux2-c-debug/include -I/usr/include/hdf5/serial -I/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so -I/usr/lib/x86_64-linux-gnu/libcrypto.so -I/usr/lib/x86_64-linux-gnu/libcurl.so -I/usr/lib/x86_64-linux-gnu/libpthread.a -I/usr/lib/x86_64-linux-gnu/libsz.so -I/usr/lib/x86_64-linux-gnu/libz.so -I/usr/lib/x86_64-linux-gnu/libdl.a -I/usr/lib/x86_64-linux-gnu/libm.so -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/headers -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources -isystem /usr/include/eigen3  -std=c++2a -g   -w -o CMakeFiles/solid_library.dir/mesh_interface/sources/MeshFactor.cpp.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources/MeshFactor.cpp",
+  "file": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources/MeshFactor.cpp"
+},
+{
+  "directory": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build",
+  "command": "/usr/bin/g++ -D__INSDIR__=\"\" -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/include -I/home/deborah/mpich/include -I/home/deborah/petsc/include -I/home/deborah/petsc/arch-linux2-c-debug/include -I/usr/include/hdf5/serial -I/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so -I/usr/lib/x86_64-linux-gnu/libcrypto.so -I/usr/lib/x86_64-linux-gnu/libcurl.so -I/usr/lib/x86_64-linux-gnu/libpthread.a -I/usr/lib/x86_64-linux-gnu/libsz.so -I/usr/lib/x86_64-linux-gnu/libz.so -I/usr/lib/x86_64-linux-gnu/libdl.a -I/usr/lib/x86_64-linux-gnu/libm.so -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/headers -I/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources -isystem /usr/include/eigen3  -std=c++2a -g   -w -o CMakeFiles/s.dir/main.cpp.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/main.cpp",
+  "file": "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/main.cpp"
+}
+]
