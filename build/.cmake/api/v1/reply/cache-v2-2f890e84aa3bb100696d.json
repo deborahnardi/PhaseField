@@ -55,7 +55,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build"
+			"value" : "/home/acer/cppCodes/PhaseField/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -526,6 +526,10 @@
 			"properties" : 
 			[
 				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
 					"name" : "HELPSTRING",
 					"value" : "No help, variable specified on the command line."
 				}
@@ -603,7 +607,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp"
+			"value" : "/home/acer/cppCodes/PhaseField"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1187,7 +1191,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/home/deborah/mpich/lib/libmpi.so][mpi][/home/deborah/mpich/include][TRUE][v3.1()]"
+			"value" : "[/home/acer/mpich-install/lib/libmpi.so][mpi][/home/acer/mpich-install/include][TRUE][v3.1()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_MPI_CXX",
@@ -1199,7 +1203,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/home/deborah/mpich/lib/libmpicxx.so][/home/deborah/mpich/lib/libmpi.so][mpicxx;mpi][/home/deborah/mpich/include][TRUE][v3.1()]"
+			"value" : "[/home/acer/mpich-install/lib/libmpicxx.so][/home/acer/mpich-install/lib/libmpi.so][mpicxx;mpi][/home/acer/mpich-install/include][TRUE][v3.1()]"
 		},
 		{
 			"name" : "FIND_PACKAGE_MESSAGE_DETAILS_PETSc",
@@ -1211,7 +1215,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/home/deborah/petsc/include;/home/deborah/petsc/arch-linux2-c-debug/include;/home/deborah/mpich/include][/home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so][YES][v3.21.3()]"
+			"value" : "[/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include][/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so][YES][v3.21.4()]"
 		},
 		{
 			"name" : "GMSH_LIB",
@@ -1239,7 +1243,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/deborah/gmsh/gmsh"
+			"value" : "/home/acer/gmsh/gmsh"
 		},
 		{
 			"name" : "HDF5_C_COMPILER_EXECUTABLE",
@@ -1503,7 +1507,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/bin/mpiexec"
+			"value" : "/home/acer/mpich-install/bin/mpiexec"
 		},
 		{
 			"name" : "MPIEXEC_MAX_NUMPROCS",
@@ -1519,7 +1523,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "16"
+			"value" : "4"
 		},
 		{
 			"name" : "MPIEXEC_NUMPROC_FLAG",
@@ -1599,7 +1603,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/bin/mpicxx"
+			"value" : "/home/acer/mpich-install/bin/mpicxx"
 		},
 		{
 			"name" : "MPI_CXX_COMPILER_INCLUDE_DIRS",
@@ -1615,7 +1619,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/deborah/mpich/include"
+			"value" : "/home/acer/mpich-install/include"
 		},
 		{
 			"name" : "MPI_CXX_COMPILE_DEFINITIONS",
@@ -1663,7 +1667,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/home/deborah/mpich/include"
+			"value" : "/home/acer/mpich-install/include"
 		},
 		{
 			"name" : "MPI_CXX_LIB_NAMES",
@@ -1695,7 +1699,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "-Wl,-rpath -Wl,/home/deborah/mpich/lib -Wl,--enable-new-dtags"
+			"value" : "-Wl,-rpath -Wl,/home/acer/mpich-install/lib -Wl,--enable-new-dtags"
 		},
 		{
 			"name" : "MPI_CXX_SKIP_MPICXX",
@@ -1743,7 +1747,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/bin/mpicc"
+			"value" : "/home/acer/mpich-install/bin/mpicc"
 		},
 		{
 			"name" : "MPI_C_COMPILER_INCLUDE_DIRS",
@@ -1759,7 +1763,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/deborah/mpich/include"
+			"value" : "/home/acer/mpich-install/include"
 		},
 		{
 			"name" : "MPI_C_COMPILE_DEFINITIONS",
@@ -1807,7 +1811,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/home/deborah/mpich/include"
+			"value" : "/home/acer/mpich-install/include"
 		},
 		{
 			"name" : "MPI_C_LIB_NAMES",
@@ -1839,7 +1843,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "-Wl,-rpath -Wl,/home/deborah/mpich/lib -Wl,--enable-new-dtags"
+			"value" : "-Wl,-rpath -Wl,/home/acer/mpich-install/lib -Wl,--enable-new-dtags"
 		},
 		{
 			"name" : "MPI_RESULT_CXX_test_mpi_MPICXX",
@@ -1891,7 +1895,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/lib/libmpi.so"
+			"value" : "/home/acer/mpich-install/lib/libmpi.so"
 		},
 		{
 			"name" : "MPI_mpicxx_LIBRARY",
@@ -1907,7 +1911,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/lib/libmpicxx.so"
+			"value" : "/home/acer/mpich-install/lib/libmpicxx.so"
 		},
 		{
 			"name" : "MULTIPASS_TEST_1_petsc_works_minimal",
@@ -2019,7 +2023,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/deborah/petsc"
+			"value" : "/home/acer/petsc/petsc-3.21.4"
 		},
 		{
 			"name" : "PACKAGE_MULTIPASS__CALLED",
@@ -2059,7 +2063,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/bin/mpicc"
+			"value" : "/home/acer/mpich-install/bin/mpicc"
 		},
 		{
 			"name" : "PETSC_CURRENT",
@@ -2096,10 +2100,14 @@
 				{
 					"name" : "HELPSTRING",
 					"value" : "PETSc Directory"
+				},
+				{
+					"name" : "MODIFIED",
+					"value" : "ON"
 				}
 			],
 			"type" : "PATH",
-			"value" : "/home/deborah/petsc"
+			"value" : "/home/acer/petsc/petsc-3.21.4"
 		},
 		{
 			"name" : "PETSC_EXECUTABLE_RUNS",
@@ -2131,7 +2139,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/deborah/petsc/include;/home/deborah/petsc/arch-linux2-c-debug/include;/home/deborah/mpich/include"
+			"value" : "/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include"
 		},
 		{
 			"name" : "PETSC_INCLUDE_CONF",
@@ -2147,7 +2155,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/home/deborah/petsc/arch-linux2-c-debug/include"
+			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include"
 		},
 		{
 			"name" : "PETSC_INCLUDE_DIR",
@@ -2163,7 +2171,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "/home/deborah/petsc/include"
+			"value" : "/home/acer/petsc/petsc-3.21.4/include"
 		},
 		{
 			"name" : "PETSC_LIBRARIES",
@@ -2179,7 +2187,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so"
+			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so"
 		},
 		{
 			"name" : "PETSC_LIBRARY_SINGLE",
@@ -2191,7 +2199,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so"
+			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so"
 		},
 		{
 			"name" : "PETSC_LIBRARY_VEC",
@@ -2219,7 +2227,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/home/deborah/mpich/bin/mpiexec"
+			"value" : "/home/acer/mpich-install/bin/mpiexec"
 		},
 		{
 			"name" : "PETSC_VERSION",
@@ -2231,7 +2239,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "3.21.3"
+			"value" : "3.21.4"
 		},
 		{
 			"name" : "PKG_CONFIG_ARGN",
@@ -2371,7 +2379,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build"
+			"value" : "/home/acer/cppCodes/PhaseField/build"
 		},
 		{
 			"name" : "s_IS_TOP_LEVEL",
@@ -2395,7 +2403,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp"
+			"value" : "/home/acer/cppCodes/PhaseField"
 		}
 	],
 	"kind" : "cache",

@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp
+CMAKE_SOURCE_DIR = /home/acer/cppCodes/PhaseField
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build
+CMAKE_BINARY_DIR = /home/acer/cppCodes/PhaseField/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/acer/cppCodes/PhaseField/build/CMakeFiles /home/acer/cppCodes/PhaseField/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/acer/cppCodes/PhaseField/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -214,6 +214,54 @@ mesh_interface/sources/Inclusion.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Inclusion.cpp.s
 .PHONY : mesh_interface/sources/Inclusion.cpp.s
 
+mesh_interface/sources/Line.o: mesh_interface/sources/Line.cpp.o
+.PHONY : mesh_interface/sources/Line.o
+
+# target to build an object file
+mesh_interface/sources/Line.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Line.cpp.o
+.PHONY : mesh_interface/sources/Line.cpp.o
+
+mesh_interface/sources/Line.i: mesh_interface/sources/Line.cpp.i
+.PHONY : mesh_interface/sources/Line.i
+
+# target to preprocess a source file
+mesh_interface/sources/Line.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Line.cpp.i
+.PHONY : mesh_interface/sources/Line.cpp.i
+
+mesh_interface/sources/Line.s: mesh_interface/sources/Line.cpp.s
+.PHONY : mesh_interface/sources/Line.s
+
+# target to generate assembly for a file
+mesh_interface/sources/Line.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Line.cpp.s
+.PHONY : mesh_interface/sources/Line.cpp.s
+
+mesh_interface/sources/LineLoop.o: mesh_interface/sources/LineLoop.cpp.o
+.PHONY : mesh_interface/sources/LineLoop.o
+
+# target to build an object file
+mesh_interface/sources/LineLoop.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/LineLoop.cpp.o
+.PHONY : mesh_interface/sources/LineLoop.cpp.o
+
+mesh_interface/sources/LineLoop.i: mesh_interface/sources/LineLoop.cpp.i
+.PHONY : mesh_interface/sources/LineLoop.i
+
+# target to preprocess a source file
+mesh_interface/sources/LineLoop.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/LineLoop.cpp.i
+.PHONY : mesh_interface/sources/LineLoop.cpp.i
+
+mesh_interface/sources/LineLoop.s: mesh_interface/sources/LineLoop.cpp.s
+.PHONY : mesh_interface/sources/LineLoop.s
+
+# target to generate assembly for a file
+mesh_interface/sources/LineLoop.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/LineLoop.cpp.s
+.PHONY : mesh_interface/sources/LineLoop.cpp.s
+
 mesh_interface/sources/MeshFactor.o: mesh_interface/sources/MeshFactor.cpp.o
 .PHONY : mesh_interface/sources/MeshFactor.o
 
@@ -238,6 +286,78 @@ mesh_interface/sources/MeshFactor.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/MeshFactor.cpp.s
 .PHONY : mesh_interface/sources/MeshFactor.cpp.s
 
+mesh_interface/sources/PlaneSurface.o: mesh_interface/sources/PlaneSurface.cpp.o
+.PHONY : mesh_interface/sources/PlaneSurface.o
+
+# target to build an object file
+mesh_interface/sources/PlaneSurface.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/PlaneSurface.cpp.o
+.PHONY : mesh_interface/sources/PlaneSurface.cpp.o
+
+mesh_interface/sources/PlaneSurface.i: mesh_interface/sources/PlaneSurface.cpp.i
+.PHONY : mesh_interface/sources/PlaneSurface.i
+
+# target to preprocess a source file
+mesh_interface/sources/PlaneSurface.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/PlaneSurface.cpp.i
+.PHONY : mesh_interface/sources/PlaneSurface.cpp.i
+
+mesh_interface/sources/PlaneSurface.s: mesh_interface/sources/PlaneSurface.cpp.s
+.PHONY : mesh_interface/sources/PlaneSurface.s
+
+# target to generate assembly for a file
+mesh_interface/sources/PlaneSurface.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/PlaneSurface.cpp.s
+.PHONY : mesh_interface/sources/PlaneSurface.cpp.s
+
+mesh_interface/sources/Point.o: mesh_interface/sources/Point.cpp.o
+.PHONY : mesh_interface/sources/Point.o
+
+# target to build an object file
+mesh_interface/sources/Point.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Point.cpp.o
+.PHONY : mesh_interface/sources/Point.cpp.o
+
+mesh_interface/sources/Point.i: mesh_interface/sources/Point.cpp.i
+.PHONY : mesh_interface/sources/Point.i
+
+# target to preprocess a source file
+mesh_interface/sources/Point.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Point.cpp.i
+.PHONY : mesh_interface/sources/Point.cpp.i
+
+mesh_interface/sources/Point.s: mesh_interface/sources/Point.cpp.s
+.PHONY : mesh_interface/sources/Point.s
+
+# target to generate assembly for a file
+mesh_interface/sources/Point.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Point.cpp.s
+.PHONY : mesh_interface/sources/Point.cpp.s
+
+mesh_interface/sources/Surface.o: mesh_interface/sources/Surface.cpp.o
+.PHONY : mesh_interface/sources/Surface.o
+
+# target to build an object file
+mesh_interface/sources/Surface.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.o
+.PHONY : mesh_interface/sources/Surface.cpp.o
+
+mesh_interface/sources/Surface.i: mesh_interface/sources/Surface.cpp.i
+.PHONY : mesh_interface/sources/Surface.i
+
+# target to preprocess a source file
+mesh_interface/sources/Surface.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.i
+.PHONY : mesh_interface/sources/Surface.cpp.i
+
+mesh_interface/sources/Surface.s: mesh_interface/sources/Surface.cpp.s
+.PHONY : mesh_interface/sources/Surface.s
+
+# target to generate assembly for a file
+mesh_interface/sources/Surface.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.s
+.PHONY : mesh_interface/sources/Surface.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -257,9 +377,24 @@ help:
 	@echo "... mesh_interface/sources/Inclusion.o"
 	@echo "... mesh_interface/sources/Inclusion.i"
 	@echo "... mesh_interface/sources/Inclusion.s"
+	@echo "... mesh_interface/sources/Line.o"
+	@echo "... mesh_interface/sources/Line.i"
+	@echo "... mesh_interface/sources/Line.s"
+	@echo "... mesh_interface/sources/LineLoop.o"
+	@echo "... mesh_interface/sources/LineLoop.i"
+	@echo "... mesh_interface/sources/LineLoop.s"
 	@echo "... mesh_interface/sources/MeshFactor.o"
 	@echo "... mesh_interface/sources/MeshFactor.i"
 	@echo "... mesh_interface/sources/MeshFactor.s"
+	@echo "... mesh_interface/sources/PlaneSurface.o"
+	@echo "... mesh_interface/sources/PlaneSurface.i"
+	@echo "... mesh_interface/sources/PlaneSurface.s"
+	@echo "... mesh_interface/sources/Point.o"
+	@echo "... mesh_interface/sources/Point.i"
+	@echo "... mesh_interface/sources/Point.s"
+	@echo "... mesh_interface/sources/Surface.o"
+	@echo "... mesh_interface/sources/Surface.i"
+	@echo "... mesh_interface/sources/Surface.s"
 .PHONY : help
 
 

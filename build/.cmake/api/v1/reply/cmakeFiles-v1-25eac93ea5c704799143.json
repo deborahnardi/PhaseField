@@ -246,8 +246,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build",
-		"source" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp"
+		"build" : "/home/acer/cppCodes/PhaseField/build",
+		"source" : "/home/acer/cppCodes/PhaseField"
 	},
 	"version" : 
 	{

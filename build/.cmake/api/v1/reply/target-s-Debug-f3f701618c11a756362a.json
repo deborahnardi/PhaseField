@@ -89,19 +89,23 @@
 			[
 				{
 					"backtrace" : 5,
-					"path" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/include"
+					"path" : "/home/acer/cppCodes/PhaseField/include"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/deborah/mpich/include"
+					"path" : "/home/acer/mpich-install/include"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/deborah/petsc/include"
+					"path" : "/home/acer/petsc/petsc-3.21.4/include"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/deborah/petsc/arch-linux2-c-debug/include"
+					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse"
 				},
 				{
 					"backtrace" : 6,
@@ -141,19 +145,19 @@
 				},
 				{
 					"backtrace" : 7,
-					"path" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/headers"
+					"path" : "/home/acer/cppCodes/PhaseField/mesh_interface/headers"
 				},
 				{
 					"backtrace" : 7,
-					"path" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources"
+					"path" : "/home/acer/cppCodes/PhaseField/mesh_interface/sources"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/home/deborah/gmsh/gmsh/api"
+					"path" : "/home/acer/gmsh/gmsh/api"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/home/deborah/gmsh/gmsh/src/common"
+					"path" : "/home/acer/gmsh/gmsh/src/common"
 				},
 				{
 					"backtrace" : 3,
@@ -198,11 +202,11 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-L/home/deborah/petsc/arch-linux2-c-debug/lib",
+				"fragment" : "-L/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib",
 				"role" : "libraryPath"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/home/deborah/petsc/arch-linux2-c-debug/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu/hdf5/serial:/home/deborah/mpich/lib",
+				"fragment" : "-Wl,-rpath,/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu/hdf5/serial:/home/acer/mpich-install/lib",
 				"role" : "libraries"
 			},
 			{
@@ -222,7 +226,7 @@
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "/home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so",
+				"fragment" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so",
 				"role" : "libraries"
 			},
 			{
@@ -271,12 +275,12 @@
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "/home/deborah/mpich/lib/libmpicxx.so",
+				"fragment" : "/home/acer/mpich-install/lib/libmpicxx.so",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "/home/deborah/mpich/lib/libmpi.so",
+				"fragment" : "/home/acer/mpich-install/lib/libmpi.so",
 				"role" : "libraries"
 			}
 		],

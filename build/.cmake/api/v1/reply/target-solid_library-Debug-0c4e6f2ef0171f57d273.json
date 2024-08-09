@@ -90,19 +90,23 @@
 			[
 				{
 					"backtrace" : 3,
-					"path" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/include"
+					"path" : "/home/acer/cppCodes/PhaseField/include"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/home/deborah/mpich/include"
+					"path" : "/home/acer/mpich-install/include"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/home/deborah/petsc/include"
+					"path" : "/home/acer/petsc/petsc-3.21.4/include"
 				},
 				{
 					"backtrace" : 3,
-					"path" : "/home/deborah/petsc/arch-linux2-c-debug/include"
+					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse"
 				},
 				{
 					"backtrace" : 4,
@@ -142,19 +146,19 @@
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/headers"
+					"path" : "/home/acer/cppCodes/PhaseField/mesh_interface/headers"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources"
+					"path" : "/home/acer/cppCodes/PhaseField/mesh_interface/sources"
 				},
 				{
 					"backtrace" : 6,
-					"path" : "/home/deborah/gmsh/gmsh/api"
+					"path" : "/home/acer/gmsh/gmsh/api"
 				},
 				{
 					"backtrace" : 6,
-					"path" : "/home/deborah/gmsh/gmsh/src/common"
+					"path" : "/home/acer/gmsh/gmsh/src/common"
 				},
 				{
 					"backtrace" : 7,
@@ -173,9 +177,14 @@
 			},
 			"sourceIndexes" : 
 			[
-				2,
-				3,
-				4
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14
 			]
 		}
 	],
@@ -194,16 +203,26 @@
 			"sourceIndexes" : 
 			[
 				0,
-				1
+				1,
+				2,
+				3,
+				4,
+				5,
+				6
 			]
 		},
 		{
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				2,
-				3,
-				4
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14
 			]
 		}
 	],
@@ -221,6 +240,31 @@
 		},
 		{
 			"backtrace" : 1,
+			"path" : "mesh_interface/headers/Line.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "mesh_interface/headers/LineLoop.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "mesh_interface/headers/PlaneSurface.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "mesh_interface/headers/Point.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "mesh_interface/headers/Surface.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "mesh_interface/sources/Geometry.cpp",
 			"sourceGroupIndex" : 1
@@ -234,7 +278,37 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "mesh_interface/sources/Line.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "mesh_interface/sources/LineLoop.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "mesh_interface/sources/MeshFactor.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "mesh_interface/sources/PlaneSurface.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "mesh_interface/sources/Point.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "mesh_interface/sources/Surface.cpp",
 			"sourceGroupIndex" : 1
 		}
 	],
