@@ -28,19 +28,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 58,
+				"line" : 70,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 56,
+				"line" : 68,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 60,
+				"line" : 72,
 				"parent" : 0
 			},
 			{
@@ -149,6 +149,14 @@
 				},
 				{
 					"backtrace" : 3,
+					"path" : "/home/deborah/gmsh/gmsh/api"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/deborah/gmsh/gmsh/src/common"
+				},
+				{
+					"backtrace" : 3,
 					"isSystem" : true,
 					"path" : "/usr/include/eigen3"
 				}
@@ -194,7 +202,7 @@
 				"role" : "libraryPath"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/home/deborah/petsc/arch-linux2-c-debug/lib:/usr/lib/x86_64-linux-gnu/hdf5/serial:/home/deborah/mpich/lib",
+				"fragment" : "-Wl,-rpath,/home/deborah/petsc/arch-linux2-c-debug/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu/hdf5/serial:/home/deborah/mpich/lib",
 				"role" : "libraries"
 			},
 			{
@@ -205,6 +213,11 @@
 			{
 				"backtrace" : 3,
 				"fragment" : "libsolid_library.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "/usr/local/lib/libgmsh.so.4.14",
 				"role" : "libraries"
 			},
 			{

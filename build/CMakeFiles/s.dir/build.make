@@ -93,6 +93,7 @@ s_EXTERNAL_OBJECTS =
 s : CMakeFiles/s.dir/main.cpp.o
 s : CMakeFiles/s.dir/build.make
 s : libsolid_library.a
+s : /usr/local/lib/libgmsh.so.4.14
 s : /home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so
 s : /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so
 s : /usr/lib/x86_64-linux-gnu/libcrypto.so

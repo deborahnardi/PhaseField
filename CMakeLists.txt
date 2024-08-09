@@ -51,12 +51,24 @@ include_directories(
 )
 
 add_library(solid_library ${MESH_INT} ${MESH_INT_SRC})
+
+set(GMSH_PATH "NONE" CACHE STRING "Gmsh build directory.")
+if(${GMSH_PATH} STREQUAL "NONE")
+   message(FATAL_ERROR "Please, include Gmsh build directory -- CMake will exit!")
+else()
+    target_include_directories(solid_library PUBLIC             "${GMSH_PATH}/api/"
+                                                    "${GMSH_PATH}/src/common/"
+    )
+
+   find_library(GMSH_LIB NAMES libgmsh.so.4.14 PATHS ${GMSH_PATH}/build/)
+endif()
+
 target_link_libraries(solid_library PRIVATE Eigen3::Eigen)
 
 link_directories(${PETSC_DIR}/${PETSC_ARCH}/lib)
 
 add_executable(${PROJECT_NAME} main.cpp ${CXX_SOURCE_FILES} ${GMSH_SOURCE_FILES} ${ELEMENT_SOURCE_FILES} ${BOUNDARY_CONDITION_SOURCE_FILES} ${IGA_SOURCE_FILES} ${QUADRATURE_SOURCE_FILES})
 
-target_link_libraries (s metis solid_library Eigen3::Eigen ${PETSC_KSP_LIB} ${PETSC_LIBRARIES} ${HDF5_LIBRARIES} ${METIS_LIBRARIES} ${MPI_LIBRARIES})
+target_link_libraries (s metis solid_library Eigen3::Eigen ${GMSH_LIB} ${PETSC_KSP_LIB} ${PETSC_LIBRARIES} ${HDF5_LIBRARIES} ${METIS_LIBRARIES} ${MPI_LIBRARIES})
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++2a")

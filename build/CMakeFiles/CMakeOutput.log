@@ -28,10 +28,10 @@ The CXX compiler identification is GNU, found in "/home/deborah/Desktop/cppCodes
 Detecting C compiler ABI info compiled with the following output:
 Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bd3f5/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bd3f5.dir/build.make CMakeFiles/cmTC_bd3f5.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_ebe57/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ebe57.dir/build.make CMakeFiles/cmTC_ebe57.dir/build
 gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o
-/usr/bin/gcc   -v -o CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c
+Building C object CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o
+/usr/bin/gcc   -v -o CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c
 Using built-in specs.
 COLLECT_GCC=/usr/bin/gcc
 OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -41,8 +41,8 @@ Configured with: ../src/configure -v --with-pkgversion='Ubuntu 11.4.0-1ubuntu1~2
 Thread model: posix
 Supported LTO compression algorithms: zlib zstd
 gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bd3f5.dir/'
- /usr/lib/gcc/x86_64-linux-gnu/11/cc1 -quiet -v -imultiarch x86_64-linux-gnu /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_bd3f5.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccK9QSQG.s
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ebe57.dir/'
+ /usr/lib/gcc/x86_64-linux-gnu/11/cc1 -quiet -v -imultiarch x86_64-linux-gnu /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_ebe57.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/cci066hT.s
 GNU C17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)
 	compiled by GNU C version 11.4.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
 
@@ -62,15 +62,15 @@ GNU C17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)
 
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 Compiler executable checksum: 50eaa2331df977b8016186198deb2d18
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bd3f5.dir/'
- as -v --64 -o CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o /tmp/ccK9QSQG.s
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ebe57.dir/'
+ as -v --64 -o CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o /tmp/cci066hT.s
 GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38
 COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.'
-Linking C executable cmTC_bd3f5
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bd3f5.dir/link.txt --verbose=1
-/usr/bin/gcc  -v CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o -o cmTC_bd3f5 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.'
+Linking C executable cmTC_ebe57
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ebe57.dir/link.txt --verbose=1
+/usr/bin/gcc  -v CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o -o cmTC_ebe57 
 Using built-in specs.
 COLLECT_GCC=/usr/bin/gcc
 COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper
@@ -83,9 +83,9 @@ Supported LTO compression algorithms: zlib zstd
 gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 
 COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_bd3f5' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_bd3f5.'
- /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccpzludT.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_bd3f5 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_bd3f5' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_bd3f5.'
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ebe57' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_ebe57.'
+ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccVaFtdX.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_ebe57 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ebe57' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_ebe57.'
 gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
 
 
@@ -109,10 +109,10 @@ Parsed C implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bd3f5/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bd3f5.dir/build.make CMakeFiles/cmTC_bd3f5.dir/build]
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_ebe57/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ebe57.dir/build.make CMakeFiles/cmTC_ebe57.dir/build]
   ignore line: [gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp']
-  ignore line: [Building C object CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o]
-  ignore line: [/usr/bin/gcc   -v -o CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c]
+  ignore line: [Building C object CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/gcc   -v -o CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c]
   ignore line: [Using built-in specs.]
   ignore line: [COLLECT_GCC=/usr/bin/gcc]
   ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -122,8 +122,8 @@ Parsed C implicit link information from above output:
   ignore line: [Thread model: posix]
   ignore line: [Supported LTO compression algorithms: zlib zstd]
   ignore line: [gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) ]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bd3f5.dir/']
-  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/11/cc1 -quiet -v -imultiarch x86_64-linux-gnu /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_bd3f5.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccK9QSQG.s]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ebe57.dir/']
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/11/cc1 -quiet -v -imultiarch x86_64-linux-gnu /usr/share/cmake-3.22/Modules/CMakeCCompilerABI.c -quiet -dumpdir CMakeFiles/cmTC_ebe57.dir/ -dumpbase CMakeCCompilerABI.c.c -dumpbase-ext .c -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/cci066hT.s]
   ignore line: [GNU C17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)]
   ignore line: [	compiled by GNU C version 11.4.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
   ignore line: []
@@ -143,15 +143,15 @@ Parsed C implicit link information from above output:
   ignore line: []
   ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
   ignore line: [Compiler executable checksum: 50eaa2331df977b8016186198deb2d18]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bd3f5.dir/']
-  ignore line: [ as -v --64 -o CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o /tmp/ccK9QSQG.s]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ebe57.dir/']
+  ignore line: [ as -v --64 -o CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o /tmp/cci066hT.s]
   ignore line: [GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38]
   ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.']
-  ignore line: [Linking C executable cmTC_bd3f5]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bd3f5.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/gcc  -v CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o -o cmTC_bd3f5 ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.']
+  ignore line: [Linking C executable cmTC_ebe57]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ebe57.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/gcc  -v CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o -o cmTC_ebe57 ]
   ignore line: [Using built-in specs.]
   ignore line: [COLLECT_GCC=/usr/bin/gcc]
   ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper]
@@ -164,13 +164,13 @@ Parsed C implicit link information from above output:
   ignore line: [gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) ]
   ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_bd3f5' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_bd3f5.']
-  link line: [ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccpzludT.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_bd3f5 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_ebe57' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_ebe57.']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccVaFtdX.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_ebe57 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o]
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/collect2] ==> ignore
     arg [-plugin] ==> ignore
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so] ==> ignore
     arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper] ==> ignore
-    arg [-plugin-opt=-fresolution=/tmp/ccpzludT.res] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccVaFtdX.res] ==> ignore
     arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
     arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
     arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -188,7 +188,7 @@ Parsed C implicit link information from above output:
     arg [-znow] ==> ignore
     arg [-zrelro] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_bd3f5] ==> ignore
+    arg [cmTC_ebe57] ==> ignore
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o]
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o]
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o]
@@ -200,7 +200,7 @@ Parsed C implicit link information from above output:
     arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
     arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
     arg [-L/usr/lib/gcc/x86_64-linux-gnu/11/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../..]
-    arg [CMakeFiles/cmTC_bd3f5.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [CMakeFiles/cmTC_ebe57.dir/CMakeCCompilerABI.c.o] ==> ignore
     arg [-lgcc] ==> lib [gcc]
     arg [--push-state] ==> ignore
     arg [--as-needed] ==> ignore
@@ -234,10 +234,10 @@ Parsed C implicit link information from above output:
 Detecting CXX compiler ABI info compiled with the following output:
 Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bb97d/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bb97d.dir/build.make CMakeFiles/cmTC_bb97d.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_576f3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_576f3.dir/build.make CMakeFiles/cmTC_576f3.dir/build
 gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
-Building CXX object CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o
-/usr/bin/g++   -v -o CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp
+Building CXX object CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/g++   -v -o CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp
 Using built-in specs.
 COLLECT_GCC=/usr/bin/g++
 OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa
@@ -247,8 +247,8 @@ Configured with: ../src/configure -v --with-pkgversion='Ubuntu 11.4.0-1ubuntu1~2
 Thread model: posix
 Supported LTO compression algorithms: zlib zstd
 gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bb97d.dir/'
- /usr/lib/gcc/x86_64-linux-gnu/11/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_bb97d.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccdeudtS.s
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_576f3.dir/'
+ /usr/lib/gcc/x86_64-linux-gnu/11/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_576f3.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccrfd1KJ.s
 GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)
 	compiled by GNU C version 11.4.0, GMP version 6.2.1, MPFR version 4.1.0, MPC version 1.2.1, isl version isl-0.24-GMP
 
@@ -272,15 +272,15 @@ GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)
 
 GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
 Compiler executable checksum: d591828bb4d392ae8b7b160e5bb0b95f
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bb97d.dir/'
- as -v --64 -o CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccdeudtS.s
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_576f3.dir/'
+ as -v --64 -o CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccrfd1KJ.s
 GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38
 COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.'
-Linking CXX executable cmTC_bb97d
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bb97d.dir/link.txt --verbose=1
-/usr/bin/g++  -v CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_bb97d 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.'
+Linking CXX executable cmTC_576f3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_576f3.dir/link.txt --verbose=1
+/usr/bin/g++  -v CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_576f3 
 Using built-in specs.
 COLLECT_GCC=/usr/bin/g++
 COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper
@@ -293,9 +293,9 @@ Supported LTO compression algorithms: zlib zstd
 gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) 
 COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/
 LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_bb97d' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_bb97d.'
- /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccpzwAkZ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_bb97d /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o
-COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_bb97d' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_bb97d.'
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_576f3' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_576f3.'
+ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccjm6vwp.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_576f3 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_576f3' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_576f3.'
 gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
 
 
@@ -325,10 +325,10 @@ Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
   ignore line: [Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bb97d/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bb97d.dir/build.make CMakeFiles/cmTC_bb97d.dir/build]
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_576f3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_576f3.dir/build.make CMakeFiles/cmTC_576f3.dir/build]
   ignore line: [gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp']
-  ignore line: [Building CXX object CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/usr/bin/g++   -v -o CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Building CXX object CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/g++   -v -o CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [Using built-in specs.]
   ignore line: [COLLECT_GCC=/usr/bin/g++]
   ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none:amdgcn-amdhsa]
@@ -338,8 +338,8 @@ Parsed CXX implicit link information from above output:
   ignore line: [Thread model: posix]
   ignore line: [Supported LTO compression algorithms: zlib zstd]
   ignore line: [gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) ]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bb97d.dir/']
-  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/11/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_bb97d.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccdeudtS.s]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_576f3.dir/']
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/11/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /usr/share/cmake-3.22/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpdir CMakeFiles/cmTC_576f3.dir/ -dumpbase CMakeCXXCompilerABI.cpp.cpp -dumpbase-ext .cpp -mtune=generic -march=x86-64 -version -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security -fstack-clash-protection -fcf-protection -o /tmp/ccrfd1KJ.s]
   ignore line: [GNU C++17 (Ubuntu 11.4.0-1ubuntu1~22.04) version 11.4.0 (x86_64-linux-gnu)]
   ignore line: [	compiled by GNU C version 11.4.0  GMP version 6.2.1  MPFR version 4.1.0  MPC version 1.2.1  isl version isl-0.24-GMP]
   ignore line: []
@@ -363,15 +363,15 @@ Parsed CXX implicit link information from above output:
   ignore line: []
   ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
   ignore line: [Compiler executable checksum: d591828bb4d392ae8b7b160e5bb0b95f]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bb97d.dir/']
-  ignore line: [ as -v --64 -o CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccdeudtS.s]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_576f3.dir/']
+  ignore line: [ as -v --64 -o CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccrfd1KJ.s]
   ignore line: [GNU assembler version 2.38 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.38]
   ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.']
-  ignore line: [Linking CXX executable cmTC_bb97d]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bb97d.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/g++  -v CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_bb97d ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.']
+  ignore line: [Linking CXX executable cmTC_576f3]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_576f3.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/g++  -v CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_576f3 ]
   ignore line: [Using built-in specs.]
   ignore line: [COLLECT_GCC=/usr/bin/g++]
   ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper]
@@ -384,13 +384,13 @@ Parsed CXX implicit link information from above output:
   ignore line: [gcc version 11.4.0 (Ubuntu 11.4.0-1ubuntu1~22.04) ]
   ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/]
   ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/11/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/11/../../../:/lib/:/usr/lib/]
-  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_bb97d' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_bb97d.']
-  link line: [ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccpzwAkZ.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_bb97d /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTC_576f3' '-shared-libgcc' '-mtune=generic' '-march=x86-64' '-dumpdir' 'cmTC_576f3.']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/11/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper -plugin-opt=-fresolution=/tmp/ccjm6vwp.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_576f3 /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/11 -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/11/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/11/../../.. CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/11/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crtn.o]
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/collect2] ==> ignore
     arg [-plugin] ==> ignore
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/liblto_plugin.so] ==> ignore
     arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/11/lto-wrapper] ==> ignore
-    arg [-plugin-opt=-fresolution=/tmp/ccpzwAkZ.res] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccjm6vwp.res] ==> ignore
     arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
     arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
     arg [-plugin-opt=-pass-through=-lc] ==> ignore
@@ -408,7 +408,7 @@ Parsed CXX implicit link information from above output:
     arg [-znow] ==> ignore
     arg [-zrelro] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_bb97d] ==> ignore
+    arg [cmTC_576f3] ==> ignore
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o]
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/crti.o]
     arg [/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o] ==> obj [/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o]
@@ -420,7 +420,7 @@ Parsed CXX implicit link information from above output:
     arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
     arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
     arg [-L/usr/lib/gcc/x86_64-linux-gnu/11/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/11/../../..]
-    arg [CMakeFiles/cmTC_bb97d.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [CMakeFiles/cmTC_576f3.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
     arg [-lstdc++] ==> lib [stdc++]
     arg [-lm] ==> lib [m]
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -450,13 +450,13 @@ Parsed CXX implicit link information from above output:
 Performing C SOURCE FILE Test MULTIPASS_TEST_2_petsc_works_allincludes succeeded with the following compile output:
 Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_53b96/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_53b96.dir/build.make CMakeFiles/cmTC_53b96.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a028b/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a028b.dir/build.make CMakeFiles/cmTC_a028b.dir/build
 gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_53b96.dir/src.c.o
-/usr/bin/gcc -DMULTIPASS_TEST_2_petsc_works_allincludes -I/home/deborah/petsc/include -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/mpich/include  -o CMakeFiles/cmTC_53b96.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp/src.c
-Linking C executable cmTC_53b96
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_53b96.dir/link.txt --verbose=1
-/usr/bin/gcc -rdynamic CMakeFiles/cmTC_53b96.dir/src.c.o -o cmTC_53b96  -Wl,-rpath,/home/deborah/petsc/arch-linux2-c-debug/lib /home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so 
+Building C object CMakeFiles/cmTC_a028b.dir/src.c.o
+/usr/bin/gcc -DMULTIPASS_TEST_2_petsc_works_allincludes -I/home/deborah/petsc/include -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/mpich/include  -o CMakeFiles/cmTC_a028b.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_a028b
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a028b.dir/link.txt --verbose=1
+/usr/bin/gcc -rdynamic CMakeFiles/cmTC_a028b.dir/src.c.o -o cmTC_a028b  -Wl,-rpath,/home/deborah/petsc/arch-linux2-c-debug/lib /home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so 
 gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
 
 
@@ -481,13 +481,13 @@ int main(int argc,char *argv[]) {
 Determining if the function METIS_NodeND exists passed with the following output:
 Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_08569/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_08569.dir/build.make CMakeFiles/cmTC_08569.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_f9c18/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_f9c18.dir/build.make CMakeFiles/cmTC_f9c18.dir/build
 gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_08569.dir/CheckFunctionExists.c.o
-/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_08569.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
-Linking C executable cmTC_08569
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_08569.dir/link.txt --verbose=1
-/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_08569.dir/CheckFunctionExists.c.o -o cmTC_08569  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+Building C object CMakeFiles/cmTC_f9c18.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_f9c18.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_f9c18
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f9c18.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_f9c18.dir/CheckFunctionExists.c.o -o cmTC_f9c18  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
 gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
 
 
@@ -495,13 +495,13 @@ gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFi
 Determining if the function METIS_NodeND exists passed with the following output:
 Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_90752/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_90752.dir/build.make CMakeFiles/cmTC_90752.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_5eef9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_5eef9.dir/build.make CMakeFiles/cmTC_5eef9.dir/build
 gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_90752.dir/CheckFunctionExists.c.o
-/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_90752.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
-Linking C executable cmTC_90752
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_90752.dir/link.txt --verbose=1
-/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_90752.dir/CheckFunctionExists.c.o -o cmTC_90752  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+Building C object CMakeFiles/cmTC_5eef9.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_5eef9.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_5eef9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5eef9.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_5eef9.dir/CheckFunctionExists.c.o -o cmTC_5eef9  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
 gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
 
 
@@ -509,13 +509,279 @@ gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFi
 Determining if the function METIS_NodeND exists passed with the following output:
 Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_30940/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_30940.dir/build.make CMakeFiles/cmTC_30940.dir/build
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_e1393/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_e1393.dir/build.make CMakeFiles/cmTC_e1393.dir/build
 gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_30940.dir/CheckFunctionExists.c.o
-/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_30940.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
-Linking C executable cmTC_30940
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_30940.dir/link.txt --verbose=1
-/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_30940.dir/CheckFunctionExists.c.o -o cmTC_30940  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+Building C object CMakeFiles/cmTC_e1393.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_e1393.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_e1393
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e1393.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_e1393.dir/CheckFunctionExists.c.o -o cmTC_e1393  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_cd4ca/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_cd4ca.dir/build.make CMakeFiles/cmTC_cd4ca.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cd4ca.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_cd4ca.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_cd4ca
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cd4ca.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_cd4ca.dir/CheckFunctionExists.c.o -o cmTC_cd4ca  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_04842/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_04842.dir/build.make CMakeFiles/cmTC_04842.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_04842.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_04842.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_04842
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_04842.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_04842.dir/CheckFunctionExists.c.o -o cmTC_04842  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_5511e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_5511e.dir/build.make CMakeFiles/cmTC_5511e.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5511e.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_5511e.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_5511e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_5511e.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_5511e.dir/CheckFunctionExists.c.o -o cmTC_5511e  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_53e34/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_53e34.dir/build.make CMakeFiles/cmTC_53e34.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_53e34.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_53e34.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_53e34
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_53e34.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_53e34.dir/CheckFunctionExists.c.o -o cmTC_53e34  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_2392f/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_2392f.dir/build.make CMakeFiles/cmTC_2392f.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2392f.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_2392f.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_2392f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2392f.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_2392f.dir/CheckFunctionExists.c.o -o cmTC_2392f  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_834a0/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_834a0.dir/build.make CMakeFiles/cmTC_834a0.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_834a0.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_834a0.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_834a0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_834a0.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_834a0.dir/CheckFunctionExists.c.o -o cmTC_834a0  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d5b15/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d5b15.dir/build.make CMakeFiles/cmTC_d5b15.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d5b15.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_d5b15.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d5b15
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d5b15.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_d5b15.dir/CheckFunctionExists.c.o -o cmTC_d5b15  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_b90c4/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b90c4.dir/build.make CMakeFiles/cmTC_b90c4.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b90c4.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_b90c4.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_b90c4
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b90c4.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_b90c4.dir/CheckFunctionExists.c.o -o cmTC_b90c4  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_bec74/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_bec74.dir/build.make CMakeFiles/cmTC_bec74.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_bec74.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_bec74.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_bec74
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_bec74.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_bec74.dir/CheckFunctionExists.c.o -o cmTC_bec74  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_80671/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_80671.dir/build.make CMakeFiles/cmTC_80671.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_80671.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_80671.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_80671
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_80671.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_80671.dir/CheckFunctionExists.c.o -o cmTC_80671  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d985d/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d985d.dir/build.make CMakeFiles/cmTC_d985d.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d985d.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_d985d.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d985d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d985d.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_d985d.dir/CheckFunctionExists.c.o -o cmTC_d985d  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_cc193/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_cc193.dir/build.make CMakeFiles/cmTC_cc193.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cc193.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_cc193.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_cc193
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cc193.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_cc193.dir/CheckFunctionExists.c.o -o cmTC_cc193  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_873d2/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_873d2.dir/build.make CMakeFiles/cmTC_873d2.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_873d2.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_873d2.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_873d2
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_873d2.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_873d2.dir/CheckFunctionExists.c.o -o cmTC_873d2  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_c7eda/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_c7eda.dir/build.make CMakeFiles/cmTC_c7eda.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c7eda.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_c7eda.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_c7eda
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c7eda.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_c7eda.dir/CheckFunctionExists.c.o -o cmTC_c7eda  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_fed92/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_fed92.dir/build.make CMakeFiles/cmTC_fed92.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fed92.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_fed92.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_fed92
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fed92.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_fed92.dir/CheckFunctionExists.c.o -o cmTC_fed92  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_0afa5/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_0afa5.dir/build.make CMakeFiles/cmTC_0afa5.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0afa5.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_0afa5.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_0afa5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0afa5.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_0afa5.dir/CheckFunctionExists.c.o -o cmTC_0afa5  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d428e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d428e.dir/build.make CMakeFiles/cmTC_d428e.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d428e.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_d428e.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d428e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d428e.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_d428e.dir/CheckFunctionExists.c.o -o cmTC_d428e  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_b22d9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b22d9.dir/build.make CMakeFiles/cmTC_b22d9.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b22d9.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_b22d9.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_b22d9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b22d9.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_b22d9.dir/CheckFunctionExists.c.o -o cmTC_b22d9  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_0d452/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_0d452.dir/build.make CMakeFiles/cmTC_0d452.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0d452.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_0d452.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_0d452
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0d452.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_0d452.dir/CheckFunctionExists.c.o -o cmTC_0d452  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
 gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
 
 

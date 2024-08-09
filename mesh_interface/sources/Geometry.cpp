@@ -1,9 +1,9 @@
 #include "../headers/Geometry.h"
 
-Geometry::Geometry(){}
+Geometry::Geometry() {}
 Geometry::Geometry(const std::string _name)
     : name(_name) {}
-Geometry::~Geometry(){}
+Geometry::~Geometry() {}
 
 Inclusion *Geometry::addInclusion(const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc)
 {
@@ -26,4 +26,8 @@ MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_me
     meshMaxSizeGlobal = _meshMaxSize * edgeLength;
 
     return meshFac;
+}
+
+void Geometry::InitializeGmshAPI()
+{
 }

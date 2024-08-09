@@ -40,10 +40,6 @@
 				{
 					"name" : "HELPSTRING",
 					"value" : "No help, variable specified on the command line."
-				},
-				{
-					"name" : "MODIFIED",
-					"value" : "ON"
 				}
 			],
 			"type" : "STRING",
@@ -529,10 +525,6 @@
 			"name" : "CMAKE_EXPORT_COMPILE_COMMANDS",
 			"properties" : 
 			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
 				{
 					"name" : "HELPSTRING",
 					"value" : "No help, variable specified on the command line."
@@ -1220,6 +1212,34 @@
 			],
 			"type" : "INTERNAL",
 			"value" : "[/home/deborah/petsc/include;/home/deborah/petsc/arch-linux2-c-debug/include;/home/deborah/mpich/include][/home/deborah/petsc/arch-linux2-c-debug/lib/libpetsc.so][YES][v3.21.3()]"
+		},
+		{
+			"name" : "GMSH_LIB",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to a library."
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "/usr/local/lib/libgmsh.so.4.14"
+		},
+		{
+			"name" : "GMSH_PATH",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Gmsh build directory."
+				},
+				{
+					"name" : "MODIFIED",
+					"value" : "ON"
+				}
+			],
+			"type" : "STRING",
+			"value" : "/home/deborah/gmsh/gmsh"
 		},
 		{
 			"name" : "HDF5_C_COMPILER_EXECUTABLE",

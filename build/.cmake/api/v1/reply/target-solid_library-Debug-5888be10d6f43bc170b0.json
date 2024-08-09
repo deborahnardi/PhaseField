@@ -14,6 +14,7 @@
 			"add_library",
 			"add_definitions",
 			"include_directories",
+			"target_include_directories",
 			"target_link_libraries"
 		],
 		"files" : 
@@ -58,7 +59,13 @@
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 54,
+				"line" : 59,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 66,
 				"parent" : 0
 			}
 		]
@@ -143,6 +150,14 @@
 				},
 				{
 					"backtrace" : 6,
+					"path" : "/home/deborah/gmsh/gmsh/api"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/deborah/gmsh/gmsh/src/common"
+				},
+				{
+					"backtrace" : 7,
 					"isSystem" : true,
 					"path" : "/usr/include/eigen3"
 				}

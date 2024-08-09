@@ -4,14 +4,6 @@
 This class creates the Input Data header file for providing the necessary input data for the mesh generation in Gmsh.
 */
 
-/*
-    meshMinFac: Minimum factor for mesh size
-    meshMaxFac: Maximum factor for mesh size
-    meshDistFac: Factor for mesh size distribution
-    meshMinSize: Minimum mesh size
-    meshMaxSize: Maximum mesh size
-*/
-
 #include <vector>
 
 class Inclusion
@@ -40,6 +32,14 @@ public:
     void setYc(const double &_yc) { yc = _yc; }
 
 };
+
+/*
+    meshMinFac: Minimum factor for mesh size
+    meshMaxFac: Maximum factor for mesh size
+    meshDistFac: Factor for mesh size distribution
+    meshMinSize: Minimum mesh size
+    meshMaxSize: Maximum mesh size
+*/
 
 class MeshFactor : public Inclusion
 {

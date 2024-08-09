@@ -1,6 +1,5 @@
 Geometry *geo1 = new Geometry("rock_mesh1");
 
-
 std::vector<Inclusion *> inclusions;
 std::vector<MeshFactor *> factors;
 
@@ -18,3 +17,5 @@ std::cout << "Inclusions: " << inclusions.size() << std::endl;
 std::cout << "Algorithm: " << geo1->getAlgorithm() << std::endl;
 std::cout << "Edge length: " << geo1->getEdgeLength() << std::endl;
 std::cout << "Mesh factors: " << factors.size() << std::endl;
+
+gmsh::initialize();
