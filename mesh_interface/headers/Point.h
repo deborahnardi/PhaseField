@@ -16,12 +16,12 @@ public:
     Point(const std::vector<double> &_coordinates, const double &_lc, const int &_index = -1.0);
     ~Point();
 
-    //Setters
+    // Setters
     void setCoordinates(const std::vector<double> &_coordinates);
     void setLC(const double &_lc);
     void setIndex(const int &_index);
 
-    //Getters
+    // Getters
     int getIndex() const { return index; }
     std::vector<double> getCoordinates() const { return coordinates; }
     double getX() const { return coordinates[0]; }

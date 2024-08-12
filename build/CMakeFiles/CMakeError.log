@@ -1,24 +1,24 @@
 Performing C SOURCE FILE Test MULTIPASS_TEST_1_petsc_works_minimal failed with the following compile output:
-Change Dir: /home/acer/cppCodes/PhaseField/build/CMakeFiles/CMakeTmp
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_f3131/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_f3131.dir/build.make CMakeFiles/cmTC_f3131.dir/build
-gmake[1]: Entrando no diretório '/home/acer/cppCodes/PhaseField/build/CMakeFiles/CMakeTmp'
-Building C object CMakeFiles/cmTC_f3131.dir/src.c.o
-/usr/bin/gcc -DMULTIPASS_TEST_1_petsc_works_minimal -I/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include -I/home/acer/petsc/petsc-3.21.4/include  -o CMakeFiles/cmTC_f3131.dir/src.c.o -c /home/acer/cppCodes/PhaseField/build/CMakeFiles/CMakeTmp/src.c
-In file included from /home/acer/petsc/petsc-3.21.4/include/petscvec.h:8,
-                 from /home/acer/petsc/petsc-3.21.4/include/petscmat.h:6,
-                 from /home/acer/petsc/petsc-3.21.4/include/petscpc.h:6,
-                 from /home/acer/petsc/petsc-3.21.4/include/petscksp.h:6,
-                 from /home/acer/petsc/petsc-3.21.4/include/petscsnes.h:6,
-                 from /home/acer/petsc/petsc-3.21.4/include/petscts.h:7,
-                 from /home/acer/cppCodes/PhaseField/build/CMakeFiles/CMakeTmp/src.c:3:
-/home/acer/petsc/petsc-3.21.4/include/petscsys.h:65:12: fatal error: mpi.h: Arquivo ou diretório inexistente
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_f011e/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_f011e.dir/build.make CMakeFiles/cmTC_f011e.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f011e.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_1_petsc_works_minimal -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/petsc/include  -o CMakeFiles/cmTC_f011e.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc/include/petscvec.h:8,
+                 from /home/deborah/petsc/include/petscmat.h:6,
+                 from /home/deborah/petsc/include/petscpc.h:6,
+                 from /home/deborah/petsc/include/petscksp.h:6,
+                 from /home/deborah/petsc/include/petscsnes.h:6,
+                 from /home/deborah/petsc/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc/include/petscsys.h:65:12: fatal error: mpi.h: No such file or directory
    65 |   #include <mpi.h>
       |            ^~~~~~~
 compilation terminated.
-gmake[1]: *** [CMakeFiles/cmTC_f3131.dir/build.make:78: CMakeFiles/cmTC_f3131.dir/src.c.o] Erro 1
-gmake[1]: Saindo do diretório '/home/acer/cppCodes/PhaseField/build/CMakeFiles/CMakeTmp'
-gmake: *** [Makefile:127: cmTC_f3131/fast] Erro 2
+gmake[1]: *** [CMakeFiles/cmTC_f011e.dir/build.make:78: CMakeFiles/cmTC_f011e.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_f011e/fast] Error 2
 
 
 ...and run output:

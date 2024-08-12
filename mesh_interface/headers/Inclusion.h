@@ -5,16 +5,17 @@ This class creates the Input Data header file for providing the necessary input 
 */
 
 #include <vector>
+#include <iostream>
 
 class Inclusion
 {
 protected:
     int index;
-    double a, b, alpha, xc, yc;
+    double a, b, alpha, xc, yc, lc;
 
 public:
     Inclusion();
-    Inclusion(int _index, const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc);
+    Inclusion(int _index, const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
     ~Inclusion();
 
     int getIndex() const { return index; }
@@ -23,6 +24,7 @@ public:
     double getAlpha() const { return alpha; }
     double getXc() const { return xc; }
     double getYc() const { return yc; }
+    double getLc() const { return lc; }
 
     void setIndex(const int &_index) { index = _index; }
     void setA(const double &_a) { a = _a; }
@@ -30,6 +32,7 @@ public:
     void setAlpha(const double &_alpha) { alpha = _alpha; }
     void setXc(const double &_xc) { xc = _xc; }
     void setYc(const double &_yc) { yc = _yc; }
+    void setLc(const double &_lc) { lc = _lc; }
 
 };
 
@@ -63,5 +66,4 @@ public:
     void setMeshDistFac(const double &_meshDistFac) { meshDistFac = _meshDistFac; }
     void setMeshMinSize(const double &_meshMinSize) { meshMinSize = _meshMinSize; }
     void setMeshMaxSize(const double &_meshMaxSize) { meshMaxSize = _meshMaxSize; }
-
 };
