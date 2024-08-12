@@ -225,7 +225,7 @@ void Geometry::InitializeGmshAPI()
     gmsh::model::mesh::field::setNumber(2, "DistMax", meshDistMax);
 
     gmsh::model::mesh::field::add("Min", 3);
-    gmsh::model::mesh::field::setNumber(3, "FieldsList", 2);
+    gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
 
     gmsh::model::mesh::field::setAsBackgroundMesh(3);
 
