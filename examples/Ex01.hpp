@@ -31,12 +31,4 @@ inclusions.push_back(geo1->addInclusion(0.10, 0.10, 45., 0.25, 0.75, 0.));
 
 factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
 
-geo1->InitializeGmshAPI();
-
-// std::cout << "Points:" << points.size() << std::endl;
-// std::cout << "Lines: " << lines.size() << std::endl;
-// std::cout << "Line loops: " << lineLoops.size() << std::endl;
-// std::cout << "Inclusions: " << inclusions.size() << std::endl;
-// std::cout << "Algorithm: " << geo1->getAlgorithm() << std::endl;
-// std::cout << "Edge length: " << geo1->getEdgeLength() << std::endl;
-// std::cout << "Mesh factors: " << factors.size() << std::endl;
+geo1->InitializeGmshAPI(true);

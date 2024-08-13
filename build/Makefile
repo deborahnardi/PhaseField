@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/acer/cppCodes/PhaseField
+CMAKE_SOURCE_DIR = /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/acer/cppCodes/PhaseField/build
+CMAKE_BINARY_DIR = /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/acer/cppCodes/PhaseField/build/CMakeFiles /home/acer/cppCodes/PhaseField/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/acer/cppCodes/PhaseField/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -358,6 +358,30 @@ mesh_interface/sources/Surface.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.s
 .PHONY : mesh_interface/sources/Surface.cpp.s
 
+solid/sources/Node.o: solid/sources/Node.cpp.o
+.PHONY : solid/sources/Node.o
+
+# target to build an object file
+solid/sources/Node.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o
+.PHONY : solid/sources/Node.cpp.o
+
+solid/sources/Node.i: solid/sources/Node.cpp.i
+.PHONY : solid/sources/Node.i
+
+# target to preprocess a source file
+solid/sources/Node.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Node.cpp.i
+.PHONY : solid/sources/Node.cpp.i
+
+solid/sources/Node.s: solid/sources/Node.cpp.s
+.PHONY : solid/sources/Node.s
+
+# target to generate assembly for a file
+solid/sources/Node.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Node.cpp.s
+.PHONY : solid/sources/Node.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -395,6 +419,9 @@ help:
 	@echo "... mesh_interface/sources/Surface.o"
 	@echo "... mesh_interface/sources/Surface.i"
 	@echo "... mesh_interface/sources/Surface.s"
+	@echo "... solid/sources/Node.o"
+	@echo "... solid/sources/Node.i"
+	@echo "... solid/sources/Node.s"
 .PHONY : help
 
 

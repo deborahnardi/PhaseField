@@ -29,7 +29,7 @@ private:
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
     double **ellipseCoordinates;
     std::string name;
-    std::vector<int> linesIndexes;
+    std::vector<int> linesIndexes, elemTypes;
     std::vector<int> tags, ellipseArcs, ellipseCurves, ellipseSurfaces;
     std::vector<Point *> points;
     std::vector<Line *> lines;
@@ -52,8 +52,6 @@ public:
     void setEdgeLength(const double &_edgeLength) { edgeLength = _edgeLength; }
     void setAlgorithm(const MeshAlgorithm &_algorithm) { algorithm = _algorithm; }
 
-    void generateInclusions();
-
     Point *addPoint(const std::vector<double> &_coordinates, const double &_lc);
     Line *addLine(const std::vector<Point *> &_points);
     LineLoop *addLineLoop(const std::vector<Line *> &_lines);
@@ -61,5 +59,7 @@ public:
     Inclusion *addInclusion(const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
     MeshFactor *addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize);
 
-    void InitializeGmshAPI();
+    void InitializeGmshAPI(const bool &showInterface = false);
+    void generateInclusions();
+    void getMeshInfo();
 };

@@ -1,4 +1,4 @@
-# Install script for directory: /home/acer/cppCodes/PhaseField
+# Install script for directory: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -44,8 +44,10 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/acer/cppCodes/PhaseField/build/mesh_interface/headers/cmake_install.cmake")
-  include("/home/acer/cppCodes/PhaseField/build/mesh_interface/sources/cmake_install.cmake")
+  include("/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/mesh_interface/headers/cmake_install.cmake")
+  include("/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/mesh_interface/sources/cmake_install.cmake")
+  include("/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/solid/headers/cmake_install.cmake")
+  include("/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/solid/sources/cmake_install.cmake")
 
 endif()
 
@@ -57,5 +59,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/acer/cppCodes/PhaseField/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

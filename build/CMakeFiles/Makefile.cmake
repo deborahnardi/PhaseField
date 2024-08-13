@@ -23,6 +23,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "../cmake-modules/SelectLibraryConfigurations.cmake"
   "../mesh_interface/headers/CMakeLists.txt"
   "../mesh_interface/sources/CMakeLists.txt"
+  "../solid/headers/CMakeLists.txt"
+  "../solid/sources/CMakeLists.txt"
   "/usr/share/cmake-3.22/Modules/CMakeCInformation.cmake"
   "/usr/share/cmake-3.22/Modules/CMakeCXXInformation.cmake"
   "/usr/share/cmake-3.22/Modules/CMakeCommonLanguageInclude.cmake"
@@ -65,6 +67,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   "mesh_interface/headers/CMakeFiles/CMakeDirectoryInformation.cmake"
   "mesh_interface/sources/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "solid/headers/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "solid/sources/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
