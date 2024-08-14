@@ -31,4 +31,4 @@ inclusions.push_back(geo1->addInclusion(0.10, 0.10, 45., 0.25, 0.75, 0.));
 
 factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
 
-geo1->InitializeGmshAPI(true);
+geo1->InitializeGmshAPI();

@@ -135,50 +135,50 @@ void Geometry::generateInclusions()
 
         gmsh::model::addPhysicalGroup(2, {pInc}, planeSurfaces.size() + inclusion->getIndex() + 1, "Inclusions");
     }
+
+    delete[] ellipseCoordinates;
 };
 
 void Geometry::getMeshInfo()
 { // dim = -1 -> all dimensions; tag = -1 -> all tags (get all nodes), includeBoundary = true, returnParametricCoordinates = false
+    gmsh::model::getEntities(entities);
 
-    //    std::vector<std::pair<int, int>> entities;
-    //    gmsh::model::getEntities(entities);
-    //
-    //    for (auto e : entities)
-    //    {
-    //        int dim = e.first, tag = e.second;
-    //
-    std::vector<std::size_t> nodeTags;
-    std::vector<double> nodeCoords, nodeParams;
     gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, -1, -1, true, false);
-    std::cout << "Nodes coordinates:" << std::endl;
-    // for (int i = 0; i < nodeTags.size(); i++)
-    //     std::cout << "Node " << nodeTags[i] << ": (" << nodeCoords[3 * i] << ", " << nodeCoords[3 * i + 1] << ", " << nodeCoords[3 * i + 2] << ")" << std::endl;
-    //
-    //
-    std::vector<int> elemTypes;
-    std::vector<std::vector<std::size_t>> elemTags, elemNodeTags;
-    gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
 
-    std::cout << "Elements Types:" << std::endl;
+    gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
+    std::cout << "elemTypes:" << std::endl;
     for (int i = 0; i < elemTypes.size(); i++)
-        std::cout << "Element " << i << ": " << elemTypes[i] << std::endl;
-    //
-    //        std::string type;
-    //        gmsh::model::getType(dim, tag, type);
-    //        std::string entityName;
-    //        gmsh::model::getEntityName(dim, tag, entityName);
-    //
-    //        if (entityName.size())
-    //            entityName += " ";
-    //        std::cout << "Entity " << entityName << "(" << dim << "," << tag << ") of type "
-    //                  << type << "\n";
-    //
-    //        int numElem = 0;
-    //        for (auto &tags : elemTags)
-    //            numElem += tags.size();
-    //        std::cout << " - Mesh has " << nodeTags.size() << " nodes and " << numElem
-    //                  << " elements\n";
-    //    }
+        std::cout << elemTypes[i] << std::endl;
+
+};
+
+void Geometry::writeMeshInfo()
+{
+    PetscPrintf(PETSC_COMM_WORLD, "Generating Output file...");
+
+    std::string fileName = name + ".mir";
+    std::ofstream file(fileName.c_str());
+
+    file << "*Heading" << std::endl;
+    file << fileName.c_str() << std::endl;  
+
+    std::set<int> writtenNodes;
+
+    file << "*NODE" << std::endl;
+    for (int i =0; i < nodeTags.size(); i++)
+    {   
+        // If the element is found, the iterator points to the location where the element is in the container.
+        // If the element is not found, the iterator returned is equal to the iterator returned by end().
+
+        if(writtenNodes.find(nodeTags[i]) == writtenNodes.end()) // If the node is not written yet
+        {
+            file << nodeTags[i] << " " << nodeCoords[3*i] << " " << nodeCoords[3*i + 1] << " " << nodeCoords[3*i + 2] << std::endl;
+            writtenNodes.insert(nodeTags[i]);
+        }
+    }
+
+    file << "*ELEMENTS" << std::endl;
+
 };
 
 void Geometry::InitializeGmshAPI(const bool &showInterface)
@@ -269,6 +269,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
         gmsh::fltk::run();
 
     getMeshInfo();
+    writeMeshInfo();
 
     gmsh::clear();
     gmsh::finalize();

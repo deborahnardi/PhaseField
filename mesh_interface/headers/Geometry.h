@@ -3,6 +3,8 @@
 #include "hdf5.h"
 #include <string>
 #include <iostream>
+#include <fstream>
+
 #include <petscsnes.h>
 #include <petscksp.h>
 #include <petscdraw.h>
@@ -29,8 +31,13 @@ private:
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
     double **ellipseCoordinates;
     std::string name;
-    std::vector<int> linesIndexes, elemTypes;
+    std::vector<int> linesIndexes;
     std::vector<int> tags, ellipseArcs, ellipseCurves, ellipseSurfaces;
+    std::vector<std::pair<int, int> > entities;
+    std::vector<std::size_t> nodeTags;
+    std::vector<double> nodeCoords, nodeParams;
+    std::vector<int> elemTypes;
+    std::vector<std::vector<std::size_t>> elemTags, elemNodeTags;
     std::vector<Point *> points;
     std::vector<Line *> lines;
     std::vector<LineLoop *> lineLoops;
@@ -62,4 +69,5 @@ public:
     void InitializeGmshAPI(const bool &showInterface = false);
     void generateInclusions();
     void getMeshInfo();
+    void writeMeshInfo();
 };
