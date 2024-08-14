@@ -1,4 +1,4 @@
-# Install script for directory: /home/acer/cppCodes/PhaseField/mesh_interface/sources
+# Install script for directory: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/mesh_interface/sources
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

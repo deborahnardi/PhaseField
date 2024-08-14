@@ -146,39 +146,333 @@ void Geometry::getMeshInfo()
     gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, -1, -1, true, false);
 
     gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
+
     std::cout << "elemTypes:" << std::endl;
     for (int i = 0; i < elemTypes.size(); i++)
         std::cout << elemTypes[i] << std::endl;
-
 };
 
 void Geometry::writeMeshInfo()
 {
-    PetscPrintf(PETSC_COMM_WORLD, "Generating Output file...");
+    PetscPrintf(PETSC_COMM_WORLD, "Generating Output file...\n");
 
     std::string fileName = name + ".mir";
     std::ofstream file(fileName.c_str());
 
     file << "*Heading" << std::endl;
-    file << fileName.c_str() << std::endl;  
+    file << fileName.c_str() << std::endl;
 
     std::set<int> writtenNodes;
 
+    // ********************************************************************************************************************
+
     file << "*NODE" << std::endl;
-    for (int i =0; i < nodeTags.size(); i++)
-    {   
+    std::vector<int> nodeTagsMir;
+    std::vector<double> nodeCoordsMir;
+
+    for (int i = 0; i < nodeTags.size(); i++)
+    {
         // If the element is found, the iterator points to the location where the element is in the container.
         // If the element is not found, the iterator returned is equal to the iterator returned by end().
 
-        if(writtenNodes.find(nodeTags[i]) == writtenNodes.end()) // If the node is not written yet
+        if (writtenNodes.find(nodeTags[i]) == writtenNodes.end()) // If the node is not written yet
         {
-            file << nodeTags[i] << " " << nodeCoords[3*i] << " " << nodeCoords[3*i + 1] << " " << nodeCoords[3*i + 2] << std::endl;
+            file << nodeTags[i] << " " << nodeCoords[3 * i] << " " << nodeCoords[3 * i + 1] << " " << nodeCoords[3 * i + 2] << std::endl;
+            nodeTagsMir.push_back(nodeTags[i]);
+            nodeCoordsMir.push_back(nodeCoords[3 * i]);
+            nodeCoordsMir.push_back(nodeCoords[3 * i + 1]);
+            nodeCoordsMir.push_back(nodeCoords[3 * i + 2]);
             writtenNodes.insert(nodeTags[i]);
         }
     }
+    // ********************************************************************************************************************
 
     file << "*ELEMENTS" << std::endl;
+    file << "*Element, type=CPS3" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
 
+    std::vector<int> elemTagsMir;     // Saving only the triangular elements
+    std::vector<int> elemNodeTagsMir; // 3 nodes per element
+
+    for (int i = 0; i < elemTypes.size(); i++)
+    {
+        if (elemTypes[i] == 2)
+        {
+            for (int j = 0; j < elemTags[i].size(); j++)
+            {
+                file << j + 1 << " " << elemNodeTags[i][3 * j] << " " << elemNodeTags[i][3 * j + 1] << " " << elemNodeTags[i][3 * j + 2] << std::endl;
+                elemTagsMir.push_back(j + 1);
+                elemNodeTagsMir.push_back(elemNodeTags[i][3 * j]);
+                elemNodeTagsMir.push_back(elemNodeTags[i][3 * j + 1]);
+                elemNodeTagsMir.push_back(elemNodeTags[i][3 * j + 2]);
+            }
+        }
+    }
+
+    // ********************************************************************************************************************
+
+    file << "*Nset, nset=inferiorBoundaryNodes" << std::endl; // Nodes on the inferior boundary
+
+    writtenNodes.clear();
+    int nodesPerLine = 8; // Number of nodes per line
+    int count = 0;
+
+    for (int i = 0; i < nodeTags.size(); i++)
+    {
+        if (nodeCoords[3 * i + 1] == 0.0) // If y = 0
+        {
+            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+            {
+                file << nodeTags[i];
+                writtenNodes.insert(nodeTags[i]);
+                count++;
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
+                }
+                else
+                    file << " ";
+            }
+        }
+    }
+
+    file << std::endl;
+
+    // ********************************************************************************************************************
+
+    file << "*Elset, elset=inferiorBoundaryElements" << std::endl; // Elements on the inferior boundary
+
+    count = 0;
+    std::set<int> writtenElems;
+
+    for (int i = 0; i < elemTagsMir.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == 0.0)
+            {
+                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+                {
+                    file << elemTagsMir[i];
+                    count++;
+                    writtenElems.insert(elemTagsMir[i]);
+
+                    if (count == nodesPerLine)
+                    {
+                        file << std::endl;
+                        count = 0;
+                    }
+                    else
+                        file << " ";
+                }
+            }
+        }
+    }
+    file << std::endl;
+    // ********************************************************************************************************************
+
+    file << "*Nset, nset=superiorBoundaryNodes" << std::endl; // Nodes on the superior boundary
+
+    writtenNodes.clear();
+
+    // Identifying maximum y coordinate
+    double maxY = 0.0;
+
+    for (int i = 0; i < nodeTagsMir.size(); i++)
+    {
+        if (nodeCoords[3 * i + 1] >= maxY)
+            maxY = nodeCoords[3 * i + 1];
+    }
+
+    for (int i = 0; i < nodeTags.size(); i++)
+    {
+        if (nodeCoords[3 * i + 1] == maxY) // If y = maxY
+        {
+            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+            {
+                file << nodeTags[i];
+                writtenNodes.insert(nodeTags[i]);
+                count++;
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
+                }
+                else
+                    file << " ";
+            }
+        }
+    }
+
+    file << std::endl;
+
+    // ********************************************************************************************************************
+    file << "*Elset, superiorBoundaryElements" << std::endl; // Elements on the superior boundary
+
+    count = 0;
+    writtenElems.clear();
+
+    for (int i = 0; i < elemTagsMir.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (nodeCoordsMir[3 * elemNodeTagsMir[3 * i + j] - 2] == maxY)
+            {
+                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+                {
+                    file << elemTagsMir[i];
+                    count++;
+                    writtenElems.insert(elemTagsMir[i]);
+
+                    if (count == nodesPerLine)
+                    {
+                        file << std::endl;
+                        count = 0;
+                    }
+                    else
+                        file << " ";
+                }
+            }
+        }
+    }
+    file << std::endl;
+
+    // ********************************************************************************************************************
+
+    file << "*Nset, nset=rightBoundaryNodes" << std::endl; // Nodes on the right side boundary
+
+    writtenNodes.clear();
+    double maxX = 0.0;
+
+    for (int i = 0; i < nodeTagsMir.size(); i++)
+    {
+        if (nodeCoords[3 * i] >= maxX)
+            maxX = nodeCoords[3 * i];
+    }
+
+    for (int i = 0; i < nodeTags.size(); i++)
+    {
+        if (nodeCoords[3 * i + 1] == maxX) // If x = maxX
+        {
+            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+            {
+                file << nodeTags[i];
+                writtenNodes.insert(nodeTags[i]);
+                count++;
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
+                }
+                else
+                    file << " ";
+            }
+        }
+    }
+
+    file << std::endl;
+
+    // ********************************************************************************************************************
+
+    file << "*Elset, rightBoundaryElements" << std::endl; // Elements on the right side boundary
+
+    count = 0;
+    writtenElems.clear();
+
+    for (int i = 0; i < elemTagsMir.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (nodeCoordsMir[3 * elemNodeTagsMir[3 * i + j] - 3] == maxX)
+            {
+                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+                {
+                    file << elemTagsMir[i];
+                    count++;
+                    writtenElems.insert(elemTagsMir[i]);
+
+                    if (count == nodesPerLine)
+                    {
+                        file << std::endl;
+                        count = 0;
+                    }
+                    else
+                        file << " ";
+                }
+            }
+        }
+    }
+    file << std::endl;
+
+    // ********************************************************************************************************************
+    file << "*Nset, nset=leftBoundaryNodes" << std::endl; // Nodes on the left side boundary
+
+    writtenNodes.clear();
+    double minX = 0.0;
+
+    for (int i = 0; i < nodeTagsMir.size(); i++)
+    {
+        if (nodeCoords[3 * i] <= minX)
+            minX = nodeCoords[3 * i];
+    }
+    std::cout << "min x:" << minX;
+    for (int i = 0; i < nodeTags.size(); i++)
+    {
+        if (nodeCoords[3 * i + 1] == minX) // If x = minX
+        {
+            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+            {
+                file << nodeTags[i];
+                writtenNodes.insert(nodeTags[i]);
+                count++;
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
+                }
+                else
+                    file << " ";
+            }
+        }
+    }
+
+    file << std::endl;
+
+    // ********************************************************************************************************************
+
+    file << "*Elset, leftBoundaryElements" << std::endl; // Elements on the left side boundary
+
+    count = 0;
+    writtenElems.clear();
+
+    for (int i = 0; i < elemTagsMir.size(); i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            if (nodeCoordsMir[3 * elemNodeTagsMir[3 * i + j] - 3] == minX)
+            {
+                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+                {
+                    file << elemTagsMir[i];
+                    count++;
+                    writtenElems.insert(elemTagsMir[i]);
+
+                    if (count == nodesPerLine)
+                    {
+                        file << std::endl;
+                        count = 0;
+                    }
+                    else
+                        file << " ";
+                }
+            }
+        }
+    }
+    file << std::endl;
 };
 
 void Geometry::InitializeGmshAPI(const bool &showInterface)

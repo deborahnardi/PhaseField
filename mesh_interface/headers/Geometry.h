@@ -33,7 +33,7 @@ private:
     std::string name;
     std::vector<int> linesIndexes;
     std::vector<int> tags, ellipseArcs, ellipseCurves, ellipseSurfaces;
-    std::vector<std::pair<int, int> > entities;
+    std::vector<std::pair<int, int>> entities;
     std::vector<std::size_t> nodeTags;
     std::vector<double> nodeCoords, nodeParams;
     std::vector<int> elemTypes;
