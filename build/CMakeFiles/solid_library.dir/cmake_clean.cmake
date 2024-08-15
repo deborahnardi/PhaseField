@@ -17,6 +17,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.o.d"
   "CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o"
   "CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o.d"
+  "CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o"
+  "CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o.d"
   "libsolid_library.a"
   "libsolid_library.pdb"
 )

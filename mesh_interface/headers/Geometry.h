@@ -26,7 +26,7 @@ class Geometry
 private:
     int dim;
     int elpPoints = 5;
-    double edgeLength;
+    double edgeLength, meshSizeFactor = 1.0;
     double xc, yc, xo, yo, xm, ym, xa, ya, xb, yb;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
     double **ellipseCoordinates;
@@ -54,10 +54,12 @@ public:
     double getEdgeLength() const { return edgeLength; }
     MeshAlgorithm getAlgorithm() const { return algorithm; }
     int getDimention() const { return dim; }
+    double getMeshSizeFactor() const { return meshSizeFactor; }
 
     void setDimention(const int &_dim) { dim = _dim; }
     void setEdgeLength(const double &_edgeLength) { edgeLength = _edgeLength; }
     void setAlgorithm(const MeshAlgorithm &_algorithm) { algorithm = _algorithm; }
+    void setMeshSizeFactor(const double &_meshSizeFactor) { meshSizeFactor = _meshSizeFactor; }
 
     Point *addPoint(const std::vector<double> &_coordinates, const double &_lc);
     Line *addLine(const std::vector<Point *> &_points);

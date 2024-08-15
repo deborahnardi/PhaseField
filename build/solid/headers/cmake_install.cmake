@@ -1,4 +1,4 @@
-# Install script for directory: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/solid/headers
+# Install script for directory: /home/acer/cppCodes/PhaseField/solid/headers
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

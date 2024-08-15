@@ -6,6 +6,7 @@ static char help[] = "Solves the phase-field problem using Finete Element Method
                      "São Carlos School of Engineering - University of São Paulo";
 
 #include "mesh_interface/headers/Geometry.h"
+#include "solid/headers/Solid.h"
 
 int main(int argc, char **args)
 {

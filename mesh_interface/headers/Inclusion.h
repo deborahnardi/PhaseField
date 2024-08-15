@@ -33,7 +33,6 @@ public:
     void setXc(const double &_xc) { xc = _xc; }
     void setYc(const double &_yc) { yc = _yc; }
     void setLc(const double &_lc) { lc = _lc; }
-
 };
 
 /*

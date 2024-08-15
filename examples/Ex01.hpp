@@ -1,4 +1,8 @@
-Geometry *geo1 = new Geometry("rock_mesh1");
+std::string projectName = "rock_mesh1";
+Geometry *geo1 = new Geometry(projectName);
+Solid *solid1 = new Solid(projectName);
+
+PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
 std::vector<Inclusion *> inclusions;
 std::vector<MeshFactor *> factors;
@@ -10,6 +14,7 @@ std::vector<PlaneSurface *> planeSurfaces;
 geo1->setEdgeLength(1000.);
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimention(2);
+geo1->setMeshSizeFactor(5.0);
 
 points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.));
 points.push_back(geo1->addPoint({geo1->getEdgeLength(), 0.0, 0.0}, 0.));
@@ -31,4 +36,6 @@ inclusions.push_back(geo1->addInclusion(0.10, 0.10, 45., 0.25, 0.75, 0.));
 
 factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
 
-geo1->InitializeGmshAPI();
+geo1->InitializeGmshAPI(true);
+
+solid1->readGeometry(projectName + ".mir");

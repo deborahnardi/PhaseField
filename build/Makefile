@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp
+CMAKE_SOURCE_DIR = /home/acer/cppCodes/PhaseField
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build
+CMAKE_BINARY_DIR = /home/acer/cppCodes/PhaseField/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/acer/cppCodes/PhaseField/build/CMakeFiles /home/acer/cppCodes/PhaseField/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/acer/cppCodes/PhaseField/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -382,6 +382,30 @@ solid/sources/Node.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Node.cpp.s
 .PHONY : solid/sources/Node.cpp.s
 
+solid/sources/Solid.o: solid/sources/Solid.cpp.o
+.PHONY : solid/sources/Solid.o
+
+# target to build an object file
+solid/sources/Solid.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o
+.PHONY : solid/sources/Solid.cpp.o
+
+solid/sources/Solid.i: solid/sources/Solid.cpp.i
+.PHONY : solid/sources/Solid.i
+
+# target to preprocess a source file
+solid/sources/Solid.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.i
+.PHONY : solid/sources/Solid.cpp.i
+
+solid/sources/Solid.s: solid/sources/Solid.cpp.s
+.PHONY : solid/sources/Solid.s
+
+# target to generate assembly for a file
+solid/sources/Solid.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.s
+.PHONY : solid/sources/Solid.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -422,6 +446,9 @@ help:
 	@echo "... solid/sources/Node.o"
 	@echo "... solid/sources/Node.i"
 	@echo "... solid/sources/Node.s"
+	@echo "... solid/sources/Solid.o"
+	@echo "... solid/sources/Solid.i"
+	@echo "... solid/sources/Solid.s"
 .PHONY : help
 
 

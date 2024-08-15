@@ -58,8 +58,6 @@ MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_me
 
 void Geometry::generateInclusions()
 {
-    std::cout << "Generating inclusions coordinates..." << std::endl;
-
     tags.resize(elpPoints);
 
     ellipseCoordinates = new double *[elpPoints];
@@ -134,6 +132,7 @@ void Geometry::generateInclusions()
         gmsh::model::occ::synchronize();
 
         gmsh::model::addPhysicalGroup(2, {pInc}, planeSurfaces.size() + inclusion->getIndex() + 1, "Inclusions");
+        gmsh::model::setPhysicalName(2, planeSurfaces.size() + inclusion->getIndex() + 1, "Inclusions");
     }
 
     delete[] ellipseCoordinates;
@@ -141,15 +140,15 @@ void Geometry::generateInclusions()
 
 void Geometry::getMeshInfo()
 { // dim = -1 -> all dimensions; tag = -1 -> all tags (get all nodes), includeBoundary = true, returnParametricCoordinates = false
-    gmsh::model::getEntities(entities);
 
     gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, -1, -1, true, false);
 
     gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
 
-    std::cout << "elemTypes:" << std::endl;
-    for (int i = 0; i < elemTypes.size(); i++)
-        std::cout << elemTypes[i] << std::endl;
+    std::vector<int> lineElems;
+    std::vector<std::vector<std::size_t>> lineElemsTags, lineElemsNodeTags;
+
+    gmsh::model::mesh::getElements(lineElems, lineElemsTags, lineElemsNodeTags, 1, -1);
 };
 
 void Geometry::writeMeshInfo()
@@ -244,31 +243,37 @@ void Geometry::writeMeshInfo()
     file << "*Elset, elset=inferiorBoundaryElements" << std::endl; // Elements on the inferior boundary
 
     count = 0;
+
     std::set<int> writtenElems;
 
     for (int i = 0; i < elemTagsMir.size(); i++)
     {
+        int numOfNodes = 0;
         for (int j = 0; j < 3; j++)
         {
             if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == 0.0)
-            {
-                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-                {
-                    file << elemTagsMir[i];
-                    count++;
-                    writtenElems.insert(elemTagsMir[i]);
+                numOfNodes++;
+        }
 
-                    if (count == nodesPerLine)
-                    {
-                        file << std::endl;
-                        count = 0;
-                    }
-                    else
-                        file << " ";
+        if (numOfNodes == 2) // 2 nodes of the element must be on the inferior boundary
+        {
+            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+            {
+                file << elemTagsMir[i];
+                count++;
+                writtenElems.insert(elemTagsMir[i]);
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
                 }
+                else
+                    file << " ";
             }
         }
     }
+
     file << std::endl;
     // ********************************************************************************************************************
 
@@ -278,7 +283,7 @@ void Geometry::writeMeshInfo()
 
     // Identifying maximum y coordinate
     double maxY = 0.0;
-
+    count = 0;
     for (int i = 0; i < nodeTagsMir.size(); i++)
     {
         if (nodeCoords[3 * i + 1] >= maxY)
@@ -316,24 +321,28 @@ void Geometry::writeMeshInfo()
 
     for (int i = 0; i < elemTagsMir.size(); i++)
     {
+        int numOfNodes = 0;
         for (int j = 0; j < 3; j++)
         {
-            if (nodeCoordsMir[3 * elemNodeTagsMir[3 * i + j] - 2] == maxY)
-            {
-                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-                {
-                    file << elemTagsMir[i];
-                    count++;
-                    writtenElems.insert(elemTagsMir[i]);
+            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == maxY)
+                numOfNodes++;
+        }
 
-                    if (count == nodesPerLine)
-                    {
-                        file << std::endl;
-                        count = 0;
-                    }
-                    else
-                        file << " ";
+        if (numOfNodes == 2)
+        {
+            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+            {
+                file << elemTagsMir[i];
+                count++;
+                writtenElems.insert(elemTagsMir[i]);
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
                 }
+                else
+                    file << " ";
             }
         }
     }
@@ -345,7 +354,7 @@ void Geometry::writeMeshInfo()
 
     writtenNodes.clear();
     double maxX = 0.0;
-
+    count = 0;
     for (int i = 0; i < nodeTagsMir.size(); i++)
     {
         if (nodeCoords[3 * i] >= maxX)
@@ -354,7 +363,7 @@ void Geometry::writeMeshInfo()
 
     for (int i = 0; i < nodeTags.size(); i++)
     {
-        if (nodeCoords[3 * i + 1] == maxX) // If x = maxX
+        if (nodeCoords[3 * i] == maxX) // If x = maxX
         {
             if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
             {
@@ -384,24 +393,28 @@ void Geometry::writeMeshInfo()
 
     for (int i = 0; i < elemTagsMir.size(); i++)
     {
+        int numOfNodes = 0;
         for (int j = 0; j < 3; j++)
         {
-            if (nodeCoordsMir[3 * elemNodeTagsMir[3 * i + j] - 3] == maxX)
-            {
-                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-                {
-                    file << elemTagsMir[i];
-                    count++;
-                    writtenElems.insert(elemTagsMir[i]);
+            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 3] == maxX)
+                numOfNodes++;
+        }
 
-                    if (count == nodesPerLine)
-                    {
-                        file << std::endl;
-                        count = 0;
-                    }
-                    else
-                        file << " ";
+        if (numOfNodes == 2)
+        {
+            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+            {
+                file << elemTagsMir[i];
+                count++;
+                writtenElems.insert(elemTagsMir[i]);
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
                 }
+                else
+                    file << " ";
             }
         }
     }
@@ -412,16 +425,17 @@ void Geometry::writeMeshInfo()
 
     writtenNodes.clear();
     double minX = 0.0;
+    count = 0;
 
     for (int i = 0; i < nodeTagsMir.size(); i++)
     {
         if (nodeCoords[3 * i] <= minX)
             minX = nodeCoords[3 * i];
     }
-    std::cout << "min x:" << minX;
+
     for (int i = 0; i < nodeTags.size(); i++)
     {
-        if (nodeCoords[3 * i + 1] == minX) // If x = minX
+        if (nodeCoords[3 * i] == minX) // If x = minX
         {
             if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
             {
@@ -451,28 +465,87 @@ void Geometry::writeMeshInfo()
 
     for (int i = 0; i < elemTagsMir.size(); i++)
     {
+        int numOfNodes = 0;
         for (int j = 0; j < 3; j++)
         {
-            if (nodeCoordsMir[3 * elemNodeTagsMir[3 * i + j] - 3] == minX)
-            {
-                if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-                {
-                    file << elemTagsMir[i];
-                    count++;
-                    writtenElems.insert(elemTagsMir[i]);
+            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 3] == minX)
+                numOfNodes++;
+        }
 
-                    if (count == nodesPerLine)
-                    {
-                        file << std::endl;
-                        count = 0;
-                    }
-                    else
-                        file << " ";
+        if (numOfNodes == 2)
+        {
+            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+            {
+                file << elemTagsMir[i];
+                count++;
+                writtenElems.insert(elemTagsMir[i]);
+
+                if (count == nodesPerLine)
+                {
+                    file << std::endl;
+                    count = 0;
                 }
+                else
+                    file << " ";
             }
         }
     }
     file << std::endl;
+
+    // ********************************************************************************************************************
+    std::string entityType;
+    std::string expectedName = "Ellipse";
+    std::vector<std::size_t> entityNodeTags;
+    std::vector<double> entityNodeCoords;
+    int nIncls = 0;
+
+    gmsh::model::getEntities(entities);
+    nodeTags.clear();
+    nodeCoords.clear();
+    writtenNodes.clear();
+    writtenElems.clear();
+
+    gmsh::vectorpair dimTags;
+    std::vector<std::string> names;
+
+    gmsh::model::getPhysicalGroups(dimTags, -1);
+    std::cout << "Physical groups: " << dimTags.size() << std::endl;
+
+    //    for (auto e : entities)
+    //    {
+    //        int entityDim = e.first, entityTag = e.second;
+    //        gmsh::model::getType(entityDim, entityTag, entityType);
+    //
+    //        if (entityType == expectedName)
+    //        {
+    //            nIncls++;
+    //
+    //            file << "*Nset inclusion_" << nIncls << std::endl;
+    //
+    //            gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, entityDim, entityTag, true, false);
+    //
+    //            for (int i = 0; i < nodeTags.size(); i++)
+    //            {
+    //                entityNodeTags.push_back(nodeTags[i]);
+    //                entityNodeCoords.push_back(nodeCoords[3 * i]);
+    //                entityNodeCoords.push_back(nodeCoords[3 * i + 1]);
+    //                entityNodeCoords.push_back(nodeCoords[3 * i + 2]);
+    //            }
+    //
+    //            for (int i = 0; i < entityNodeTags.size(); i++)
+    //            {
+    //                if (writtenNodes.find(entityNodeTags[i]) == writtenNodes.end())
+    //                {
+    //                    file << entityNodeTags[i] << std::endl;
+    //                    writtenNodes.insert(entityNodeTags[i]);
+    //                }
+    //            }
+    //        }
+    //    }
+    //
+    //    for (int i = 0; i < entityNodeTags.size(); i++)
+    //        std::cout << "Node " << entityNodeTags[i] << " -> " << entityNodeCoords[3 * i] << " " << entityNodeCoords[3 * i + 1] << " " << entityNodeCoords[3 * i + 2] << std::endl;
+    //    std::cout << "---------------------------" << std::endl;
 };
 
 void Geometry::InitializeGmshAPI(const bool &showInterface)
@@ -514,9 +587,9 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::occ::synchronize();
 
     // Global definition for mesh size generation
-    gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal); // Defines the minimum mesh size
-    gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal); // Defines the maximum mesh size
-    gmsh::option::setNumber("Mesh.MeshSizeFactor", 50.0);           // Defines the mesh size factor
+    gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
+    gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);      // Defines the maximum mesh size
+    gmsh::option::setNumber("Mesh.MeshSizeFactor", getMeshSizeFactor()); // Defines the mesh size factor
 
     // 0 -> Deactivated; 1 -> Activated
     gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
@@ -559,11 +632,11 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::mesh::generate(dim);
     gmsh::write(name + ".inp");
 
-    if (showInterface)
-        gmsh::fltk::run();
-
     getMeshInfo();
     writeMeshInfo();
+
+    if (showInterface)
+        gmsh::fltk::run();
 
     gmsh::clear();
     gmsh::finalize();
