@@ -130,9 +130,6 @@ void Geometry::generateInclusions()
         ellipseSurfaces.push_back(pInc);
 
         gmsh::model::occ::synchronize();
-
-        gmsh::model::addPhysicalGroup(2, {pInc}, planeSurfaces.size() + inclusion->getIndex() + 1, "Inclusions");
-        gmsh::model::setPhysicalName(2, planeSurfaces.size() + inclusion->getIndex() + 1, "Inclusions");
     }
 
     delete[] ellipseCoordinates;
@@ -505,12 +502,6 @@ void Geometry::writeMeshInfo()
     writtenNodes.clear();
     writtenElems.clear();
 
-    gmsh::vectorpair dimTags;
-    std::vector<std::string> names;
-
-    gmsh::model::getPhysicalGroups(dimTags, -1);
-    std::cout << "Physical groups: " << dimTags.size() << std::endl;
-
     //    for (auto e : entities)
     //    {
     //        int entityDim = e.first, entityTag = e.second;
@@ -570,21 +561,51 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
 
         gmsh::model::occ::addCurveLoop(linesIndexes, lineLoop->getIndex() + 1);
         gmsh::model::occ::synchronize();
-        gmsh::model::addPhysicalGroup(1, linesIndexes, lineLoop->getIndex() + 1, "External Boundaries");
-        gmsh::model::occ::synchronize();
     }
 
     for (auto planeSurface : planeSurfaces)
     {
-        gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1}, planeSurface->getIndex() + 1);
+        gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1});
         gmsh::model::occ::synchronize();
-        gmsh::model::addPhysicalGroup(2, {planeSurface->getIndex() + 1}, planeSurface->getIndex() + 1, "Host");
     }
 
     generateInclusions();
 
     gmsh::model::occ::removeAllDuplicates();
     gmsh::model::occ::synchronize();
+
+    int surfaceTag = planeSurfaces[0]->getIndex() + 1;
+    std::cout << "Surface Tag: " << surfaceTag << std::endl;
+
+    gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, "Host");
+    gmsh::model::occ::synchronize();
+
+    for (int i = 0; i < ellipseSurfaces.size(); i++)
+    {
+        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Inclusion" + std::to_string(i + 1));
+        gmsh::model::occ::synchronize();
+    }
+
+    std::vector<std::pair<int, int>> physicalGroups;
+    gmsh::model::getPhysicalGroups(physicalGroups);
+
+    if (physicalGroups.empty())
+    {
+        std::cout << "No physical groups found." << std::endl;
+    }
+    else
+    {
+        for (auto &group : physicalGroups)
+        {
+            int dim = group.first;
+            int tag = group.second;
+
+            std::string name;
+            gmsh::model::getPhysicalName(dim, tag, name);
+
+            std::cout << "Physical Group: Dimension = " << dim << ", Tag = " << tag << ", Name = " << name << std::endl;
+        }
+    }
 
     // Global definition for mesh size generation
     gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
