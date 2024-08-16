@@ -212,26 +212,48 @@ void Geometry::writeMeshInfo()
     int nodesPerLine = 8; // Number of nodes per line
     int count = 0;
 
-    for (int i = 0; i < nodeTags.size(); i++)
-    {
-        if (nodeCoords[3 * i + 1] == 0.0) // If y = 0
-        {
-            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
-            {
-                file << nodeTags[i];
-                writtenNodes.insert(nodeTags[i]);
-                count++;
+    std::vector<std::pair<int, int>> boundaries;
+    std::vector<std::pair<int, int>> dimTags = {{2, 1}};
+    gmsh::model::occ::synchronize();
+    gmsh::model::getBoundary(dimTags, boundaries);
 
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
+    try
+    {
+        // Obter o contorno das superfícies
+        gmsh::model::getBoundary(dimTags, boundaries, true, true, false);
+
+        // Imprimir o contorno
+        std::cout << "Contorno das superfícies:" << std::endl;
+        for (const auto &boundary : boundaries)
+        {
+            std::cout << "Dimensão: " << boundary.first << ", Tag: " << boundary.second << std::endl;
         }
     }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Erro: " << e.what() << std::endl;
+    }
+
+    //    for (int i = 0; i < nodeTags.size(); i++)
+    //    {
+    //        if (nodeCoords[3 * i + 1] == 0.0) // If y = 0
+    //        {
+    //            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+    //            {
+    //                file << nodeTags[i];
+    //                writtenNodes.insert(nodeTags[i]);
+    //                count++;
+    //
+    //                if (count == nodesPerLine)
+    //                {
+    //                    file << std::endl;
+    //                    count = 0;
+    //                }
+    //                else
+    //                    file << " ";
+    //            }
+    //        }
+    //    }
 
     file << std::endl;
 
@@ -574,10 +596,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::occ::removeAllDuplicates();
     gmsh::model::occ::synchronize();
 
-    int surfaceTag = planeSurfaces[0]->getIndex() + 1;
-    std::cout << "Surface Tag: " << surfaceTag << std::endl;
-
-    gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, "Host");
+    gmsh::model::addPhysicalGroup(2, {planeSurfaces[0]->getIndex() + 2}, -1, "Host"); // For some reason the index for host is 2
     gmsh::model::occ::synchronize();
 
     for (int i = 0; i < ellipseSurfaces.size(); i++)
@@ -589,22 +608,11 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     std::vector<std::pair<int, int>> physicalGroups;
     gmsh::model::getPhysicalGroups(physicalGroups);
 
-    if (physicalGroups.empty())
+    std::cout << "Grupos Físicos Criados:" << std::endl;
+    for (const auto &group : physicalGroups)
     {
-        std::cout << "No physical groups found." << std::endl;
-    }
-    else
-    {
-        for (auto &group : physicalGroups)
-        {
-            int dim = group.first;
-            int tag = group.second;
-
-            std::string name;
-            gmsh::model::getPhysicalName(dim, tag, name);
-
-            std::cout << "Physical Group: Dimension = " << dim << ", Tag = " << tag << ", Name = " << name << std::endl;
-        }
+        std::cout << "Dimensão: " << group.first << std::endl;
+        std::cout << "Tags: " << group.second << std::endl;
     }
 
     // Global definition for mesh size generation

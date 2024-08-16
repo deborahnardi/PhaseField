@@ -73,15 +73,15 @@ CMakeFiles/s.dir/main.cpp.o: CMakeFiles/s.dir/flags.make
 CMakeFiles/s.dir/main.cpp.o: ../main.cpp
 CMakeFiles/s.dir/main.cpp.o: CMakeFiles/s.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/acer/cppCodes/PhaseField/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/s.dir/main.cpp.o"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/s.dir/main.cpp.o -MF CMakeFiles/s.dir/main.cpp.o.d -o CMakeFiles/s.dir/main.cpp.o -c /home/acer/cppCodes/PhaseField/main.cpp
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/s.dir/main.cpp.o -MF CMakeFiles/s.dir/main.cpp.o.d -o CMakeFiles/s.dir/main.cpp.o -c /home/acer/cppCodes/PhaseField/main.cpp
 
 CMakeFiles/s.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/s.dir/main.cpp.i"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/acer/cppCodes/PhaseField/main.cpp > CMakeFiles/s.dir/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/acer/cppCodes/PhaseField/main.cpp > CMakeFiles/s.dir/main.cpp.i
 
 CMakeFiles/s.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/s.dir/main.cpp.s"
-	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/acer/cppCodes/PhaseField/main.cpp -o CMakeFiles/s.dir/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/acer/cppCodes/PhaseField/main.cpp -o CMakeFiles/s.dir/main.cpp.s
 
 # Object files for target s
 s_OBJECTS = \
