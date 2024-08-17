@@ -119,14 +119,14 @@ void Geometry::generateInclusions()
             int startTag = tags[i];
             int endTag = tags[(i + 1) % 4]; // Cyclic form of the array
 
-            int elp = gmsh::model::occ::addEllipseArc(startTag, centerTag, majorTag, endTag, lines.size() + ellipseArcs.size() + 1);
+            int elp = gmsh::model::occ::addEllipseArc(startTag, centerTag, majorTag, endTag);
             ellipseArcs.push_back(elp);
         }
 
-        int cInc = gmsh::model::occ::addCurveLoop({ellipseArcs[4 * inclusion->getIndex()], ellipseArcs[4 * inclusion->getIndex() + 1], ellipseArcs[4 * inclusion->getIndex() + 2], ellipseArcs[4 * inclusion->getIndex() + 3]}, lineLoops.size() + inclusion->getIndex() + 1);
+        int cInc = gmsh::model::occ::addCurveLoop({ellipseArcs[4 * inclusion->getIndex()], ellipseArcs[4 * inclusion->getIndex() + 1], ellipseArcs[4 * inclusion->getIndex() + 2], ellipseArcs[4 * inclusion->getIndex() + 3]});
         ellipseCurves.push_back(cInc);
 
-        int pInc = gmsh::model::occ::addPlaneSurface({cInc}, planeSurfaces.size() + inclusion->getIndex() + 1);
+        int pInc = gmsh::model::occ::addPlaneSurface({cInc});
         ellipseSurfaces.push_back(pInc);
 
         gmsh::model::occ::synchronize();
@@ -212,26 +212,33 @@ void Geometry::writeMeshInfo()
     int nodesPerLine = 8; // Number of nodes per line
     int count = 0;
 
-    std::vector<std::pair<int, int>> boundaries;
-    std::vector<std::pair<int, int>> dimTags = {{2, 1}};
-    gmsh::model::occ::synchronize();
-    gmsh::model::getBoundary(dimTags, boundaries);
+    gmsh::vectorpair physicalGroups;
+    gmsh::model::getPhysicalGroups(physicalGroups);
 
-    try
+    std::cout << "PHYSICAL GROUPS" << std::endl;
+    for (const auto &group : physicalGroups)
     {
-        // Obter o contorno das superfícies
-        gmsh::model::getBoundary(dimTags, boundaries, true, true, false);
 
-        // Imprimir o contorno
-        std::cout << "Contorno das superfícies:" << std::endl;
-        for (const auto &boundary : boundaries)
+        std::string groupName;
+        gmsh::model::getPhysicalName(group.first, group.second, groupName);
+        std::cout << "Group name: " << groupName << ", of dimension: " << group.first << ", and tag: " << group.second << std::endl;
+
+        std::vector<int> entities;
+        gmsh::model::getEntitiesForPhysicalGroup(group.first, group.second, entities);
+
+        for (const auto &entity : entities)
         {
-            std::cout << "Dimensão: " << boundary.first << ", Tag: " << boundary.second << std::endl;
+            std::cout << "Entidade: " << entity << std::endl;
+            std::vector<std::pair<int, int>> boundaries;
+            std::vector<std::pair<int, int>> dimTags = {{2, entity}};
+            gmsh::model::getBoundary(dimTags, boundaries);
+            std::cout << "BOUNDARY INFO: " << std::endl;
+            for (const auto &boundary : boundaries)
+            {
+                std::cout << "Dimension: " << boundary.first << ", Tag: " << boundary.second << std::endl;
+            }
         }
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Erro: " << e.what() << std::endl;
+        std::cout << "---------------------------" << std::endl;
     }
 
     //    for (int i = 0; i < nodeTags.size(); i++)
@@ -587,7 +594,10 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
 
     for (auto planeSurface : planeSurfaces)
     {
-        gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1});
+        int pS = gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1});
+        gmsh::model::occ::synchronize();
+        gmshPlanesuf2D.push_back(pS);
+        gmsh::model::addPhysicalGroup(2, {gmshPlanesuf2D[0]}, -1, "Host"); // For some reason the index for host is 2
         gmsh::model::occ::synchronize();
     }
 
@@ -596,23 +606,16 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::occ::removeAllDuplicates();
     gmsh::model::occ::synchronize();
 
-    gmsh::model::addPhysicalGroup(2, {planeSurfaces[0]->getIndex() + 2}, -1, "Host"); // For some reason the index for host is 2
-    gmsh::model::occ::synchronize();
-
-    for (int i = 0; i < ellipseSurfaces.size(); i++)
+    for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
     {
-        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Inclusion" + std::to_string(i + 1));
+        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "Inclusion" + std::to_string(i + 1));
         gmsh::model::occ::synchronize();
-    }
 
-    std::vector<std::pair<int, int>> physicalGroups;
-    gmsh::model::getPhysicalGroups(physicalGroups);
-
-    std::cout << "Grupos Físicos Criados:" << std::endl;
-    for (const auto &group : physicalGroups)
-    {
-        std::cout << "Dimensão: " << group.first << std::endl;
-        std::cout << "Tags: " << group.second << std::endl;
+        if (i == ellipseSurfaces.size() - 1)
+        {
+            gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Host"); // Contain all the boundaries
+            gmsh::model::occ::synchronize();
+        }
     }
 
     // Global definition for mesh size generation
@@ -662,6 +665,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::write(name + ".inp");
 
     getMeshInfo();
+
     writeMeshInfo();
 
     if (showInterface)

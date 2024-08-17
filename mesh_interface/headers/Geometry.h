@@ -32,7 +32,7 @@ private:
     double **ellipseCoordinates;
     std::string name;
     std::vector<int> linesIndexes;
-    std::vector<int> tags, ellipseArcs, ellipseCurves, ellipseSurfaces;
+    std::vector<int> tags, ellipseArcs, ellipseCurves, ellipseSurfaces, gmshPlanesuf2D;
     std::vector<std::pair<int, int>> entities;
     std::vector<std::size_t> nodeTags;
     std::vector<double> nodeCoords, nodeParams;
