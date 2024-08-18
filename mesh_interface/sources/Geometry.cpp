@@ -206,11 +206,11 @@ void Geometry::writeMeshInfo()
 
     // ********************************************************************************************************************
 
-    file << "*Nset, nset=inferiorBoundaryNodes" << std::endl; // Nodes on the inferior boundary
-
     writtenNodes.clear();
+
     int nodesPerLine = 8; // Number of nodes per line
     int count = 0;
+    std::set<int> writtenBoundaryTags;
 
     gmsh::vectorpair physicalGroups;
     gmsh::model::getPhysicalGroups(physicalGroups);
@@ -233,339 +233,368 @@ void Geometry::writeMeshInfo()
             std::vector<std::pair<int, int>> dimTags = {{2, entity}};
             gmsh::model::getBoundary(dimTags, boundaries);
             std::cout << "BOUNDARY INFO: " << std::endl;
+            bool FLAG1 = false, FLAG2 = false, FLAG3 = false, FLAG4 = false;
+
             for (const auto &boundary : boundaries)
             {
-                std::cout << "Dimension: " << boundary.first << ", Tag: " << boundary.second << std::endl;
+                if (writtenBoundaryTags.find(boundary.second) == writtenBoundaryTags.end())
+                {
+                    writtenBoundaryTags.insert(boundary.second);
+                    std::cout << "Dimension: " << boundary.first << ", Tag: " << boundary.second << std::endl;
+
+                    if (groupName == "Host")
+                    {
+                        std::vector<int> elementTypes;
+                        std::vector<std::vector<std::size_t>> elementTags, nodeTags;
+                        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+
+                        for (std::size_t i = 0; i < elementTypes.size(); i++)
+                        {
+                            std::cout << "Element type: " << elementTypes[i] << std::endl;
+                            std::cout << "Elements: ";
+                            for (const auto &elem : elementTags[i])
+                            {
+                                std::cout << elem << " ";
+                            }
+
+                            std::cout << std::endl;
+
+                            std::cout << "Nodes: ";
+                            writtenNodes.clear();
+
+                            std::vector<double> coords;
+                            std::vector<double> paramCoords;
+                            int dim, tag;
+                            int node = nodeTags[i][0]; // Always checking on the first node of the element
+
+                            gmsh::model::mesh::getNode(node, coords, paramCoords, dim, tag);
+
+                            if (coords[1] == 0.0 && FLAG1 == false) // If y = 0.0
+                            {
+                                file << "*Nset, nset=inferiorBoundaryNodes" << std::endl;
+
+                                for (const auto &node : nodeTags[i])
+                                {
+                                    if (writtenNodes.find(node) == writtenNodes.end())
+                                    {
+                                        file << node << " ";
+                                        writtenNodes.insert(node);
+                                    }
+                                }
+                                FLAG1 = true;
+                                file << std::endl;
+                            }
+                            else if (coords[1] == edgeLength && FLAG2 == false) // If y = edgeLenght
+                            {
+                                file << "*Nset, nset=superiorBoundaryNodes" << std::endl;
+
+                                for (const auto &node : nodeTags[i])
+                                {
+                                    if (writtenNodes.find(node) == writtenNodes.end())
+                                    {
+                                        file << node << " ";
+                                        writtenNodes.insert(node);
+                                    }
+                                }
+                                FLAG2 = true;
+                                file << std::endl;
+                            }
+                            else if (coords[0] == 0.0 && FLAG3 == false) // If x = 0.0
+                            {
+                                file << "*Nset, nset=leftBoundaryNodes" << std::endl;
+
+                                for (const auto &node : nodeTags[i])
+                                {
+                                    if (writtenNodes.find(node) == writtenNodes.end())
+                                    {
+                                        file << node << " ";
+                                        writtenNodes.insert(node);
+                                    }
+                                }
+                                FLAG3 = true;
+                                file << std::endl;
+                            }
+                            else if (coords[0] == edgeLength && FLAG4 == false) // If x = edgeLength
+                            {
+                                file << "*Nset, nset=rightBoundaryNodes" << std::endl;
+
+                                for (const auto &node : nodeTags[i])
+                                {
+                                    if (writtenNodes.find(node) == writtenNodes.end())
+                                    {
+                                        file << node << " ";
+                                        writtenNodes.insert(node);
+                                    }
+                                }
+                                FLAG4 = true;
+                                file << std::endl;
+                            }
+                            std::cout << std::endl;
+                        }
+                    }
+                }
             }
         }
         std::cout << "---------------------------" << std::endl;
     }
 
-    //    for (int i = 0; i < nodeTags.size(); i++)
-    //    {
-    //        if (nodeCoords[3 * i + 1] == 0.0) // If y = 0
-    //        {
-    //            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
-    //            {
-    //                file << nodeTags[i];
-    //                writtenNodes.insert(nodeTags[i]);
-    //                count++;
-    //
-    //                if (count == nodesPerLine)
-    //                {
-    //                    file << std::endl;
-    //                    count = 0;
-    //                }
-    //                else
-    //                    file << " ";
-    //            }
-    //        }
-    //    }
-
     file << std::endl;
 
     // ********************************************************************************************************************
 
-    file << "*Elset, elset=inferiorBoundaryElements" << std::endl; // Elements on the inferior boundary
+    // file << "*Elset, elset=inferiorBoundaryElements" << std::endl; // Elements on the inferior boundary
 
-    count = 0;
+    // count = 0;
 
-    std::set<int> writtenElems;
+    // std::set<int> writtenElems;
 
-    for (int i = 0; i < elemTagsMir.size(); i++)
-    {
-        int numOfNodes = 0;
-        for (int j = 0; j < 3; j++)
-        {
-            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == 0.0)
-                numOfNodes++;
-        }
+    // for (int i = 0; i < elemTagsMir.size(); i++)
+    // {
+    //     int numOfNodes = 0;
+    //     for (int j = 0; j < 3; j++)
+    //     {
+    //         if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == 0.0)
+    //             numOfNodes++;
+    //     }
 
-        if (numOfNodes == 2) // 2 nodes of the element must be on the inferior boundary
-        {
-            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-            {
-                file << elemTagsMir[i];
-                count++;
-                writtenElems.insert(elemTagsMir[i]);
+    //     if (numOfNodes == 2) // 2 nodes of the element must be on the inferior boundary
+    //     {
+    //         if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+    //         {
+    //             file << elemTagsMir[i];
+    //             count++;
+    //             writtenElems.insert(elemTagsMir[i]);
 
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
 
-    file << std::endl;
+    // file << std::endl;
+    // // ********************************************************************************************************************
+
+    // file << "*Nset, nset=superiorBoundaryNodes" << std::endl; // Nodes on the superior boundary
+
+    // writtenNodes.clear();
+
+    // // Identifying maximum y coordinate
+    // double maxY = 0.0;
+    // count = 0;
+    // for (int i = 0; i < nodeTagsMir.size(); i++)
+    // {
+    //     if (nodeCoords[3 * i + 1] >= maxY)
+    //         maxY = nodeCoords[3 * i + 1];
+    // }
+
+    // for (int i = 0; i < nodeTags.size(); i++)
+    // {
+    //     if (nodeCoords[3 * i + 1] == maxY) // If y = maxY
+    //     {
+    //         if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+    //         {
+    //             file << nodeTags[i];
+    //             writtenNodes.insert(nodeTags[i]);
+    //             count++;
+
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
+
+    // file << std::endl;
+
+    // // ********************************************************************************************************************
+    // file << "*Elset, superiorBoundaryElements" << std::endl; // Elements on the superior boundary
+
+    // count = 0;
+    // writtenElems.clear();
+
+    // for (int i = 0; i < elemTagsMir.size(); i++)
+    // {
+    //     int numOfNodes = 0;
+    //     for (int j = 0; j < 3; j++)
+    //     {
+    //         if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == maxY)
+    //             numOfNodes++;
+    //     }
+
+    //     if (numOfNodes == 2)
+    //     {
+    //         if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+    //         {
+    //             file << elemTagsMir[i];
+    //             count++;
+    //             writtenElems.insert(elemTagsMir[i]);
+
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
+    // file << std::endl;
+
+    // // ********************************************************************************************************************
+
+    // file << "*Nset, nset=rightBoundaryNodes" << std::endl; // Nodes on the right side boundary
+
+    // writtenNodes.clear();
+    // double maxX = 0.0;
+    // count = 0;
+    // for (int i = 0; i < nodeTagsMir.size(); i++)
+    // {
+    //     if (nodeCoords[3 * i] >= maxX)
+    //         maxX = nodeCoords[3 * i];
+    // }
+
+    // for (int i = 0; i < nodeTags.size(); i++)
+    // {
+    //     if (nodeCoords[3 * i] == maxX) // If x = maxX
+    //     {
+    //         if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+    //         {
+    //             file << nodeTags[i];
+    //             writtenNodes.insert(nodeTags[i]);
+    //             count++;
+
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
+
+    // file << std::endl;
+
+    // // ********************************************************************************************************************
+
+    // file << "*Elset, rightBoundaryElements" << std::endl; // Elements on the right side boundary
+
+    // count = 0;
+    // writtenElems.clear();
+
+    // for (int i = 0; i < elemTagsMir.size(); i++)
+    // {
+    //     int numOfNodes = 0;
+    //     for (int j = 0; j < 3; j++)
+    //     {
+    //         if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 3] == maxX)
+    //             numOfNodes++;
+    //     }
+
+    //     if (numOfNodes == 2)
+    //     {
+    //         if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+    //         {
+    //             file << elemTagsMir[i];
+    //             count++;
+    //             writtenElems.insert(elemTagsMir[i]);
+
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
+    // file << std::endl;
+
+    // // ********************************************************************************************************************
+    // file << "*Nset, nset=leftBoundaryNodes" << std::endl; // Nodes on the left side boundary
+
+    // writtenNodes.clear();
+    // double minX = 0.0;
+    // count = 0;
+
+    // for (int i = 0; i < nodeTagsMir.size(); i++)
+    // {
+    //     if (nodeCoords[3 * i] <= minX)
+    //         minX = nodeCoords[3 * i];
+    // }
+
+    // for (int i = 0; i < nodeTags.size(); i++)
+    // {
+    //     if (nodeCoords[3 * i] == minX) // If x = minX
+    //     {
+    //         if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+    //         {
+    //             file << nodeTags[i];
+    //             writtenNodes.insert(nodeTags[i]);
+    //             count++;
+
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
+
+    // file << std::endl;
+
+    // // ********************************************************************************************************************
+
+    // file << "*Elset, leftBoundaryElements" << std::endl; // Elements on the left side boundary
+
+    // count = 0;
+    // writtenElems.clear();
+
+    // for (int i = 0; i < elemTagsMir.size(); i++)
+    // {
+    //     int numOfNodes = 0;
+    //     for (int j = 0; j < 3; j++)
+    //     {
+    //         if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 3] == minX)
+    //             numOfNodes++;
+    //     }
+
+    //     if (numOfNodes == 2)
+    //     {
+    //         if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
+    //         {
+    //             file << elemTagsMir[i];
+    //             count++;
+    //             writtenElems.insert(elemTagsMir[i]);
+
+    //             if (count == nodesPerLine)
+    //             {
+    //                 file << std::endl;
+    //                 count = 0;
+    //             }
+    //             else
+    //                 file << " ";
+    //         }
+    //     }
+    // }
+    // file << std::endl;
+
     // ********************************************************************************************************************
-
-    file << "*Nset, nset=superiorBoundaryNodes" << std::endl; // Nodes on the superior boundary
-
-    writtenNodes.clear();
-
-    // Identifying maximum y coordinate
-    double maxY = 0.0;
-    count = 0;
-    for (int i = 0; i < nodeTagsMir.size(); i++)
-    {
-        if (nodeCoords[3 * i + 1] >= maxY)
-            maxY = nodeCoords[3 * i + 1];
-    }
-
-    for (int i = 0; i < nodeTags.size(); i++)
-    {
-        if (nodeCoords[3 * i + 1] == maxY) // If y = maxY
-        {
-            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
-            {
-                file << nodeTags[i];
-                writtenNodes.insert(nodeTags[i]);
-                count++;
-
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
-
-    file << std::endl;
-
-    // ********************************************************************************************************************
-    file << "*Elset, superiorBoundaryElements" << std::endl; // Elements on the superior boundary
-
-    count = 0;
-    writtenElems.clear();
-
-    for (int i = 0; i < elemTagsMir.size(); i++)
-    {
-        int numOfNodes = 0;
-        for (int j = 0; j < 3; j++)
-        {
-            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 2] == maxY)
-                numOfNodes++;
-        }
-
-        if (numOfNodes == 2)
-        {
-            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-            {
-                file << elemTagsMir[i];
-                count++;
-                writtenElems.insert(elemTagsMir[i]);
-
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
-    file << std::endl;
-
-    // ********************************************************************************************************************
-
-    file << "*Nset, nset=rightBoundaryNodes" << std::endl; // Nodes on the right side boundary
-
-    writtenNodes.clear();
-    double maxX = 0.0;
-    count = 0;
-    for (int i = 0; i < nodeTagsMir.size(); i++)
-    {
-        if (nodeCoords[3 * i] >= maxX)
-            maxX = nodeCoords[3 * i];
-    }
-
-    for (int i = 0; i < nodeTags.size(); i++)
-    {
-        if (nodeCoords[3 * i] == maxX) // If x = maxX
-        {
-            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
-            {
-                file << nodeTags[i];
-                writtenNodes.insert(nodeTags[i]);
-                count++;
-
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
-
-    file << std::endl;
-
-    // ********************************************************************************************************************
-
-    file << "*Elset, rightBoundaryElements" << std::endl; // Elements on the right side boundary
-
-    count = 0;
-    writtenElems.clear();
-
-    for (int i = 0; i < elemTagsMir.size(); i++)
-    {
-        int numOfNodes = 0;
-        for (int j = 0; j < 3; j++)
-        {
-            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 3] == maxX)
-                numOfNodes++;
-        }
-
-        if (numOfNodes == 2)
-        {
-            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-            {
-                file << elemTagsMir[i];
-                count++;
-                writtenElems.insert(elemTagsMir[i]);
-
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
-    file << std::endl;
-
-    // ********************************************************************************************************************
-    file << "*Nset, nset=leftBoundaryNodes" << std::endl; // Nodes on the left side boundary
-
-    writtenNodes.clear();
-    double minX = 0.0;
-    count = 0;
-
-    for (int i = 0; i < nodeTagsMir.size(); i++)
-    {
-        if (nodeCoords[3 * i] <= minX)
-            minX = nodeCoords[3 * i];
-    }
-
-    for (int i = 0; i < nodeTags.size(); i++)
-    {
-        if (nodeCoords[3 * i] == minX) // If x = minX
-        {
-            if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
-            {
-                file << nodeTags[i];
-                writtenNodes.insert(nodeTags[i]);
-                count++;
-
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
-
-    file << std::endl;
-
-    // ********************************************************************************************************************
-
-    file << "*Elset, leftBoundaryElements" << std::endl; // Elements on the left side boundary
-
-    count = 0;
-    writtenElems.clear();
-
-    for (int i = 0; i < elemTagsMir.size(); i++)
-    {
-        int numOfNodes = 0;
-        for (int j = 0; j < 3; j++)
-        {
-            if (nodeCoordsMir[3 * (elemNodeTagsMir[3 * i + j]) - 3] == minX)
-                numOfNodes++;
-        }
-
-        if (numOfNodes == 2)
-        {
-            if (writtenElems.find(elemTagsMir[i]) == writtenElems.end())
-            {
-                file << elemTagsMir[i];
-                count++;
-                writtenElems.insert(elemTagsMir[i]);
-
-                if (count == nodesPerLine)
-                {
-                    file << std::endl;
-                    count = 0;
-                }
-                else
-                    file << " ";
-            }
-        }
-    }
-    file << std::endl;
-
-    // ********************************************************************************************************************
-    std::string entityType;
-    std::string expectedName = "Ellipse";
-    std::vector<std::size_t> entityNodeTags;
-    std::vector<double> entityNodeCoords;
-    int nIncls = 0;
-
-    gmsh::model::getEntities(entities);
-    nodeTags.clear();
-    nodeCoords.clear();
-    writtenNodes.clear();
-    writtenElems.clear();
-
-    //    for (auto e : entities)
-    //    {
-    //        int entityDim = e.first, entityTag = e.second;
-    //        gmsh::model::getType(entityDim, entityTag, entityType);
-    //
-    //        if (entityType == expectedName)
-    //        {
-    //            nIncls++;
-    //
-    //            file << "*Nset inclusion_" << nIncls << std::endl;
-    //
-    //            gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, entityDim, entityTag, true, false);
-    //
-    //            for (int i = 0; i < nodeTags.size(); i++)
-    //            {
-    //                entityNodeTags.push_back(nodeTags[i]);
-    //                entityNodeCoords.push_back(nodeCoords[3 * i]);
-    //                entityNodeCoords.push_back(nodeCoords[3 * i + 1]);
-    //                entityNodeCoords.push_back(nodeCoords[3 * i + 2]);
-    //            }
-    //
-    //            for (int i = 0; i < entityNodeTags.size(); i++)
-    //            {
-    //                if (writtenNodes.find(entityNodeTags[i]) == writtenNodes.end())
-    //                {
-    //                    file << entityNodeTags[i] << std::endl;
-    //                    writtenNodes.insert(entityNodeTags[i]);
-    //                }
-    //            }
-    //        }
-    //    }
-    //
-    //    for (int i = 0; i < entityNodeTags.size(); i++)
-    //        std::cout << "Node " << entityNodeTags[i] << " -> " << entityNodeCoords[3 * i] << " " << entityNodeCoords[3 * i + 1] << " " << entityNodeCoords[3 * i + 2] << std::endl;
-    //    std::cout << "---------------------------" << std::endl;
 };
 
 void Geometry::InitializeGmshAPI(const bool &showInterface)
@@ -594,10 +623,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
 
     for (auto planeSurface : planeSurfaces)
     {
-        int pS = gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1});
-        gmsh::model::occ::synchronize();
-        gmshPlanesuf2D.push_back(pS);
-        gmsh::model::addPhysicalGroup(2, {gmshPlanesuf2D[0]}, -1, "Host"); // For some reason the index for host is 2
+        gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1});
         gmsh::model::occ::synchronize();
     }
 
@@ -608,7 +634,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
 
     for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
     {
-        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "Inclusion" + std::to_string(i + 1));
+        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "Inclusion_" + std::to_string(i + 1));
         gmsh::model::occ::synchronize();
 
         if (i == ellipseSurfaces.size() - 1)
