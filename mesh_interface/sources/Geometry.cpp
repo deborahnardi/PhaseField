@@ -233,7 +233,6 @@ void Geometry::writeMeshInfo()
             std::vector<std::pair<int, int>> dimTags = {{2, entity}};
             gmsh::model::getBoundary(dimTags, boundaries);
             std::cout << "BOUNDARY INFO: " << std::endl;
-            bool FLAG1 = false, FLAG2 = false, FLAG3 = false, FLAG4 = false;
 
             for (const auto &boundary : boundaries)
             {
@@ -269,7 +268,7 @@ void Geometry::writeMeshInfo()
 
                             gmsh::model::mesh::getNode(node, coords, paramCoords, dim, tag);
 
-                            if (coords[1] == 0.0 && FLAG1 == false) // If y = 0.0
+                            if (coords[0] == 0 && coords[1] == 0.0) // If (x = 0.0 and y = 0.0)
                             {
                                 file << "*Nset, nset=inferiorBoundaryNodes" << std::endl;
 
@@ -281,25 +280,9 @@ void Geometry::writeMeshInfo()
                                         writtenNodes.insert(node);
                                     }
                                 }
-                                FLAG1 = true;
                                 file << std::endl;
                             }
-                            else if (coords[1] == edgeLength && FLAG2 == false) // If y = edgeLenght
-                            {
-                                file << "*Nset, nset=superiorBoundaryNodes" << std::endl;
-
-                                for (const auto &node : nodeTags[i])
-                                {
-                                    if (writtenNodes.find(node) == writtenNodes.end())
-                                    {
-                                        file << node << " ";
-                                        writtenNodes.insert(node);
-                                    }
-                                }
-                                FLAG2 = true;
-                                file << std::endl;
-                            }
-                            else if (coords[0] == 0.0 && FLAG3 == false) // If x = 0.0
+                            else if (coords[0] == 0 && coords[1] == edgeLength) // If (x = 0.0 and y = edgeLength)
                             {
                                 file << "*Nset, nset=leftBoundaryNodes" << std::endl;
 
@@ -311,10 +294,9 @@ void Geometry::writeMeshInfo()
                                         writtenNodes.insert(node);
                                     }
                                 }
-                                FLAG3 = true;
                                 file << std::endl;
                             }
-                            else if (coords[0] == edgeLength && FLAG4 == false) // If x = edgeLength
+                            else if (coords[0] = edgeLength && coords[1] == 0.0) // If (x = edgeLength and y = 0.0)
                             {
                                 file << "*Nset, nset=rightBoundaryNodes" << std::endl;
 
@@ -326,7 +308,20 @@ void Geometry::writeMeshInfo()
                                         writtenNodes.insert(node);
                                     }
                                 }
-                                FLAG4 = true;
+                                file << std::endl;
+                            }
+                            else // If (x = edgeLength and y = edgeLength)
+                            {
+                                file << "*Nset, nset=superiorBoundaryNodes" << std::endl;
+
+                                for (const auto &node : nodeTags[i])
+                                {
+                                    if (writtenNodes.find(node) == writtenNodes.end())
+                                    {
+                                        file << node << " ";
+                                        writtenNodes.insert(node);
+                                    }
+                                }
                                 file << std::endl;
                             }
                             std::cout << std::endl;

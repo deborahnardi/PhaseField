@@ -426,8 +426,10 @@ rock_mesh1.mir
 272 14 120 3
 *Nset, nset=inferiorBoundaryNodes
 1 21 22 23 2 
-*Nset, nset=superiorBoundaryNodes
+*Nset, nset=leftBoundaryNodes
 3 24 25 26 1 
 *Nset, nset=rightBoundaryNodes
 2 27 28 29 4 
+*Nset, nset=superiorBoundaryNodes
+4 30 31 32 3 
 
