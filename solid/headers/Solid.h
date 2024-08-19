@@ -14,6 +14,7 @@ class Solid
 private:
     std::string name;
     std::string filename;
+    int numNodes, num2DElements;
     std::vector<Node *> nodes;
 
 public:

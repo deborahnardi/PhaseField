@@ -253,9 +253,9 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
   /home/acer/petsc/petsc-3.21.4/include/petscmat.h \
   /home/acer/petsc/petsc-3.21.4/include/petscvec.h \
   /home/acer/petsc/petsc-3.21.4/include/petscsys.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h \
   /home/acer/petsc/petsc-3.21.4/include/petscmacros.h \
   /home/acer/petsc/petsc-3.21.4/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -320,6 +320,7 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
   /home/acer/petsc/petsc-3.21.4/include/petscfvtypes.h \
   /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h \
   /home/acer/petsc/petsc-3.21.4/include/petscdraw.h \
+  /usr/include/setjmp.h \
   /usr/include/c++/11/set \
   /usr/include/c++/11/bits/stl_tree.h \
   /usr/include/c++/11/ext/aligned_buffer.h \
@@ -327,7 +328,7 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/11/bits/stl_set.h \
   /usr/include/c++/11/bits/stl_multiset.h \
   /usr/include/c++/11/bits/erase_if.h \
-  /usr/local/include/gmsh.h \
+  /home/acer/gmsh/gmsh/api/gmsh.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_uninitialized.h \
   /usr/include/c++/11/bits/stl_vector.h \
@@ -394,8 +395,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/c++/11/vector:
 
-/usr/local/include/gmsh.h:
-
 /usr/include/c++/11/bits/stl_multiset.h:
 
 /usr/include/c++/11/bits/stl_set.h:
@@ -403,6 +402,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/c++/11/bits/stl_tree.h:
 
 /usr/include/c++/11/set:
+
+/usr/include/setjmp.h:
 
 /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h:
 
@@ -574,6 +575,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
 
+/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h:
+
 /usr/include/hdf5/serial/H5FDmpio.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
@@ -597,6 +600,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++io.h:
+
+/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h:
 
 /usr/include/x86_64-linux-gnu/bits/local_lim.h:
 
@@ -623,8 +628,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
 ../main.cpp:
-
-/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h:
 
 /usr/include/hdf5/serial/H5Dpublic.h:
 
@@ -684,9 +687,9 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/c++/11/bits/locale_classes.h:
 
-/usr/include/hdf5/serial/H5FDdirect.h:
+/home/acer/gmsh/gmsh/api/gmsh.h:
 
-/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h:
+/usr/include/hdf5/serial/H5FDdirect.h:
 
 /usr/include/hdf5/serial/H5version.h:
 
@@ -749,8 +752,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h:
 
 /usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
-
-/usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
 
 /usr/include/c++/11/bits/stl_iterator_base_types.h:
 
@@ -874,6 +875,10 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /home/acer/petsc/petsc-3.21.4/include/petscmacros.h:
 
+/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+
+/usr/include/c++/11/cstdint:
+
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++allocator.h:
 
 /usr/include/c++/11/bits/localefwd.h:
@@ -889,6 +894,10 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
 
 /usr/include/c++/11/bits/ostream_insert.h:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
+
+/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h:
 
 /home/acer/mpich-install/include/mpi.h:
 
@@ -1065,9 +1074,3 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/c++/11/bits/streambuf.tcc:
 
 /home/acer/petsc/petsc-3.21.4/include/petscsys.h:
-
-/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
-
-/usr/include/c++/11/cstdint:
-
-/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h:

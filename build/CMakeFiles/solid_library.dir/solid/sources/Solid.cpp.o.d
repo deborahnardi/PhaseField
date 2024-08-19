@@ -99,9 +99,9 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: \
  /home/acer/petsc/petsc-3.21.4/include/petscmat.h \
  /home/acer/petsc/petsc-3.21.4/include/petscvec.h \
  /home/acer/petsc/petsc-3.21.4/include/petscsys.h \
- /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h \
- /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h \
- /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h \
+ /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h \
+ /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h \
+ /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h \
  /home/acer/petsc/petsc-3.21.4/include/petscmacros.h \
  /home/acer/petsc/petsc-3.21.4/include/petscversion.h \
  /usr/include/c++/11/cstddef \
@@ -264,7 +264,8 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: \
  /home/acer/petsc/petsc-3.21.4/include/petscpctypes.h \
  /home/acer/petsc/petsc-3.21.4/include/petscfvtypes.h \
  /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h \
- /home/acer/petsc/petsc-3.21.4/include/petscdraw.h /usr/include/metis.h \
+ /home/acer/petsc/petsc-3.21.4/include/petscdraw.h /usr/include/setjmp.h \
+ /usr/include/metis.h \
  /home/acer/cppCodes/PhaseField/solid/sources/../headers/Node.h \
  /usr/include/c++/11/iostream /usr/include/c++/11/vector \
  /usr/include/c++/11/bits/stl_uninitialized.h \

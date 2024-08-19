@@ -1,6 +1,6 @@
 *Heading
 rock_mesh1.mir
-*NODE
+*NODES
 146 250 250 0
 147 750 750 0
 148 500 500 0
@@ -151,7 +151,7 @@ rock_mesh1.mir
 144 841.516 364.931 0
 145 623.562 852.312 0
 *ELEMENTS
-*Element, type=CPS3
+*Element, type=CPS3, 2DElements_Only
 1 38 7 35
 2 34 6 39
 3 36 82 35

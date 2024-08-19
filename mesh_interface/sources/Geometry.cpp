@@ -175,7 +175,7 @@ void Geometry::writeMeshInfo()
 
     // ********************************************************************************************************************
 
-    file << "*NODE" << std::endl;
+    file << "*NODES" << std::endl;
     std::vector<int> nodeTagsMir;
     std::vector<double> nodeCoordsMir;
 
@@ -197,7 +197,7 @@ void Geometry::writeMeshInfo()
     // ********************************************************************************************************************
 
     file << "*ELEMENTS" << std::endl;
-    file << "*Element, type=CPS3" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
+    file << "*Element, type=CPS3, 2DElements_Only" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
 
     std::vector<int> elemTagsMir;     // Saving only the triangular elements
     std::vector<int> elemNodeTagsMir; // 3 nodes per element
@@ -411,7 +411,6 @@ void Geometry::writeMeshInfo()
                                 }
                                 file << std::endl;
                             }
-                            std::cout << std::endl;
                         }
                     }
                 }
@@ -420,8 +419,12 @@ void Geometry::writeMeshInfo()
         std::cout << "---------------------------" << std::endl;
     }
     // ********************************************************************************************************************
-
-    // WRITING INCLUSIONS INFORMATIONS
+    /*
+        WRITING INCLUSIONS INFORMATIONS
+        **ATTENTION**: Please note that the element numbering for the boundary elements is the one that comes from Gmsh.
+                       Differently, the 2D elements present in the .mir file are numbered from 1 to the number of elements,
+                        i.e, they are renumbered.
+    */
 
     count = 0;
 
@@ -601,7 +604,6 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::write(name + ".inp");
 
     getMeshInfo();
-
     writeMeshInfo();
 
     if (showInterface)

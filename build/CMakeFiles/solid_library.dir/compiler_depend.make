@@ -253,9 +253,9 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: ../mesh_inte
   /home/acer/petsc/petsc-3.21.4/include/petscmat.h \
   /home/acer/petsc/petsc-3.21.4/include/petscvec.h \
   /home/acer/petsc/petsc-3.21.4/include/petscsys.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h \
   /home/acer/petsc/petsc-3.21.4/include/petscmacros.h \
   /home/acer/petsc/petsc-3.21.4/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -320,6 +320,7 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: ../mesh_inte
   /home/acer/petsc/petsc-3.21.4/include/petscfvtypes.h \
   /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h \
   /home/acer/petsc/petsc-3.21.4/include/petscdraw.h \
+  /usr/include/setjmp.h \
   /usr/include/c++/11/set \
   /usr/include/c++/11/bits/stl_tree.h \
   /usr/include/c++/11/ext/aligned_buffer.h \
@@ -327,7 +328,7 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: ../mesh_inte
   /usr/include/c++/11/bits/stl_set.h \
   /usr/include/c++/11/bits/stl_multiset.h \
   /usr/include/c++/11/bits/erase_if.h \
-  /usr/local/include/gmsh.h \
+  /home/acer/gmsh/gmsh/api/gmsh.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_uninitialized.h \
   /usr/include/c++/11/bits/stl_vector.h \
@@ -2072,9 +2073,9 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
   /home/acer/petsc/petsc-3.21.4/include/petscmat.h \
   /home/acer/petsc/petsc-3.21.4/include/petscvec.h \
   /home/acer/petsc/petsc-3.21.4/include/petscsys.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h \
-  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h \
   /home/acer/petsc/petsc-3.21.4/include/petscmacros.h \
   /home/acer/petsc/petsc-3.21.4/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -2275,6 +2276,7 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
   /home/acer/petsc/petsc-3.21.4/include/petscfvtypes.h \
   /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h \
   /home/acer/petsc/petsc-3.21.4/include/petscdraw.h \
+  /usr/include/setjmp.h \
   /usr/include/metis.h \
   ../solid/headers/Node.h \
   /usr/include/c++/11/iostream \
@@ -2326,8 +2328,6 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 
 /usr/include/c++/11/vector:
 
-/usr/local/include/gmsh.h:
-
 /usr/include/c++/11/bits/stl_multiset.h:
 
 /usr/include/c++/11/bits/stl_set.h:
@@ -2335,6 +2335,8 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 /usr/include/c++/11/bits/stl_tree.h:
 
 /usr/include/c++/11/set:
+
+/usr/include/setjmp.h:
 
 /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h:
 
@@ -2508,6 +2510,8 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 
 /usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
 
+/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h:
+
 /usr/include/hdf5/serial/H5FDmpio.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/FILE.h:
@@ -2531,6 +2535,8 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++io.h:
+
+/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h:
 
 /usr/include/x86_64-linux-gnu/bits/local_lim.h:
 
@@ -2612,9 +2618,9 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
 
-/usr/include/hdf5/serial/H5FDdirect.h:
+/home/acer/gmsh/gmsh/api/gmsh.h:
 
-/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h:
+/usr/include/hdf5/serial/H5FDdirect.h:
 
 ../mesh_interface/sources/Line.cpp:
 
@@ -2689,8 +2695,6 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 /usr/lib/gcc/x86_64-linux-gnu/11/include/limits.h:
 
 /usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
-
-/usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
 
 /usr/include/c++/11/bits/stl_iterator_base_types.h:
 
@@ -2816,6 +2820,10 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 
 /home/acer/petsc/petsc-3.21.4/include/petscmacros.h:
 
+/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
+
+/usr/include/c++/11/cstdint:
+
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++allocator.h:
 
 /usr/include/c++/11/bits/localefwd.h:
@@ -2831,6 +2839,10 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 /usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
 
 /usr/include/c++/11/bits/ostream_insert.h:
+
+/usr/include/x86_64-linux-gnu/c++/11/bits/c++locale.h:
+
+/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h:
 
 /home/acer/mpich-install/include/mpi.h:
 
@@ -3009,11 +3021,3 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 /usr/include/c++/11/bits/streambuf.tcc:
 
 /home/acer/petsc/petsc-3.21.4/include/petscsys.h:
-
-/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h:
-
-/usr/include/x86_64-linux-gnu/bits/waitstatus.h:
-
-/usr/include/c++/11/cstdint:
-
-/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h:
