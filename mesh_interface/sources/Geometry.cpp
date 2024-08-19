@@ -221,8 +221,8 @@ void Geometry::writeMeshInfo()
 
     writtenNodes.clear();
 
-    int nodesPerLine = 8; // Number of nodes per line
-    int count = 0;
+    int nodesPerLine = 8, elemsPerLine = 8; // Number of nodes per line
+    int count = 0, countE = 0;
     std::set<int> writtenBoundaryTags;
 
     gmsh::vectorpair physicalGroups;
@@ -254,6 +254,7 @@ void Geometry::writeMeshInfo()
                         std::vector<int> elementTypes;
                         std::vector<std::vector<std::size_t>> elementTags, nodeTags;
                         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+
                         for (std::size_t i = 0; i < elementTypes.size(); i++)
                         {
                             writtenNodes.clear();
@@ -283,6 +284,22 @@ void Geometry::writeMeshInfo()
                                             file << " ";
                                     }
                                 }
+
+                                file << std::endl;
+                                file << "*Elset, elset=inferiorBoundaryElements" << std::endl;
+
+                                for (const auto &elem : elementTags[i])
+                                {
+                                    file << elem;
+                                    countE++;
+                                    if (count == elemsPerLine)
+                                    {
+                                        file << std::endl;
+                                        countE = 0;
+                                    }
+                                    else
+                                        file << " ";
+                                }
                                 file << std::endl;
                             }
                             else if (coords[0] == minX && coords[1] == maxY) // If (x = 0.0 and y = edgeLength)
@@ -303,6 +320,22 @@ void Geometry::writeMeshInfo()
                                         else
                                             file << " ";
                                     }
+                                }
+
+                                file << std::endl;
+                                file << "*Elset, elset=leftBoundaryElements" << std::endl;
+                                countE = 0;
+                                for (const auto &elem : elementTags[i])
+                                {
+                                    file << elem;
+                                    countE++;
+                                    if (count == elemsPerLine)
+                                    {
+                                        file << std::endl;
+                                        countE = 0;
+                                    }
+                                    else
+                                        file << " ";
                                 }
                                 file << std::endl;
                             }
@@ -326,6 +359,21 @@ void Geometry::writeMeshInfo()
                                     }
                                 }
                                 file << std::endl;
+                                file << "*Elset, elset=rightBoundaryElements" << std::endl;
+                                countE = 0;
+                                for (const auto &elem : elementTags[i])
+                                {
+                                    file << elem;
+                                    countE++;
+                                    if (count == elemsPerLine)
+                                    {
+                                        file << std::endl;
+                                        countE = 0;
+                                    }
+                                    else
+                                        file << " ";
+                                }
+                                file << std::endl;
                             }
                             else // If (x = edgeLength and y = edgeLength)
                             {
@@ -345,6 +393,21 @@ void Geometry::writeMeshInfo()
                                         else
                                             file << " ";
                                     }
+                                }
+                                file << std::endl;
+                                file << "*Elset, elset=superiorBoundaryElements" << std::endl;
+                                countE = 0;
+                                for (const auto &elem : elementTags[i])
+                                {
+                                    file << elem;
+                                    countE++;
+                                    if (count == elemsPerLine)
+                                    {
+                                        file << std::endl;
+                                        countE = 0;
+                                    }
+                                    else
+                                        file << " ";
                                 }
                                 file << std::endl;
                             }
@@ -407,6 +470,32 @@ void Geometry::writeMeshInfo()
                                 else
                                     file << " ";
                             }
+                        }
+                    }
+                }
+                file << std::endl;
+                countE = 0;
+                file << "*Elset, elset=BoundaryElements_" << groupName << std::endl;
+
+                for (const auto boundary : boundaries)
+                {
+                    std::vector<int> elementTypes;
+                    std::vector<std::vector<std::size_t>> elementTags, nodeTags;
+                    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+
+                    for (std::size_t i = 0; i < elementTypes.size(); i++)
+                    {
+                        for (const auto &elem : elementTags[i])
+                        {
+                            file << elem;
+                            countE++;
+                            if (countE == elemsPerLine)
+                            {
+                                file << std::endl;
+                                countE = 0;
+                            }
+                            else
+                                file << " ";
                         }
                     }
                 }

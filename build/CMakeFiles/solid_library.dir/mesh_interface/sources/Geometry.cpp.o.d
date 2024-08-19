@@ -277,7 +277,7 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: \
  /usr/include/c++/11/bits/node_handle.h \
  /usr/include/c++/11/bits/stl_set.h \
  /usr/include/c++/11/bits/stl_multiset.h \
- /usr/include/c++/11/bits/erase_if.h /home/acer/gmsh/gmsh/api/gmsh.h \
+ /usr/include/c++/11/bits/erase_if.h /usr/local/include/gmsh.h \
  /usr/include/c++/11/vector /usr/include/c++/11/bits/stl_uninitialized.h \
  /usr/include/c++/11/bits/stl_vector.h \
  /usr/include/c++/11/bits/stl_bvector.h \

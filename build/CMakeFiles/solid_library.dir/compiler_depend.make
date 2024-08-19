@@ -327,7 +327,7 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: ../mesh_inte
   /usr/include/c++/11/bits/stl_set.h \
   /usr/include/c++/11/bits/stl_multiset.h \
   /usr/include/c++/11/bits/erase_if.h \
-  /home/acer/gmsh/gmsh/api/gmsh.h \
+  /usr/local/include/gmsh.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_uninitialized.h \
   /usr/include/c++/11/bits/stl_vector.h \
@@ -2326,6 +2326,8 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 
 /usr/include/c++/11/vector:
 
+/usr/local/include/gmsh.h:
+
 /usr/include/c++/11/bits/stl_multiset.h:
 
 /usr/include/c++/11/bits/stl_set.h:
@@ -2609,8 +2611,6 @@ CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o: ../solid/sources/Solid.c
 /usr/include/hdf5/serial/H5Opublic.h:
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
-
-/home/acer/gmsh/gmsh/api/gmsh.h:
 
 /usr/include/hdf5/serial/H5FDdirect.h:
 

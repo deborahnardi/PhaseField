@@ -216,7 +216,7 @@ Eigen3_DIR:PATH=/usr/share/eigen3/cmake
 GMSH_LIB:FILEPATH=/usr/local/lib/libgmsh.so.4.14
 
 //Gmsh build directory.
-GMSH_PATH:STRING=/home/acer/gmsh/gmsh
+GMSH_PATH:STRING=Release
 
 //HDF5 C Wrapper compiler.  Used only to detect HDF5 compile flags.
 HDF5_C_COMPILER_EXECUTABLE:FILEPATH=/usr/bin/h5cc
@@ -369,7 +369,7 @@ PETSC_EXECUTABLE_RUNS:BOOL=YES
 PETSC_INCLUDES:STRING=/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include
 
 //Path to a file.
-PETSC_INCLUDE_CONF:PATH=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include
+PETSC_INCLUDE_CONF:PATH=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include
 
 //Path to a file.
 PETSC_INCLUDE_DIR:PATH=/home/acer/petsc/petsc-3.21.4/include
@@ -645,8 +645,18 @@ MULTIPASS_TEST_2_petsc_works_allincludes:INTERNAL=1
 MULTIPASS_TEST_2_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
 //Result of TRY_RUN
 MULTIPASS_TEST_2_petsc_works_allincludes_EXITCODE:INTERNAL=0
+//Test MULTIPASS_TEST_3_petsc_works_minimal
+MULTIPASS_TEST_3_petsc_works_minimal:INTERNAL=
+//Result of TRY_COMPILE
+MULTIPASS_TEST_3_petsc_works_minimal_COMPILED:INTERNAL=FALSE
+//Test MULTIPASS_TEST_4_petsc_works_allincludes
+MULTIPASS_TEST_4_petsc_works_allincludes:INTERNAL=1
+//Result of TRY_COMPILE
+MULTIPASS_TEST_4_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
+//Result of TRY_RUN
+MULTIPASS_TEST_4_petsc_works_allincludes_EXITCODE:INTERNAL=0
 //Unique test ID
-MULTIPASS_TEST_COUNT:INTERNAL=2
+MULTIPASS_TEST_COUNT:INTERNAL=4
 //ADVANCED property for variable: M_LIBRARY
 M_LIBRARY-ADVANCED:INTERNAL=1
 //Stored state for PETSc.
@@ -655,6 +665,8 @@ PACKAGE_MULTIPASS_PETSC_ARCH:INTERNAL=arch-linux2-c-debug
 PACKAGE_MULTIPASS_PETSC_DIR:INTERNAL=/home/acer/petsc/petsc-3.21.4
 //Private
 PACKAGE_MULTIPASS__CALLED:INTERNAL=YES
+//MODIFIED property for variable: PETSC_ARCH
+PETSC_ARCH-MODIFIED:INTERNAL=ON
 //ADVANCED property for variable: PETSC_COMPILER
 PETSC_COMPILER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PETSC_DEFINITIONS
@@ -671,8 +683,12 @@ PETSC_INCLUDE_CONF-ADVANCED:INTERNAL=1
 PETSC_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PETSC_LIBRARIES
 PETSC_LIBRARIES-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PETSC_LIBRARY_SINGLE
+PETSC_LIBRARY_SINGLE-ADVANCED:INTERNAL=1
 //Cleared
 PETSC_LIBRARY_SINGLE:INTERNAL=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so
+//ADVANCED property for variable: PETSC_LIBRARY_VEC
+PETSC_LIBRARY_VEC-ADVANCED:INTERNAL=1
 //Cleared
 PETSC_LIBRARY_VEC:INTERNAL=NOTFOUND
 //ADVANCED property for variable: PETSC_MPIEXEC

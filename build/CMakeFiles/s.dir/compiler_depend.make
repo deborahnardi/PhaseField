@@ -327,7 +327,7 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/11/bits/stl_set.h \
   /usr/include/c++/11/bits/stl_multiset.h \
   /usr/include/c++/11/bits/erase_if.h \
-  /home/acer/gmsh/gmsh/api/gmsh.h \
+  /usr/local/include/gmsh.h \
   /usr/include/c++/11/vector \
   /usr/include/c++/11/bits/stl_uninitialized.h \
   /usr/include/c++/11/bits/stl_vector.h \
@@ -393,6 +393,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/c++/11/bits/stl_uninitialized.h:
 
 /usr/include/c++/11/vector:
+
+/usr/local/include/gmsh.h:
 
 /usr/include/c++/11/bits/stl_multiset.h:
 
@@ -681,8 +683,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 ../mesh_interface/headers/Geometry.h:
 
 /usr/include/c++/11/bits/locale_classes.h:
-
-/home/acer/gmsh/gmsh/api/gmsh.h:
 
 /usr/include/hdf5/serial/H5FDdirect.h:
 
