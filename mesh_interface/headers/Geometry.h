@@ -27,7 +27,7 @@ private:
     int dim;
     int elpPoints = 5;
     double edgeLength, meshSizeFactor = 1.0;
-    double xc, yc, xo, yo, xm, ym, xa, ya, xb, yb;
+    double xc, yc, xo, yo, xm, ym, xa, ya, xb, yb, maxX = 0, minX = 0, maxY = 0, minY = 0;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
     double **ellipseCoordinates;
     std::string name;
@@ -55,6 +55,10 @@ public:
     MeshAlgorithm getAlgorithm() const { return algorithm; }
     int getDimention() const { return dim; }
     double getMeshSizeFactor() const { return meshSizeFactor; }
+    double getMaxX() const { return maxX; }
+    double getMinX() const { return minX; }
+    double getMaxY() const { return maxY; }
+    double getMinY() const { return minY; }
 
     void setDimention(const int &_dim) { dim = _dim; }
     void setEdgeLength(const double &_edgeLength) { edgeLength = _edgeLength; }
