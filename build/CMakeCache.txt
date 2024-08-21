@@ -343,7 +343,7 @@ MPI_mpicxx_LIBRARY:FILEPATH=/home/acer/mpich-install/lib/libmpicxx.so
 M_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libm.so
 
 //PETSc build architecture
-PETSC_ARCH:STRING=arch-linux2-c-opt
+PETSC_ARCH:STRING=arch-linux2-c-debug
 
 //PETSc compiler
 PETSC_COMPILER:FILEPATH=/home/acer/mpich-install/bin/mpicc
@@ -365,7 +365,7 @@ PETSC_DIR:PATH=/home/acer/petsc/petsc-3.21.4
 PETSC_EXECUTABLE_RUNS:BOOL=YES
 
 //PETSc include path
-PETSC_INCLUDES:STRING=/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/suitesparse;/home/acer/mpich-install/include
+PETSC_INCLUDES:STRING=/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include
 
 //Path to a file.
 PETSC_INCLUDE_CONF:PATH=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include
@@ -374,7 +374,7 @@ PETSC_INCLUDE_CONF:PATH=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include
 PETSC_INCLUDE_DIR:PATH=/home/acer/petsc/petsc-3.21.4/include
 
 //PETSc libraries
-PETSC_LIBRARIES:STRING=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so
+PETSC_LIBRARIES:STRING=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so
 
 //Executable for running PETSc MPI programs
 PETSC_MPIEXEC:FILEPATH=/home/acer/mpich-install/bin/mpiexec
@@ -555,7 +555,7 @@ FIND_PACKAGE_MESSAGE_DETAILS_MPI_C:INTERNAL=[/home/acer/mpich-install/lib/libmpi
 //Details about finding MPI_CXX
 FIND_PACKAGE_MESSAGE_DETAILS_MPI_CXX:INTERNAL=[/home/acer/mpich-install/lib/libmpicxx.so][/home/acer/mpich-install/lib/libmpi.so][mpicxx;mpi][/home/acer/mpich-install/include][TRUE][v3.1()]
 //Details about finding PETSc
-FIND_PACKAGE_MESSAGE_DETAILS_PETSc:INTERNAL=[/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/suitesparse;/home/acer/mpich-install/include][/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so][YES][v3.21.4()]
+FIND_PACKAGE_MESSAGE_DETAILS_PETSc:INTERNAL=[/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include][/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so][YES][v3.21.4()]
 //MODIFIED property for variable: GMSH_PATH
 GMSH_PATH-MODIFIED:INTERNAL=ON
 //ADVANCED property for variable: HDF5_C_COMPILER_EXECUTABLE
@@ -642,16 +642,28 @@ MULTIPASS_TEST_2_petsc_works_allincludes:INTERNAL=1
 MULTIPASS_TEST_2_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
 //Result of TRY_RUN
 MULTIPASS_TEST_2_petsc_works_allincludes_EXITCODE:INTERNAL=0
+//Test MULTIPASS_TEST_3_petsc_works_minimal
+MULTIPASS_TEST_3_petsc_works_minimal:INTERNAL=
+//Result of TRY_COMPILE
+MULTIPASS_TEST_3_petsc_works_minimal_COMPILED:INTERNAL=FALSE
+//Test MULTIPASS_TEST_4_petsc_works_allincludes
+MULTIPASS_TEST_4_petsc_works_allincludes:INTERNAL=1
+//Result of TRY_COMPILE
+MULTIPASS_TEST_4_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
+//Result of TRY_RUN
+MULTIPASS_TEST_4_petsc_works_allincludes_EXITCODE:INTERNAL=0
 //Unique test ID
-MULTIPASS_TEST_COUNT:INTERNAL=2
+MULTIPASS_TEST_COUNT:INTERNAL=4
 //ADVANCED property for variable: M_LIBRARY
 M_LIBRARY-ADVANCED:INTERNAL=1
 //Stored state for PETSc.
-PACKAGE_MULTIPASS_PETSC_ARCH:INTERNAL=arch-linux2-c-opt
+PACKAGE_MULTIPASS_PETSC_ARCH:INTERNAL=arch-linux2-c-debug
 //Stored state for PETSc.
 PACKAGE_MULTIPASS_PETSC_DIR:INTERNAL=/home/acer/petsc/petsc-3.21.4
 //Private
 PACKAGE_MULTIPASS__CALLED:INTERNAL=YES
+//MODIFIED property for variable: PETSC_ARCH
+PETSC_ARCH-MODIFIED:INTERNAL=ON
 //ADVANCED property for variable: PETSC_COMPILER
 PETSC_COMPILER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PETSC_DEFINITIONS
@@ -668,8 +680,12 @@ PETSC_INCLUDE_CONF-ADVANCED:INTERNAL=1
 PETSC_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PETSC_LIBRARIES
 PETSC_LIBRARIES-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PETSC_LIBRARY_SINGLE
+PETSC_LIBRARY_SINGLE-ADVANCED:INTERNAL=1
 //Cleared
-PETSC_LIBRARY_SINGLE:INTERNAL=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so
+PETSC_LIBRARY_SINGLE:INTERNAL=/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so
+//ADVANCED property for variable: PETSC_LIBRARY_VEC
+PETSC_LIBRARY_VEC-ADVANCED:INTERNAL=1
 //Cleared
 PETSC_LIBRARY_VEC:INTERNAL=NOTFOUND
 //ADVANCED property for variable: PETSC_MPIEXEC

@@ -101,11 +101,11 @@
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include"
+					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include"
 				},
 				{
 					"backtrace" : 5,
-					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/suitesparse"
+					"path" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse"
 				},
 				{
 					"backtrace" : 6,
@@ -210,11 +210,11 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-L/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib",
+				"fragment" : "-L/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib",
 				"role" : "libraryPath"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu/hdf5/serial:/home/acer/mpich-install/lib",
+				"fragment" : "-Wl,-rpath,/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu/hdf5/serial:/home/acer/mpich-install/lib",
 				"role" : "libraries"
 			},
 			{
@@ -234,7 +234,7 @@
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so",
+				"fragment" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so",
 				"role" : "libraries"
 			},
 			{

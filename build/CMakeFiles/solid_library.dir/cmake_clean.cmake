@@ -15,6 +15,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/solid_library.dir/mesh_interface/sources/Point.cpp.o.d"
   "CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.o"
   "CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.o.d"
+  "CMakeFiles/solid_library.dir/solid/sources/Element.cpp.o"
+  "CMakeFiles/solid_library.dir/solid/sources/Element.cpp.o.d"
   "CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o"
   "CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o.d"
   "CMakeFiles/solid_library.dir/solid/sources/Solid.cpp.o"

@@ -209,9 +209,9 @@ CMakeFiles/s.dir/main.cpp.o: /home/acer/cppCodes/PhaseField/main.cpp \
  /home/acer/petsc/petsc-3.21.4/include/petscmat.h \
  /home/acer/petsc/petsc-3.21.4/include/petscvec.h \
  /home/acer/petsc/petsc-3.21.4/include/petscsys.h \
- /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf.h \
- /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscconf_poison.h \
- /home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/petscfix.h \
+ /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf.h \
+ /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscconf_poison.h \
+ /home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/petscfix.h \
  /home/acer/petsc/petsc-3.21.4/include/petscmacros.h \
  /home/acer/petsc/petsc-3.21.4/include/petscversion.h \
  /usr/include/c++/11/cstddef \
@@ -270,7 +270,7 @@ CMakeFiles/s.dir/main.cpp.o: /home/acer/cppCodes/PhaseField/main.cpp \
  /home/acer/petsc/petsc-3.21.4/include/petscpctypes.h \
  /home/acer/petsc/petsc-3.21.4/include/petscfvtypes.h \
  /home/acer/petsc/petsc-3.21.4/include/petscdmdatypes.h \
- /home/acer/petsc/petsc-3.21.4/include/petscdraw.h /usr/include/setjmp.h \
+ /home/acer/petsc/petsc-3.21.4/include/petscdraw.h \
  /usr/include/c++/11/set /usr/include/c++/11/bits/stl_tree.h \
  /usr/include/c++/11/ext/aligned_buffer.h \
  /usr/include/c++/11/bits/node_handle.h \
@@ -299,4 +299,5 @@ CMakeFiles/s.dir/main.cpp.o: /home/acer/cppCodes/PhaseField/main.cpp \
  /home/acer/cppCodes/PhaseField/mesh_interface/headers/../../enumclass.hpp \
  /home/acer/cppCodes/PhaseField/solid/headers/Solid.h \
  /usr/include/metis.h /home/acer/cppCodes/PhaseField/solid/headers/Node.h \
+ /home/acer/cppCodes/PhaseField/solid/headers/Element.h \
  /home/acer/cppCodes/PhaseField/examples/Ex01.hpp

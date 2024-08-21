@@ -128,6 +128,35 @@
 			"path" : "cmake-modules/FindPackageMultipass.cmake"
 		},
 		{
+			"path" : "cmake-modules/ResolveCompilerPaths.cmake"
+		},
+		{
+			"path" : "cmake-modules/CorrectWindowsPaths.cmake"
+		},
+		{
+			"path" : "cmake-modules/CorrectWindowsPaths.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake-3.22/Modules/CheckCSourceRuns.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake-3.22/Modules/Internal/CheckSourceRuns.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake-3.22/Modules/CheckCSourceRuns.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/usr/share/cmake-3.22/Modules/CheckCSourceRuns.cmake"
+		},
+		{
 			"path" : "cmake-modules/FindPackageHandleStandardArgs.cmake"
 		},
 		{

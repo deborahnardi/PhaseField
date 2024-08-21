@@ -176,8 +176,7 @@ void Geometry::writeMeshInfo()
     // ********************************************************************************************************************
 
     file << "*NODES" << std::endl;
-    std::vector<int> nodeTagsMir;
-    std::vector<double> nodeCoordsMir;
+    std::vector<std::tuple<int, double, double, double>> auxPrintNodes;
 
     for (int i = 0; i < nodeTags.size(); i++)
     {
@@ -186,34 +185,31 @@ void Geometry::writeMeshInfo()
 
         if (writtenNodes.find(nodeTags[i]) == writtenNodes.end()) // If the node is not written yet
         {
-            file << nodeTags[i] << " " << nodeCoords[3 * i] << " " << nodeCoords[3 * i + 1] << " " << nodeCoords[3 * i + 2] << std::endl;
-            nodeTagsMir.push_back(nodeTags[i]);
-            nodeCoordsMir.push_back(nodeCoords[3 * i]);
-            nodeCoordsMir.push_back(nodeCoords[3 * i + 1]);
-            nodeCoordsMir.push_back(nodeCoords[3 * i + 2]);
+            auxPrintNodes.push_back(std::make_tuple(nodeTags[i], nodeCoords[3 * i], nodeCoords[3 * i + 1], nodeCoords[3 * i + 2]));
+            // file << nodeTags[i] << " " << nodeCoords[3 * i] << " " << nodeCoords[3 * i + 1] << " " << nodeCoords[3 * i + 2] << std::endl;
             writtenNodes.insert(nodeTags[i]);
         }
     }
+
+    std::sort(auxPrintNodes.begin(), auxPrintNodes.end(), [](const std::tuple<int, double, double, double> &a, const std::tuple<int, double, double, double> &b)
+              { return std::get<0>(a) < std::get<0>(b); }); // Reordering the nodes by their tags, from the smallest to the largest
+                                                            // get<0>(a) gets the first element of the tuple a; get<0>(b) gets the first element of the tuple b
+
+    for (int i = 0; i < auxPrintNodes.size(); i++)
+        file << std::get<0>(auxPrintNodes[i]) << " " << std::get<1>(auxPrintNodes[i]) << " " << std::get<2>(auxPrintNodes[i]) << " " << std::get<3>(auxPrintNodes[i]) << std::endl;
+
+    auxPrintNodes.clear();
     // ********************************************************************************************************************
 
     file << "*ELEMENTS" << std::endl;
     file << "*Element, type=CPS3, 2DElements_Only" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
-
-    std::vector<int> elemTagsMir;     // Saving only the triangular elements
-    std::vector<int> elemNodeTagsMir; // 3 nodes per element
 
     for (int i = 0; i < elemTypes.size(); i++)
     {
         if (elemTypes[i] == 2)
         {
             for (int j = 0; j < elemTags[i].size(); j++)
-            {
                 file << j + 1 << " " << elemNodeTags[i][3 * j] << " " << elemNodeTags[i][3 * j + 1] << " " << elemNodeTags[i][3 * j + 2] << std::endl;
-                elemTagsMir.push_back(j + 1);
-                elemNodeTagsMir.push_back(elemNodeTags[i][3 * j]);
-                elemNodeTagsMir.push_back(elemNodeTags[i][3 * j + 1]);
-                elemNodeTagsMir.push_back(elemNodeTags[i][3 * j + 2]);
-            }
         }
     }
 

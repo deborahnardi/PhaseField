@@ -358,6 +358,30 @@ mesh_interface/sources/Surface.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/mesh_interface/sources/Surface.cpp.s
 .PHONY : mesh_interface/sources/Surface.cpp.s
 
+solid/sources/Element.o: solid/sources/Element.cpp.o
+.PHONY : solid/sources/Element.o
+
+# target to build an object file
+solid/sources/Element.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Element.cpp.o
+.PHONY : solid/sources/Element.cpp.o
+
+solid/sources/Element.i: solid/sources/Element.cpp.i
+.PHONY : solid/sources/Element.i
+
+# target to preprocess a source file
+solid/sources/Element.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Element.cpp.i
+.PHONY : solid/sources/Element.cpp.i
+
+solid/sources/Element.s: solid/sources/Element.cpp.s
+.PHONY : solid/sources/Element.s
+
+# target to generate assembly for a file
+solid/sources/Element.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/solid_library.dir/build.make CMakeFiles/solid_library.dir/solid/sources/Element.cpp.s
+.PHONY : solid/sources/Element.cpp.s
+
 solid/sources/Node.o: solid/sources/Node.cpp.o
 .PHONY : solid/sources/Node.o
 
@@ -443,6 +467,9 @@ help:
 	@echo "... mesh_interface/sources/Surface.o"
 	@echo "... mesh_interface/sources/Surface.i"
 	@echo "... mesh_interface/sources/Surface.s"
+	@echo "... solid/sources/Element.o"
+	@echo "... solid/sources/Element.i"
+	@echo "... solid/sources/Element.s"
 	@echo "... solid/sources/Node.o"
 	@echo "... solid/sources/Node.i"
 	@echo "... solid/sources/Node.s"

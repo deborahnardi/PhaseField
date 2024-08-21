@@ -23,3 +23,14 @@ public:
     void setElemConnectivity(const std::vector<Node *> &_elemConnectivity) { elemConnectivity = _elemConnectivity; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 };
+
+class Solid2D : public Element
+{
+private:
+    double area;
+
+public:
+    Solid2D();
+    Solid2D(const int &index, const std::vector<Node *> &elemConnectivity);
+    ~Solid2D();
+};

@@ -1215,7 +1215,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "[/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/suitesparse;/home/acer/mpich-install/include][/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so][YES][v3.21.4()]"
+			"value" : "[/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include][/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so][YES][v3.21.4()]"
 		},
 		{
 			"name" : "GMSH_LIB",
@@ -1974,6 +1974,66 @@
 			"value" : "0"
 		},
 		{
+			"name" : "MULTIPASS_TEST_3_petsc_works_minimal",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Test MULTIPASS_TEST_3_petsc_works_minimal"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : ""
+		},
+		{
+			"name" : "MULTIPASS_TEST_3_petsc_works_minimal_COMPILED",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Result of TRY_COMPILE"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "FALSE"
+		},
+		{
+			"name" : "MULTIPASS_TEST_4_petsc_works_allincludes",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Test MULTIPASS_TEST_4_petsc_works_allincludes"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "1"
+		},
+		{
+			"name" : "MULTIPASS_TEST_4_petsc_works_allincludes_COMPILED",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Result of TRY_COMPILE"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "TRUE"
+		},
+		{
+			"name" : "MULTIPASS_TEST_4_petsc_works_allincludes_EXITCODE",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Result of TRY_RUN"
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "0"
+		},
+		{
 			"name" : "MULTIPASS_TEST_COUNT",
 			"properties" : 
 			[
@@ -1983,7 +2043,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "2"
+			"value" : "4"
 		},
 		{
 			"name" : "M_LIBRARY",
@@ -2011,7 +2071,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "arch-linux2-c-opt"
+			"value" : "arch-linux2-c-debug"
 		},
 		{
 			"name" : "PACKAGE_MULTIPASS_PETSC_DIR",
@@ -2044,10 +2104,14 @@
 				{
 					"name" : "HELPSTRING",
 					"value" : "PETSc build architecture"
+				},
+				{
+					"name" : "MODIFIED",
+					"value" : "ON"
 				}
 			],
 			"type" : "STRING",
-			"value" : "arch-linux2-c-opt"
+			"value" : "arch-linux2-c-debug"
 		},
 		{
 			"name" : "PETSC_COMPILER",
@@ -2139,7 +2203,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/include/suitesparse;/home/acer/mpich-install/include"
+			"value" : "/home/acer/petsc/petsc-3.21.4/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include;/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/include/suitesparse;/home/acer/mpich-install/include"
 		},
 		{
 			"name" : "PETSC_INCLUDE_CONF",
@@ -2187,24 +2251,32 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so"
+			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so"
 		},
 		{
 			"name" : "PETSC_LIBRARY_SINGLE",
 			"properties" : 
 			[
 				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
 					"name" : "HELPSTRING",
 					"value" : "Cleared"
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-opt/lib/libpetsc.so"
+			"value" : "/home/acer/petsc/petsc-3.21.4/arch-linux2-c-debug/lib/libpetsc.so"
 		},
 		{
 			"name" : "PETSC_LIBRARY_VEC",
 			"properties" : 
 			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
 				{
 					"name" : "HELPSTRING",
 					"value" : "Cleared"

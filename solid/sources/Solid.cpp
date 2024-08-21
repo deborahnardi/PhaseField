@@ -30,24 +30,22 @@ void Solid::readGeometry(const std::string &_filename)
     }
 
     numNodes = nodes.size();
-    std::cout << "Total number of nodes: " << numNodes << std::endl;
 
     while (std::getline(file, line))
     {
         // != std::string::nos -> It is used to indicate that a search or operation has failed. For example, if you use the find function to search for a substring and the substring is not found, find returns std::string::npos to indicate this failure.
         if (line.find("*Element") != std::string::npos) // If the line contains the string "*Element"
         {
+            std::cout << "The code has found the string: " << line << std::endl;
             break;
         }
-        std::cout << line << std::endl;
     }
-
-    std::getline(file, line);
 
     while (std::getline(file, line))
     {
         if (line.find("*") != std::string::npos)
         {
+            std::cout << "The code has found the string: " << line << std::endl;
             break;
         }
 
@@ -55,7 +53,14 @@ void Solid::readGeometry(const std::string &_filename)
         std::vector<int> elemConnectivity(3);
         std::istringstream iss(line);
         iss >> index >> elemConnectivity[0] >> elemConnectivity[1] >> elemConnectivity[2];
+
+        std::vector<Node *> elemNodes;
+        for (int i = 0; i < 3; i++)
+            elemNodes.push_back(nodes[elemConnectivity[i] - 1]);
+
+        elements.push_back(new Solid2D(index - 1, elemNodes));
     }
 
+    std::cout << "There are: " << elements.size() << " elements" << std::endl;
     file.close();
 }
