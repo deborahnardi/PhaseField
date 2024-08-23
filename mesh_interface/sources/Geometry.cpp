@@ -201,7 +201,6 @@ void Geometry::writeMeshInfo()
     auxPrintNodes.clear();
     // ********************************************************************************************************************
 
-    file << "*ELEMENTS" << std::endl;
     file << "*Element, type=CPS3, 2DElements_Only" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
 
     for (int i = 0; i < elemTypes.size(); i++)
@@ -263,7 +262,7 @@ void Geometry::writeMeshInfo()
 
                             if (coords[0] == minX && coords[1] == minY) // If (x = 0.0 and y = 0.0)
                             {
-                                file << "*Nset, nset=inferiorBoundaryNodes" << std::endl;
+                                file << "*Nset, nset=bottom" << std::endl;
                                 for (const auto &node : nodeTags[i])
                                 {
                                     if (writtenNodes.find(node) == writtenNodes.end())
@@ -282,25 +281,27 @@ void Geometry::writeMeshInfo()
                                 }
 
                                 file << std::endl;
-                                file << "*Elset, elset=inferiorBoundaryElements" << std::endl;
+                                file << "*Elset, elset=bottom" << std::endl; // Print tag element and its connectivity
 
                                 for (const auto &elem : elementTags[i])
                                 {
-                                    file << elem;
-                                    countE++;
-                                    if (count == elemsPerLine)
+                                    file << elem << " ";
+                                    std::size_t elementTag = elem;
+                                    int elementType, dim, tag;
+                                    std::vector<std::size_t> elemNodeTags;
+                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
+
+                                    for (int i = 0; i < elemNodeTags.size(); i++)
                                     {
-                                        file << std::endl;
-                                        countE = 0;
+                                        file << elemNodeTags[i] << " ";
                                     }
-                                    else
-                                        file << " ";
+
+                                    file << std::endl;
                                 }
-                                file << std::endl;
                             }
                             else if (coords[0] == minX && coords[1] == maxY) // If (x = 0.0 and y = edgeLength)
                             {
-                                file << "*Nset, nset=leftBoundaryNodes" << std::endl;
+                                file << "*Nset, nset=left" << std::endl;
                                 for (const auto &node : nodeTags[i])
                                 {
                                     if (writtenNodes.find(node) == writtenNodes.end())
@@ -319,25 +320,27 @@ void Geometry::writeMeshInfo()
                                 }
 
                                 file << std::endl;
-                                file << "*Elset, elset=leftBoundaryElements" << std::endl;
+                                file << "*Elset, elset=left" << std::endl;
                                 countE = 0;
                                 for (const auto &elem : elementTags[i])
                                 {
-                                    file << elem;
-                                    countE++;
-                                    if (count == elemsPerLine)
+                                    file << elem << " ";
+                                    std::size_t elementTag = elem;
+                                    int elementType, dim, tag;
+                                    std::vector<std::size_t> elemNodeTags;
+                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
+
+                                    for (int i = 0; i < elemNodeTags.size(); i++)
                                     {
-                                        file << std::endl;
-                                        countE = 0;
+                                        file << elemNodeTags[i] << " ";
                                     }
-                                    else
-                                        file << " ";
+
+                                    file << std::endl;
                                 }
-                                file << std::endl;
                             }
                             else if (coords[0] = maxX && coords[1] == minY) // If (x = edgeLength and y = 0.0)
                             {
-                                file << "*Nset, nset=rightBoundaryNodes" << std::endl;
+                                file << "*Nset, nset=right" << std::endl;
                                 for (const auto &node : nodeTags[i])
                                 {
                                     if (writtenNodes.find(node) == writtenNodes.end())
@@ -355,25 +358,27 @@ void Geometry::writeMeshInfo()
                                     }
                                 }
                                 file << std::endl;
-                                file << "*Elset, elset=rightBoundaryElements" << std::endl;
+                                file << "*Elset, elset=right" << std::endl;
                                 countE = 0;
                                 for (const auto &elem : elementTags[i])
                                 {
-                                    file << elem;
-                                    countE++;
-                                    if (count == elemsPerLine)
+                                    file << elem << " ";
+                                    std::size_t elementTag = elem;
+                                    int elementType, dim, tag;
+                                    std::vector<std::size_t> elemNodeTags;
+                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
+
+                                    for (int i = 0; i < elemNodeTags.size(); i++)
                                     {
-                                        file << std::endl;
-                                        countE = 0;
+                                        file << elemNodeTags[i] << " ";
                                     }
-                                    else
-                                        file << " ";
+
+                                    file << std::endl;
                                 }
-                                file << std::endl;
                             }
                             else // If (x = edgeLength and y = edgeLength)
                             {
-                                file << "*Nset, nset=superiorBoundaryNodes" << std::endl;
+                                file << "*Nset, nset=top" << std::endl;
                                 for (const auto &node : nodeTags[i])
                                 {
                                     if (writtenNodes.find(node) == writtenNodes.end())
@@ -391,21 +396,23 @@ void Geometry::writeMeshInfo()
                                     }
                                 }
                                 file << std::endl;
-                                file << "*Elset, elset=superiorBoundaryElements" << std::endl;
+                                file << "*Elset, elset=top" << std::endl;
                                 countE = 0;
                                 for (const auto &elem : elementTags[i])
                                 {
-                                    file << elem;
-                                    countE++;
-                                    if (count == elemsPerLine)
+                                    file << elem << " ";
+                                    std::size_t elementTag = elem;
+                                    int elementType, dim, tag;
+                                    std::vector<std::size_t> elemNodeTags;
+                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
+
+                                    for (int i = 0; i < elemNodeTags.size(); i++)
                                     {
-                                        file << std::endl;
-                                        countE = 0;
+                                        file << elemNodeTags[i] << " ";
                                     }
-                                    else
-                                        file << " ";
+
+                                    file << std::endl;
                                 }
-                                file << std::endl;
                             }
                         }
                     }
@@ -474,7 +481,7 @@ void Geometry::writeMeshInfo()
                 }
                 file << std::endl;
                 countE = 0;
-                file << "*Elset, elset=BoundaryElements_" << groupName << std::endl;
+                file << "*Elset, elset=" << groupName << std::endl;
 
                 for (const auto boundary : boundaries)
                 {
@@ -486,19 +493,21 @@ void Geometry::writeMeshInfo()
                     {
                         for (const auto &elem : elementTags[i])
                         {
-                            file << elem;
-                            countE++;
-                            if (countE == elemsPerLine)
+                            file << elem << " ";
+                            std::size_t elementTag = elem;
+                            int elementType, dim, tag;
+                            std::vector<std::size_t> elemNodeTags;
+                            gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
+
+                            for (int i = 0; i < elemNodeTags.size(); i++)
                             {
-                                file << std::endl;
-                                countE = 0;
+                                file << elemNodeTags[i] << " ";
                             }
-                            else
-                                file << " ";
+
+                            file << std::endl;
                         }
                     }
                 }
-                file << std::endl;
             }
         }
     }

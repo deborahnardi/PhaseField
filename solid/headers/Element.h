@@ -24,6 +24,14 @@ public:
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 };
 
+class BoundaryElement : public Element
+{
+public:
+    BoundaryElement();
+    BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity);
+    ~BoundaryElement();
+};
+
 class Solid2D : public Element
 {
 private:

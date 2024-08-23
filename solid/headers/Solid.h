@@ -9,6 +9,8 @@
 
 #include "Node.h"
 #include "Element.h"
+#include "NodeSet.h"
+#include "ElementSet.h"
 
 class Solid
 {
@@ -18,6 +20,8 @@ private:
     int numNodes, num2DElements;
     std::vector<Node *> nodes;
     std::vector<Element *> elements;
+    std::vector<NodeSet *> nodeSets;
+    std::vector<ElementSet *> elementSets;
 
 public:
     Solid();

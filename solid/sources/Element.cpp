@@ -9,3 +9,8 @@ Solid2D::Solid2D() {}
 Solid2D::Solid2D(const int &index, const std::vector<Node *> &elemConnectivity)
     : Element(index, elemConnectivity, 2) {}
 Solid2D::~Solid2D() {}
+
+BoundaryElement::BoundaryElement() {}
+BoundaryElement::BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity)
+    : Element(index, elemConnectivity, 1) {}
+BoundaryElement::~BoundaryElement() {}
