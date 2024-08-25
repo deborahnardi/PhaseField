@@ -479,8 +479,9 @@ void Geometry::writeMeshInfo()
                         }
                     }
                 }
-                file << std::endl;
-                countE = 0;
+
+                if (count > 0 && count < nodesPerLine)
+                    file << std::endl;
                 file << "*Elset, elset=" << groupName << std::endl;
 
                 for (const auto boundary : boundaries)
@@ -511,7 +512,7 @@ void Geometry::writeMeshInfo()
             }
         }
     }
-
+    file << "*END" << std::endl;
     file.close();
 };
 

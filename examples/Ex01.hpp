@@ -14,7 +14,7 @@ std::vector<PlaneSurface *> planeSurfaces;
 geo1->setEdgeLength(1000.);
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimention(2);
-geo1->setMeshSizeFactor(5.0);
+geo1->setMeshSizeFactor(2.0);
 
 points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.));
 points.push_back(geo1->addPoint({geo1->getEdgeLength(), 0.0, 0.0}, 0.));

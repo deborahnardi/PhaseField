@@ -15,9 +15,9 @@
 class Solid
 {
 private:
-    std::string name;
+    std::string name, nSetName, elSetName;
     std::string filename;
-    int numNodes, num2DElements;
+    int numNodes, num2DElements, numBoundaryElements = 0;
     std::vector<Node *> nodes;
     std::vector<Element *> elements;
     std::vector<NodeSet *> nodeSets;
