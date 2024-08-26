@@ -19,7 +19,8 @@ private:
     std::string filename;
     int numNodes, num2DElements, numBoundaryElements = 0;
     std::vector<Node *> nodes;
-    std::vector<Element *> elements;
+    std::vector<Solid2D *> elements;
+    std::vector<BoundaryElement *> boundaryElements;
     std::vector<NodeSet *> nodeSets;
     std::vector<ElementSet *> elementSets;
 
@@ -30,11 +31,11 @@ public:
 
     std::string getName() const { return name; }
     std::vector<Node *> getNodes() const { return nodes; }
-    std::vector<Element *> getElements() const { return elements; }
+    std::vector<Solid2D *> getElements() const { return elements; }
 
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
-    void setElements(const std::vector<Element *> &_elements) { elements = _elements; }
+    void setElements(const std::vector<Solid2D *> &_elements) { elements = _elements; }
 
     void readGeometry(const std::string &_filename);
 };

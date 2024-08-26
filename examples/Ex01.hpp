@@ -10,6 +10,7 @@ std::vector<Point *> points;
 std::vector<Line *> lines;
 std::vector<LineLoop *> lineLoops;
 std::vector<PlaneSurface *> planeSurfaces;
+std::vector<BoundaryCondition *> boundaryConditions;
 
 geo1->setEdgeLength(1000.);
 geo1->setAlgorithm(DELAUNAY);
@@ -35,6 +36,9 @@ inclusions.push_back(geo1->addInclusion(0.10, 0.10, 90., 0.50, 0.50, 0.));
 inclusions.push_back(geo1->addInclusion(0.10, 0.10, 45., 0.25, 0.75, 0.));
 
 factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
+
+boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X, 0.}, {Y, 0.}}));
+boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 1.}}));
 
 geo1->InitializeGmshAPI();
 

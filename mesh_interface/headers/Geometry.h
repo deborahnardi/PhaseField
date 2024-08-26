@@ -19,6 +19,8 @@
 #include "LineLoop.h"
 #include "Surface.h"
 #include "PlaneSurface.h"
+#include "BoundaryCondition.h"
+
 #include "../../enumclass.hpp"
 
 class Geometry
@@ -44,6 +46,7 @@ private:
     std::vector<PlaneSurface *> planeSurfaces;
     std::vector<Inclusion *> inclusions;
     std::vector<MeshFactor *> meshFactors;
+    std::vector<BoundaryCondition *> boundaryConditions;
     MeshAlgorithm algorithm;
 
 public:
@@ -55,10 +58,6 @@ public:
     MeshAlgorithm getAlgorithm() const { return algorithm; }
     int getDimention() const { return dim; }
     double getMeshSizeFactor() const { return meshSizeFactor; }
-    double getMaxX() const { return maxX; }
-    double getMinX() const { return minX; }
-    double getMaxY() const { return maxY; }
-    double getMinY() const { return minY; }
 
     void setDimention(const int &_dim) { dim = _dim; }
     void setEdgeLength(const double &_edgeLength) { edgeLength = _edgeLength; }
@@ -71,9 +70,10 @@ public:
     PlaneSurface *addPlaneSurface(LineLoop *_lineLoop);
     Inclusion *addInclusion(const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
     MeshFactor *addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize);
+    BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
+    BoundaryCondition *addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
 
     void InitializeGmshAPI(const bool &showInterface = false);
     void generateInclusions();
-    void getMeshInfo();
     void writeMeshInfo();
 };

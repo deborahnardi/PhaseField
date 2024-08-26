@@ -9,6 +9,7 @@ class Point
 private:
     int index;
     std::vector<double> coordinates;
+    std::string entityName;
     double lc; // characteristic length
 
 public:
@@ -17,13 +18,15 @@ public:
     ~Point();
 
     // Setters
-    void setCoordinates(const std::vector<double> &_coordinates);
-    void setLC(const double &_lc);
-    void setIndex(const int &_index);
+    void setCoordinates(const std::vector<double> &_coordinates) { coordinates = _coordinates; }
+    void setLC(const double &_lc) { lc = _lc; }
+    void setIndex(const int &_index) { index = _index; }
+    void setEntityName(const std::string &_entityName) { entityName = _entityName; }
 
     // Getters
     int getIndex() const { return index; }
     std::vector<double> getCoordinates() const { return coordinates; }
+    std::string getEntityName() const { return entityName; }
     double getX() const { return coordinates[0]; }
     double getY() const { return coordinates[1]; }
     double getZ() const { return coordinates[2]; }

@@ -14,7 +14,7 @@ public:
     ~Element();
 
     int getIndex() const { return index; }
-    int getPhysicalEntity() const { return elemDimension; }
+    int getElemDimension() const { return elemDimension; }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &_index) const { return elemConnectivity[_index]; }
 
@@ -30,6 +30,11 @@ public:
     BoundaryElement();
     BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity);
     ~BoundaryElement();
+
+    int getIndex() const { return index; }
+    int getElemDimension() const { return 1; }
+    std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
+    Node *getNode(const int &index) const { return elemConnectivity[index]; }
 };
 
 class Solid2D : public Element
@@ -41,4 +46,12 @@ public:
     Solid2D();
     Solid2D(const int &index, const std::vector<Node *> &elemConnectivity);
     ~Solid2D();
+
+    int getIndex() const { return index; }
+    int getElemDimension() const { return 2; }
+    double getArea() const { return area; }
+    std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
+    Node *getNode(const int &index) const { return elemConnectivity[index]; }
+
+    void setArea(const double &_area) { area = _area; }
 };

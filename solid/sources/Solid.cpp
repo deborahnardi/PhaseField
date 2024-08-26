@@ -116,7 +116,6 @@ void Solid::readGeometry(const std::string &_filename)
 
             if (flagElem == true)
             {
-
                 elementSets.push_back(new ElementSet(elSetName, elemSets));
                 elemSets.clear();
             }
@@ -139,28 +138,43 @@ void Solid::readGeometry(const std::string &_filename)
             {
                 // std::cout << "The code has found the string: " << line << std::endl;
                 std::vector<std::string> result = split(line, ' ');
-
                 for (size_t i = 1; i < result.size(); i++)
                 {
                     int index = std::stoi(result[i]);
                     elemConnectivity.push_back(nodes[index - 1]);
                 }
+
                 flagElem = true;
-                elements.push_back(new BoundaryElement(elements.size(), elemConnectivity));
+                boundaryElements.push_back(new BoundaryElement(boundaryElements.size() + 1, elemConnectivity));
                 elemSets.push_back(elements.back());
                 elemConnectivity.clear();
-                numBoundaryElements++;
             }
         }
     }
 
-    numBoundaryElements = elements.size() - num2DElements;
-
+    numBoundaryElements = boundaryElements.size();
     std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
 
     // for (int i = 0; i < nodeSets.size(); i++)
+    //{
     //     std::cout << "Node set: " << nodeSets[i]->getName() << " has " << nodeSets[i]->getNodes().size() << " nodes" << std::endl;
+    //     for (int j = 0; j < nodeSets[i]->getNodes().size(); j++)
+    //         std::cout << "Node: " << nodeSets[i]->getNode(j)->getIndex() << std::endl;
+    // }
+
     // for (int i = 0; i < elementSets.size(); i++)
-    //     std::cout << "Element set: " << elementSets[i]->getName() << " has " << elementSets[i]->getElements().size() << " elements" << std::endl;
+    //{
+    //    std::cout << "Element set: " << elementSets[i]->getName() << " has " << elementSets[i]->getElements().size() << " elements" << std::endl;
+    //    for (int j = 0; j < elementSets[i]->getElements().size(); j++)
+    //    {
+    //        std::cout << "Element: " << elementSets[i]->getElement(j)->getIndex() << std::endl;
+    //        std::vector<Node *> connectivity = elementSets[i]->getElement(j)->getElemConnectivity();
+    //
+    //        for (int k = 0; k < connectivity.size(); k++)
+    //        {
+    //            std::cout << "Node: " << connectivity[k]->getIndex() << std::endl;
+    //        }
+    //    }
+    //}
     file.close();
 }

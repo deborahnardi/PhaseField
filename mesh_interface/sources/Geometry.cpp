@@ -10,24 +10,13 @@ Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double 
     Point *point = new Point(_coordinates, _lc, points.size());
     points.push_back(point);
 
-    int x = point->getX();
-    int y = point->getY();
-
-    if (x > maxX)
-        maxX = x;
-    if (x < minX)
-        minX = x;
-    if (y > maxY)
-        maxY = y;
-    if (y < minY)
-        minY = y;
-
     return point;
 }
 
 Line *Geometry::addLine(const std::vector<Point *> &_points)
 {
     Line *line = new Line(_points, lines.size());
+    line->setEntityName("Line_" + std::to_string(line->getIndex() + 1));
     lines.push_back(line);
     return line;
 }
@@ -35,6 +24,7 @@ Line *Geometry::addLine(const std::vector<Point *> &_points)
 LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 {
     LineLoop *lineLoop = new LineLoop(_lines, lineLoops.size());
+    lineLoop->setEntityName("LineLoop_" + std::to_string(lineLoop->getIndex() + 1));
     lineLoops.push_back(lineLoop);
     return lineLoop;
 }
@@ -42,6 +32,7 @@ LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 PlaneSurface *Geometry::addPlaneSurface(LineLoop *_lineLoop)
 {
     PlaneSurface *planeSurface = new PlaneSurface(_lineLoop, planeSurfaces.size());
+    planeSurface->setEntityName("PlaneSurface_" + std::to_string(planeSurface->getIndex() + 1));
     planeSurfaces.push_back(planeSurface);
     return planeSurface;
 }
@@ -67,6 +58,22 @@ MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_me
     meshMaxSizeGlobal = _meshMaxSize * edgeLength;
 
     return meshFac;
+}
+
+BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
+{
+    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), point->getEntityName(), _dofValues, _bType);
+    boundaryConditions.push_back(bCondition);
+    return bCondition;
+}
+
+BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
+{
+    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType);
+    std::string lineName = line->getEntityName();
+    std::cout << "Boundary Condition has been added to: " << lineName << std::endl;
+    boundaryConditions.push_back(bCondition);
+    return bCondition;
 }
 
 void Geometry::generateInclusions()
@@ -148,8 +155,9 @@ void Geometry::generateInclusions()
     delete[] ellipseCoordinates;
 };
 
-void Geometry::getMeshInfo()
-{ // dim = -1 -> all dimensions; tag = -1 -> all tags (get all nodes), includeBoundary = true, returnParametricCoordinates = false
+void Geometry::writeMeshInfo()
+{
+    // dim = -1 -> all dimensions; tag = -1 -> all tags (get all nodes), includeBoundary = true, returnParametricCoordinates = false
 
     gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, -1, -1, true, false);
 
@@ -159,10 +167,6 @@ void Geometry::getMeshInfo()
     std::vector<std::vector<std::size_t>> lineElemsTags, lineElemsNodeTags;
 
     gmsh::model::mesh::getElements(lineElems, lineElemsTags, lineElemsNodeTags, 1, -1);
-};
-
-void Geometry::writeMeshInfo()
-{
     PetscPrintf(PETSC_COMM_WORLD, "Generating Output file...\n");
 
     std::string fileName = name + ".mir";
@@ -217,13 +221,14 @@ void Geometry::writeMeshInfo()
     writtenNodes.clear();
 
     int nodesPerLine = 8, elemsPerLine = 8; // Number of nodes per line
-    int count = 0, countE = 0;
+    int count = 0, countE = 0, bdElems = 0;
     std::set<int> writtenBoundaryTags;
 
     gmsh::vectorpair physicalGroups;
     gmsh::model::getPhysicalGroups(physicalGroups);
 
-    std::cout << "PHYSICAL GROUPS" << std::endl;
+    std::cout << "*PHYSICAL GROUPS" << std::endl;
+
     for (const auto &group : physicalGroups)
     {
         std::string groupName;
@@ -231,6 +236,7 @@ void Geometry::writeMeshInfo()
         std::cout << "Group name: " << groupName << ", of dimension: " << group.first << ", and tag: " << group.second << std::endl;
         std::vector<int> entities;
         gmsh::model::getEntitiesForPhysicalGroup(group.first, group.second, entities);
+
         for (const auto &entity : entities)
         {
             std::cout << "Entidade: " << entity << std::endl;
@@ -243,176 +249,61 @@ void Geometry::writeMeshInfo()
                 if (writtenBoundaryTags.find(boundary.second) == writtenBoundaryTags.end())
                 {
                     writtenBoundaryTags.insert(boundary.second);
-                    std::cout << "Dimension: " << boundary.first << ", Tag: " << boundary.second << std::endl;
+                    gmsh::model::setEntityName(boundary.first, boundary.second, "Boundary_" + std::to_string(boundary.second));
+                    std::string currentName;
+                    gmsh::model::getEntityName(boundary.first, boundary.second, currentName);
+                    std::cout << "Dimension: " << boundary.first << ", Tag: " << boundary.second << ", Name: " << currentName << std::endl;
+
                     if (groupName == "Host")
                     {
                         std::vector<int> elementTypes;
                         std::vector<std::vector<std::size_t>> elementTags, nodeTags;
                         gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
 
+                        writtenNodes.clear();
+                        count = 0;
+                        file << "*Nset, nset=" << currentName << std::endl;
                         for (std::size_t i = 0; i < elementTypes.size(); i++)
                         {
-                            writtenNodes.clear();
-                            count = 0;
-                            std::vector<double> coords;
-                            std::vector<double> paramCoords;
-                            int dim, tag;
-                            int node = nodeTags[i][0]; // Always checking on the first node of the element
-                            gmsh::model::mesh::getNode(node, coords, paramCoords, dim, tag);
-
-                            if (coords[0] == minX && coords[1] == minY) // If (x = 0.0 and y = 0.0)
+                            for (const auto &node : nodeTags[i])
                             {
-                                file << "*Nset, nset=bottom" << std::endl;
-                                for (const auto &node : nodeTags[i])
+                                if (writtenNodes.find(node) == writtenNodes.end())
                                 {
-                                    if (writtenNodes.find(node) == writtenNodes.end())
+                                    file << node;
+                                    count++;
+                                    writtenNodes.insert(node);
+
+                                    if (count == nodesPerLine)
                                     {
-                                        file << node;
-                                        count++;
-                                        writtenNodes.insert(node);
-                                        if (count == nodesPerLine)
-                                        {
-                                            file << std::endl;
-                                            count = 0;
-                                        }
-                                        else
-                                            file << " ";
+                                        file << std::endl;
+                                        count = 0;
                                     }
-                                }
-
-                                file << std::endl;
-                                file << "*Elset, elset=bottom" << std::endl; // Print tag element and its connectivity
-
-                                for (const auto &elem : elementTags[i])
-                                {
-                                    file << elem << " ";
-                                    std::size_t elementTag = elem;
-                                    int elementType, dim, tag;
-                                    std::vector<std::size_t> elemNodeTags;
-                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
-
-                                    for (int i = 0; i < elemNodeTags.size(); i++)
-                                    {
-                                        file << elemNodeTags[i] << " ";
-                                    }
-
-                                    file << std::endl;
+                                    else
+                                        file << " ";
                                 }
                             }
-                            else if (coords[0] == minX && coords[1] == maxY) // If (x = 0.0 and y = edgeLength)
+                        }
+                        file << std::endl;
+
+                        file << "*Elset, elset=" << currentName << std::endl;
+
+                        for (std::size_t i = 0; i < elementTypes.size(); i++)
+                        {
+                            for (const auto &elem : elementTags[i])
                             {
-                                file << "*Nset, nset=left" << std::endl;
-                                for (const auto &node : nodeTags[i])
+                                bdElems++;
+                                file << bdElems << " ";
+                                std::size_t elementTag = elem;
+                                int elementType, dim, tag;
+                                std::vector<std::size_t> elemNodeTags;
+                                gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
+
+                                for (int i = 0; i < elemNodeTags.size(); i++)
                                 {
-                                    if (writtenNodes.find(node) == writtenNodes.end())
-                                    {
-                                        file << node;
-                                        count++;
-                                        writtenNodes.insert(node);
-                                        if (count == nodesPerLine)
-                                        {
-                                            file << std::endl;
-                                            count = 0;
-                                        }
-                                        else
-                                            file << " ";
-                                    }
+                                    file << elemNodeTags[i] << " ";
                                 }
 
                                 file << std::endl;
-                                file << "*Elset, elset=left" << std::endl;
-                                countE = 0;
-                                for (const auto &elem : elementTags[i])
-                                {
-                                    file << elem << " ";
-                                    std::size_t elementTag = elem;
-                                    int elementType, dim, tag;
-                                    std::vector<std::size_t> elemNodeTags;
-                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
-
-                                    for (int i = 0; i < elemNodeTags.size(); i++)
-                                    {
-                                        file << elemNodeTags[i] << " ";
-                                    }
-
-                                    file << std::endl;
-                                }
-                            }
-                            else if (coords[0] = maxX && coords[1] == minY) // If (x = edgeLength and y = 0.0)
-                            {
-                                file << "*Nset, nset=right" << std::endl;
-                                for (const auto &node : nodeTags[i])
-                                {
-                                    if (writtenNodes.find(node) == writtenNodes.end())
-                                    {
-                                        file << node;
-                                        count++;
-                                        writtenNodes.insert(node);
-                                        if (count == nodesPerLine)
-                                        {
-                                            file << std::endl;
-                                            count = 0;
-                                        }
-                                        else
-                                            file << " ";
-                                    }
-                                }
-                                file << std::endl;
-                                file << "*Elset, elset=right" << std::endl;
-                                countE = 0;
-                                for (const auto &elem : elementTags[i])
-                                {
-                                    file << elem << " ";
-                                    std::size_t elementTag = elem;
-                                    int elementType, dim, tag;
-                                    std::vector<std::size_t> elemNodeTags;
-                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
-
-                                    for (int i = 0; i < elemNodeTags.size(); i++)
-                                    {
-                                        file << elemNodeTags[i] << " ";
-                                    }
-
-                                    file << std::endl;
-                                }
-                            }
-                            else // If (x = edgeLength and y = edgeLength)
-                            {
-                                file << "*Nset, nset=top" << std::endl;
-                                for (const auto &node : nodeTags[i])
-                                {
-                                    if (writtenNodes.find(node) == writtenNodes.end())
-                                    {
-                                        file << node;
-                                        count++;
-                                        writtenNodes.insert(node);
-                                        if (count == nodesPerLine)
-                                        {
-                                            file << std::endl;
-                                            count = 0;
-                                        }
-                                        else
-                                            file << " ";
-                                    }
-                                }
-                                file << std::endl;
-                                file << "*Elset, elset=top" << std::endl;
-                                countE = 0;
-                                for (const auto &elem : elementTags[i])
-                                {
-                                    file << elem << " ";
-                                    std::size_t elementTag = elem;
-                                    int elementType, dim, tag;
-                                    std::vector<std::size_t> elemNodeTags;
-                                    gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
-
-                                    for (int i = 0; i < elemNodeTags.size(); i++)
-                                    {
-                                        file << elemNodeTags[i] << " ";
-                                    }
-
-                                    file << std::endl;
-                                }
                             }
                         }
                     }
@@ -424,8 +315,8 @@ void Geometry::writeMeshInfo()
     // ********************************************************************************************************************
     /*
         WRITING INCLUSIONS INFORMATIONS
-        **ATTENTION**: Please note that the element numbering for the boundary elements is the one that comes from Gmsh.
-                       Differently, the 2D elements present in the .mir file are numbered from 1 to the number of elements,
+        **ATTENTION**: Please note that the element numbering for the boundary elements is the one created here.
+                       Similarly, the 2D elements present in the .mir file are numbered from 1 to the number of elements,
                         i.e, they are renumbered.
     */
 
@@ -494,7 +385,8 @@ void Geometry::writeMeshInfo()
                     {
                         for (const auto &elem : elementTags[i])
                         {
-                            file << elem << " ";
+                            bdElems++;
+                            file << bdElems << " ";
                             std::size_t elementTag = elem;
                             int elementType, dim, tag;
                             std::vector<std::size_t> elemNodeTags;
@@ -512,6 +404,12 @@ void Geometry::writeMeshInfo()
             }
         }
     }
+    file << "*BOUNDARY" << std::endl;
+    for (int i = 0; i < boundaryConditions.size(); i++)
+    {
+        file << boundaryConditions[i]->getEntityname() << " ";
+    }
+
     file << "*END" << std::endl;
     file.close();
 };
@@ -537,12 +435,17 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
             linesIndexes.push_back(lineLoop->getLine(i)->getIndex() + 1);
 
         gmsh::model::occ::addCurveLoop(linesIndexes, lineLoop->getIndex() + 1);
+        lineLoop->setEntityName("LineLoop_" + std::to_string(lineLoop->getIndex() + 1));
         gmsh::model::occ::synchronize();
     }
 
     for (auto planeSurface : planeSurfaces)
     {
-        gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1});
+        int surfaceTag = gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1}, -1);
+
+        std::cout << "Tag da superfície criada: " << surfaceTag << std::endl;
+
+        planeSurface->setEntityName("PlaneSurface_" + std::to_string(planeSurface->getIndex() + 1));
         gmsh::model::occ::synchronize();
     }
 
@@ -609,7 +512,6 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::mesh::generate(dim);
     gmsh::write(name + ".inp");
 
-    getMeshInfo();
     writeMeshInfo();
 
     if (showInterface)
