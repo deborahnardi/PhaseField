@@ -29,9 +29,17 @@ class BoundaryElement : public Element
 private:
     std::string entityName;
 
+    struct AppliedBoundaryCondition
+    {
+        BoundaryType bType;
+        std::vector<DOF *> dofs;
+    };
+
+    std::vector<AppliedBoundaryCondition> appliedBCs;
+
 public:
     BoundaryElement();
-    BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity);
+    BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity, const int &elemDimension = 1);
     ~BoundaryElement();
 
     int getIndex() const { return index; }
@@ -39,6 +47,8 @@ public:
     std::string getEntityName() const { return "Boundary_" + std::to_string(index); }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
+
+    void addCondition(BoundaryType _bType, DOFType _dofType, double _value);
 };
 
 class Solid2D : public Element
@@ -48,7 +58,7 @@ private:
 
 public:
     Solid2D();
-    Solid2D(const int &index, const std::vector<Node *> &elemConnectivity);
+    Solid2D(const int &index, const std::vector<Node *> &elemConnectivity, const int &elemDimension = 2);
     ~Solid2D();
 
     int getIndex() const { return index; }

@@ -4,3 +4,12 @@ Node::Node() {}
 Node::Node(const int &_index, const std::vector<double> &_initialCoordinates)
     : index(_index), initialCoordinates(_initialCoordinates) {}
 Node::~Node() {}
+
+void Node::addDOF(DOF *_dof)
+{
+    for (const auto &existingDOF : dofs)
+        if (existingDOF->getDOFType() == _dof->getDOFType())
+            return;
+
+    dofs.push_back(_dof);
+}

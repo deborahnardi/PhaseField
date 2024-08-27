@@ -68,6 +68,12 @@ void Solid::readGeometry(const std::string &_filename)
             elemNodes.push_back(nodes[elemConnectivity[i] - 1]);
 
         elements.push_back(new Solid2D(index - 1, elemNodes));
+
+        for (auto node : elemNodes) // Adding DOFs to the nodes
+        {
+            node->addDOF(new DOF(X));
+            node->addDOF(new DOF(Y));
+        }
     }
 
     std::cout << "There are: " << elements.size() << " 2D elements" << std::endl;
@@ -146,6 +152,11 @@ void Solid::readGeometry(const std::string &_filename)
                 flagElem = true;
                 boundaryElements.push_back(new BoundaryElement(boundaryElements.size() + 1, elemConnectivity));
                 elemSets.push_back(elements.back());
+                for (auto node : elemConnectivity)
+                {
+                    node->addDOF(new DOF(X));
+                    node->addDOF(new DOF(Y));
+                }
                 elemConnectivity.clear();
             }
         }
@@ -154,25 +165,63 @@ void Solid::readGeometry(const std::string &_filename)
     numBoundaryElements = boundaryElements.size();
     std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
 
+    //***** SETTING DOFs
+
+    nDOFs = 0;
+    for (auto node : nodes)
+        for (auto dof : node->getDOFs())
+        {
+            dof->setIndex(nDOFs++);    // Correspondent index in the global DOF vector
+            globalDOFs.push_back(dof); // Adding the DOF to the global DOF vector
+        }
+
+    std::cout << "There are: " << nDOFs << " global DOFs" << std::endl;
+
     for (; std::getline(file, line);)
     {
-        if (line.find("*") != std::string::npos)
+        if (line.find("*BOUNDARY") != std::string::npos)
             continue;
-        else if (line.find("*END") != std::string::npos)
+        else if (line.find("*CLOAD") != std::string::npos)
             break;
         else
         {
             std::vector<std::string> result = split(line, ' ');
-            BoundaryType bType = static_cast<BoundaryType>(std::stoi(result[0])); // static_cast is used to convert the integer to an enum class
-            std::string entityName = result[1];
-            std::cout << "Entity name: " << entityName << std::endl;
-            int numBConditions = (result.size() - 2) / 2; // Number of prescribed boundary conditions
+            std::string entityName = result[0];
+            int dof = std::stoi(result[1]);
+            int value = std::stoi(result[2]);
+            BoundaryType bdType = DIRICHLET;
 
-            for (auto &elem : boundaryElements)
-                if (elem->getEntityName() == entityName)
-                    std::cout << "Boundary condition has been added to: " << elem->getEntityName() << std::endl;
+            for (auto be : boundaryElements)
+                if (entityName == be->getEntityName())
+                    be->addCondition(bdType, static_cast<DOFType>(dof), value);
         }
-
-        file.close();
     }
+
+    for (; std::getline(file, line);)
+    {
+        if (line.find("*END") != std::string::npos)
+            break;
+        else
+        {
+            std::vector<std::string> result = split(line, ' ');
+            std::string entityName = result[0];
+            int dof = std::stoi(result[1]);
+            int value = std::stoi(result[2]);
+            BoundaryType bdType = NEUMANN;
+
+            for (auto be : boundaryElements)
+                if (entityName == be->getEntityName())
+                    be->addCondition(bdType, static_cast<DOFType>(dof), value);
+        }
+    }
+
+    for (auto dof : globalDOFs)
+        if (dof->isDirichlet())
+            numDirichletDOFs++;
+        else
+            numNeumannDOFs++;
+
+    std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs" << std::endl;
+    std::cout << "There are: " << numNeumannDOFs << " Neumann DOFs" << std::endl;
+    file.close();
 }

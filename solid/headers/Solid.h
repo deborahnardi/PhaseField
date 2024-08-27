@@ -11,6 +11,7 @@
 #include "Element.h"
 #include "NodeSet.h"
 #include "ElementSet.h"
+#include "DOF.h"
 
 #include "../../enumclass.hpp"
 
@@ -19,12 +20,13 @@ class Solid
 private:
     std::string name, nSetName, elSetName;
     std::string filename;
-    int numNodes, num2DElements, numBoundaryElements = 0;
+    int numNodes, num2DElements, numBoundaryElements = 0, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0;
     std::vector<Node *> nodes;
     std::vector<Solid2D *> elements;
     std::vector<BoundaryElement *> boundaryElements;
     std::vector<NodeSet *> nodeSets;
     std::vector<ElementSet *> elementSets;
+    std::vector<DOF *> globalDOFs;
 
 public:
     Solid();

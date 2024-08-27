@@ -5,11 +5,15 @@
 #include <string>
 #include <fstream>
 
+#include "../../enumclass.hpp"
+#include "DOF.h"
+
 class Node
 {
 private:
     int index;
     std::vector<double> initialCoordinates;
+    std::vector<DOF *> dofs; // Degrees of freedom of the node
 
 public:
     Node();
@@ -26,4 +30,10 @@ public:
     double getX() const { return initialCoordinates[0]; }
     double getY() const { return initialCoordinates[1]; }
     double getZ() const { return initialCoordinates[2]; }
+
+    void addDOF(DOF *_dof);
+    std::vector<DOF *> getDOFs() const { return dofs; }
+    DOF *getDOF(const int &_index) const { return dofs[_index]; }
+    void setDOF(const int &_index, DOF *_dof) { dofs[_index] = _dof; }
+    int getNumDOFs() const { return dofs.size(); }
 };
