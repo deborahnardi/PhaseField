@@ -12,6 +12,8 @@
 #include "NodeSet.h"
 #include "ElementSet.h"
 
+#include "../../enumclass.hpp"
+
 class Solid
 {
 private:

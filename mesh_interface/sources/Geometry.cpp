@@ -16,7 +16,7 @@ Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double 
 Line *Geometry::addLine(const std::vector<Point *> &_points)
 {
     Line *line = new Line(_points, lines.size());
-    line->setEntityName("Line_" + std::to_string(line->getIndex() + 1));
+    line->setEntityName("Boundary_" + std::to_string(line->getIndex() + 1));
     lines.push_back(line);
     return line;
 }
@@ -404,10 +404,40 @@ void Geometry::writeMeshInfo()
             }
         }
     }
+    // ********************************************************************************************************************
+
     file << "*BOUNDARY" << std::endl;
-    for (int i = 0; i < boundaryConditions.size(); i++)
+
+    for (auto *bc : boundaryConditions)
     {
-        file << boundaryConditions[i]->getEntityname() << " ";
+        int dirichletOrNeumann = bc->getBType();
+
+        if (dirichletOrNeumann == 0) // Dirichlet
+        {
+            for (auto dofValues : bc->getDOFValues())
+            {
+                file << bc->getEntityname() << " ";
+                file << dofValues.first << " " << dofValues.second;
+                file << std::endl;
+            }
+        }
+    }
+
+    file << "*CLOAD" << std::endl;
+
+    for (auto *bc : boundaryConditions)
+    {
+        int dirichletOrNeumann = bc->getBType();
+
+        if (dirichletOrNeumann == 1) // Neumann
+        {
+            for (auto dofValues : bc->getDOFValues())
+            {
+                file << bc->getEntityname() << " ";
+                file << dofValues.first << " " << dofValues.second;
+                file << std::endl;
+            }
+        }
     }
 
     file << "*END" << std::endl;

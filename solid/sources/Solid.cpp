@@ -80,8 +80,7 @@ void Solid::readGeometry(const std::string &_filename)
 
     for (; std::getline(file, line);)
     {
-        // std::cout << line << std::endl;
-        if (line.find("*END") != std::string::npos)
+        if (line.find("*BOUNDARY") != std::string::npos)
         {
             elementSets.push_back(new ElementSet(elSetName, elemSets));
             elemSets.clear();
@@ -155,26 +154,25 @@ void Solid::readGeometry(const std::string &_filename)
     numBoundaryElements = boundaryElements.size();
     std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
 
-    // for (int i = 0; i < nodeSets.size(); i++)
-    //{
-    //     std::cout << "Node set: " << nodeSets[i]->getName() << " has " << nodeSets[i]->getNodes().size() << " nodes" << std::endl;
-    //     for (int j = 0; j < nodeSets[i]->getNodes().size(); j++)
-    //         std::cout << "Node: " << nodeSets[i]->getNode(j)->getIndex() << std::endl;
-    // }
+    for (; std::getline(file, line);)
+    {
+        if (line.find("*") != std::string::npos)
+            continue;
+        else if (line.find("*END") != std::string::npos)
+            break;
+        else
+        {
+            std::vector<std::string> result = split(line, ' ');
+            BoundaryType bType = static_cast<BoundaryType>(std::stoi(result[0])); // static_cast is used to convert the integer to an enum class
+            std::string entityName = result[1];
+            std::cout << "Entity name: " << entityName << std::endl;
+            int numBConditions = (result.size() - 2) / 2; // Number of prescribed boundary conditions
 
-    // for (int i = 0; i < elementSets.size(); i++)
-    //{
-    //    std::cout << "Element set: " << elementSets[i]->getName() << " has " << elementSets[i]->getElements().size() << " elements" << std::endl;
-    //    for (int j = 0; j < elementSets[i]->getElements().size(); j++)
-    //    {
-    //        std::cout << "Element: " << elementSets[i]->getElement(j)->getIndex() << std::endl;
-    //        std::vector<Node *> connectivity = elementSets[i]->getElement(j)->getElemConnectivity();
-    //
-    //        for (int k = 0; k < connectivity.size(); k++)
-    //        {
-    //            std::cout << "Node: " << connectivity[k]->getIndex() << std::endl;
-    //        }
-    //    }
-    //}
-    file.close();
+            for (auto &elem : boundaryElements)
+                if (elem->getEntityName() == entityName)
+                    std::cout << "Boundary condition has been added to: " << elem->getEntityName() << std::endl;
+        }
+
+        file.close();
+    }
 }

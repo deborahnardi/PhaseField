@@ -26,6 +26,9 @@ public:
 
 class BoundaryElement : public Element
 {
+private:
+    std::string entityName;
+
 public:
     BoundaryElement();
     BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity);
@@ -33,6 +36,7 @@ public:
 
     int getIndex() const { return index; }
     int getElemDimension() const { return 1; }
+    std::string getEntityName() const { return "Boundary_" + std::to_string(index); }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
 };
@@ -52,6 +56,7 @@ public:
     double getArea() const { return area; }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
+    std::string getEntityName() const { return "Solid2D_" + std::to_string(index); }
 
     void setArea(const double &_area) { area = _area; }
 };
