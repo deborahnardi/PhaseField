@@ -16,7 +16,7 @@ Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double 
 Line *Geometry::addLine(const std::vector<Point *> &_points)
 {
     Line *line = new Line(_points, lines.size());
-    line->setEntityName("Boundary_" + std::to_string(line->getIndex() + 1));
+    line->setEntityName("Line_" + std::to_string(line->getIndex() + 1));
     lines.push_back(line);
     return line;
 }
@@ -143,7 +143,7 @@ void Geometry::generateInclusions()
             ellipseArcs.push_back(elp);
         }
 
-        int cInc = gmsh::model::occ::addCurveLoop({ellipseArcs[4 * inclusion->getIndex()], ellipseArcs[4 * inclusion->getIndex() + 1], ellipseArcs[4 * inclusion->getIndex() + 2], ellipseArcs[4 * inclusion->getIndex() + 3]});
+        int cInc = gmsh::model::occ::addCurveLoop({ellipseArcs[4 * inclusion->getIndex()], ellipseArcs[4 * inclusion->getIndex() + 1], ellipseArcs[4 * inclusion->getIndex() + 2], ellipseArcs[4 * inclusion->getIndex() + 3]}, lines.size() + ellipseCurves.size() + 1);
         ellipseCurves.push_back(cInc);
 
         int pInc = gmsh::model::occ::addPlaneSurface({cInc});
@@ -219,6 +219,7 @@ void Geometry::writeMeshInfo()
     // ********************************************************************************************************************
 
     writtenNodes.clear();
+    std::set<std::string> addedGroups;
 
     int nodesPerLine = 8, elemsPerLine = 8; // Number of nodes per line
     int count = 0, countE = 0, bdElems = 0;
@@ -228,6 +229,21 @@ void Geometry::writeMeshInfo()
     gmsh::model::getPhysicalGroups(physicalGroups);
 
     std::cout << "*PHYSICAL GROUPS" << std::endl;
+
+    std::vector<std::pair<double, double>> coordsPoints;
+    std::vector<double> firstNodeCoords, lastNodeCoords, parametricCoords;
+    int firstNode, lastNode, dimNode, tagNode;
+
+    for (auto line : lines)
+    {
+        double x1 = line->getPoint(0)->getX();
+        double y1 = line->getPoint(0)->getY();
+        double x2 = line->getPoint(1)->getX();
+        double y2 = line->getPoint(1)->getY();
+
+        coordsPoints.push_back(std::make_pair(x1, y1));
+        coordsPoints.push_back(std::make_pair(x2, y2));
+    }
 
     for (const auto &group : physicalGroups)
     {
@@ -239,115 +255,28 @@ void Geometry::writeMeshInfo()
 
         for (const auto &entity : entities)
         {
-            std::cout << "Entidade: " << entity << std::endl;
-            std::vector<std::pair<int, int>> boundaries;
-            std::vector<std::pair<int, int>> dimTags = {{2, entity}};
-            gmsh::model::getBoundary(dimTags, boundaries);
-            std::cout << "BOUNDARY INFO: " << std::endl;
-            for (const auto &boundary : boundaries)
+            std::vector<int> elementTypes;
+            std::vector<std::vector<std::size_t>> elementTags, nodeTags;
+            gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, group.first, entity);
+            firstNode = nodeTags[0][0];
+            lastNode = nodeTags[0][nodeTags[0].size() - 1];
+            // std::cout << "First Node: " << firstNode << ", Last Node: " << lastNode << std::endl;
+            gmsh::model::mesh::getNode(firstNode, firstNodeCoords, parametricCoords, dimNode, tagNode);
+            gmsh::model::mesh::getNode(lastNode, lastNodeCoords, parametricCoords, dimNode, tagNode);
+
+            // Identifying the lines with the boundary created by Gmsh
+
+            for (int i = 0; i < coordsPoints.size(); i++)
             {
-                if (writtenBoundaryTags.find(boundary.second) == writtenBoundaryTags.end())
+                if (coordsPoints[2 * i].first == firstNodeCoords[0] && coordsPoints[2 * i].second == firstNodeCoords[1] && coordsPoints[2 * i + 1].first == lastNodeCoords[0] && coordsPoints[2 * i + 1].second == lastNodeCoords[1])
                 {
-                    writtenBoundaryTags.insert(boundary.second);
-                    gmsh::model::setEntityName(boundary.first, boundary.second, "Boundary_" + std::to_string(boundary.second));
-                    std::string currentName;
-                    gmsh::model::getEntityName(boundary.first, boundary.second, currentName);
-                    std::cout << "Dimension: " << boundary.first << ", Tag: " << boundary.second << ", Name: " << currentName << std::endl;
-
-                    if (groupName == "Host")
-                    {
-                        std::vector<int> elementTypes;
-                        std::vector<std::vector<std::size_t>> elementTags, nodeTags;
-                        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
-
-                        writtenNodes.clear();
-                        count = 0;
-                        file << "*Nset, nset=" << currentName << std::endl;
-                        for (std::size_t i = 0; i < elementTypes.size(); i++)
-                        {
-                            for (const auto &node : nodeTags[i])
-                            {
-                                if (writtenNodes.find(node) == writtenNodes.end())
-                                {
-                                    file << node;
-                                    count++;
-                                    writtenNodes.insert(node);
-
-                                    if (count == nodesPerLine)
-                                    {
-                                        file << std::endl;
-                                        count = 0;
-                                    }
-                                    else
-                                        file << " ";
-                                }
-                            }
-                        }
-                        file << std::endl;
-
-                        file << "*Elset, elset=" << currentName << std::endl;
-
-                        for (std::size_t i = 0; i < elementTypes.size(); i++)
-                        {
-                            for (const auto &elem : elementTags[i])
-                            {
-                                bdElems++;
-                                file << bdElems << " ";
-                                std::size_t elementTag = elem;
-                                int elementType, dim, tag;
-                                std::vector<std::size_t> elemNodeTags;
-                                gmsh::model::mesh::getElement(elementTag, elementType, elemNodeTags, dim, tag);
-
-                                for (int i = 0; i < elemNodeTags.size(); i++)
-                                {
-                                    file << elemNodeTags[i] << " ";
-                                }
-
-                                file << std::endl;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        std::cout << "---------------------------" << std::endl;
-    }
-    // ********************************************************************************************************************
-    /*
-        WRITING INCLUSIONS INFORMATIONS
-        **ATTENTION**: Please note that the element numbering for the boundary elements is the one created here.
-                       Similarly, the 2D elements present in the .mir file are numbered from 1 to the number of elements,
-                        i.e, they are renumbered.
-    */
-
-    count = 0;
-
-    for (const auto &group : physicalGroups)
-    {
-
-        std::string groupName;
-        gmsh::model::getPhysicalName(group.first, group.second, groupName);
-
-        std::vector<int> entities;
-        gmsh::model::getEntitiesForPhysicalGroup(group.first, group.second, entities);
-
-        for (const auto &entity : entities)
-        {
-            std::vector<std::pair<int, int>> boundaries;
-            std::vector<std::pair<int, int>> dimTags = {{2, entity}};
-            gmsh::model::getBoundary(dimTags, boundaries);
-
-            if (groupName != "Host")
-            {
-                writtenNodes.clear();
-                count = 0;
-                file << "*Nset, nset=" << groupName << std::endl;
-
-                for (const auto boundary : boundaries)
-                {
-                    std::vector<int> elementTypes;
-                    std::vector<std::vector<std::size_t>> elementTags, nodeTags;
-                    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+                    // Line is on this boundary
+                    std::cout << "Boundary: " << groupName << ", Line: " << 2 * i / 2 << std::endl;
+                    std::cout << "----------------------------------" << std::endl;
+                    count = 0;
+                    writtenNodes.clear();
+                    file << "*Nset, nset=" << "Boundary_" + std::to_string(2 * i / 2) << std::endl;
+                    addedGroups.insert(groupName);
 
                     for (std::size_t i = 0; i < elementTypes.size(); i++)
                     {
@@ -368,18 +297,10 @@ void Geometry::writeMeshInfo()
                                     file << " ";
                             }
                         }
+                        file << std::endl;
                     }
-                }
 
-                if (count > 0 && count < nodesPerLine)
-                    file << std::endl;
-                file << "*Elset, elset=" << groupName << std::endl;
-
-                for (const auto boundary : boundaries)
-                {
-                    std::vector<int> elementTypes;
-                    std::vector<std::vector<std::size_t>> elementTags, nodeTags;
-                    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+                    file << "*Elset, elset=" << "Boundary_" + std::to_string((2 * i / 2)) << std::endl;
 
                     for (std::size_t i = 0; i < elementTypes.size(); i++)
                     {
@@ -404,41 +325,134 @@ void Geometry::writeMeshInfo()
             }
         }
     }
+
+    // ********************************************************************************************************************
+    // /*
+    //     WRITING INCLUSIONS INFORMATIONS
+    //     **ATTENTION**: Please note that the element numbering for the boundary elements is the one created here.
+    //                    Similarly, the 2D elements present in the .mir file are numbered from 1 to the number of elements,
+    //                     i.e, they are renumbered.
+    // */
+
+    count = 0;
+
+    for (const auto &group : physicalGroups)
+    {
+
+        std::string groupName;
+        gmsh::model::getPhysicalName(group.first, group.second, groupName);
+
+        if (addedGroups.find(groupName) == addedGroups.end())
+        {
+            std::vector<int> entities;
+            gmsh::model::getEntitiesForPhysicalGroup(group.first, group.second, entities);
+
+            for (const auto &entity : entities)
+            {
+                std::vector<std::pair<int, int>> boundaries;
+                std::vector<std::pair<int, int>> dimTags = {{2, entity}};
+                gmsh::model::getBoundary(dimTags, boundaries);
+
+                if (groupName != "Host")
+                {
+                    writtenNodes.clear();
+                    count = 0;
+                    file << "*Nset, nset=" << groupName << std::endl;
+
+                    for (const auto boundary : boundaries)
+                    {
+                        std::vector<int> elementTypes;
+                        std::vector<std::vector<std::size_t>> elementTags, nodeTags;
+                        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+
+                        for (std::size_t i = 0; i < elementTypes.size(); i++)
+                        {
+                            for (const auto &node : nodeTags[i])
+                            {
+                                if (writtenNodes.find(node) == writtenNodes.end())
+                                {
+                                    file << node;
+                                    count++;
+                                    writtenNodes.insert(node);
+
+                                    if (count == nodesPerLine)
+                                    {
+                                        file << std::endl;
+                                        count = 0;
+                                    }
+                                    else
+                                        file << " ";
+                                }
+                            }
+                        }
+                    }
+
+                    if (count > 0 && count < nodesPerLine)
+                        file << std::endl;
+                    file << "*Elset, elset=" << groupName << std::endl;
+
+                    for (const auto boundary : boundaries)
+                    {
+                        std::vector<int> elementTypes;
+                        std::vector<std::vector<std::size_t>> elementTags, nodeTags;
+                        gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, boundary.first, boundary.second);
+
+                        bdElems++;
+                        file << bdElems << " ";
+                        writtenNodes.clear();
+
+                        for (std::size_t i = 0; i < elementTypes.size(); i++)
+                        {
+                            for (const auto &node : nodeTags[i])
+                            {
+                                if (writtenNodes.find(node) == writtenNodes.end())
+                                {
+                                    file << node << " ";
+                                    writtenNodes.insert(node);
+                                }
+                            }
+                        }
+                        file << std::endl;
+                    }
+                }
+            }
+        }
+    }
     // ********************************************************************************************************************
 
-    file << "*BOUNDARY" << std::endl;
+    // file << "*BOUNDARY" << std::endl;
 
-    for (auto *bc : boundaryConditions)
-    {
-        int dirichletOrNeumann = bc->getBType();
+    // for (auto *bc : boundaryConditions)
+    // {
+    //     int dirichletOrNeumann = bc->getBType();
 
-        if (dirichletOrNeumann == 0) // Dirichlet
-        {
-            for (auto dofValues : bc->getDOFValues())
-            {
-                file << bc->getEntityname() << " ";
-                file << dofValues.first << " " << dofValues.second;
-                file << std::endl;
-            }
-        }
-    }
+    //     if (dirichletOrNeumann == 0) // Dirichlet
+    //     {
+    //         for (auto dofValues : bc->getDOFValues())
+    //         {
+    //             file << bc->getEntityname() << " ";
+    //             file << dofValues.first << " " << dofValues.second;
+    //             file << std::endl;
+    //         }
+    //     }
+    // }
 
-    file << "*CLOAD" << std::endl;
+    // file << "*CLOAD" << std::endl;
 
-    for (auto *bc : boundaryConditions)
-    {
-        int dirichletOrNeumann = bc->getBType();
+    // for (auto *bc : boundaryConditions)
+    // {
+    //     int dirichletOrNeumann = bc->getBType();
 
-        if (dirichletOrNeumann == 1) // Neumann
-        {
-            for (auto dofValues : bc->getDOFValues())
-            {
-                file << bc->getEntityname() << " ";
-                file << dofValues.first << " " << dofValues.second;
-                file << std::endl;
-            }
-        }
-    }
+    //     if (dirichletOrNeumann == 1) // Neumann
+    //     {
+    //         for (auto dofValues : bc->getDOFValues())
+    //         {
+    //             file << bc->getEntityname() << " ";
+    //             file << dofValues.first << " " << dofValues.second;
+    //             file << std::endl;
+    //         }
+    //     }
+    // }
 
     file << "*END" << std::endl;
     file.close();
@@ -472,9 +486,6 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     for (auto planeSurface : planeSurfaces)
     {
         int surfaceTag = gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1}, -1);
-
-        std::cout << "Tag da superfície criada: " << surfaceTag << std::endl;
-
         planeSurface->setEntityName("PlaneSurface_" + std::to_string(planeSurface->getIndex() + 1));
         gmsh::model::occ::synchronize();
     }
@@ -483,6 +494,12 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
 
     gmsh::model::occ::removeAllDuplicates();
     gmsh::model::occ::synchronize();
+
+    for (auto line : lines)
+    {
+        gmsh::model::addPhysicalGroup(1, {line->getIndex() + 1}, -1, "Boundary_" + std::to_string(line->getIndex() + 1));
+        // std::cout << "Boundary_" + std::to_string(line->getIndex() + 1) << ", of dimension: 1, and tag: " << line->getIndex() + 1 << std::endl;
+    }
 
     for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
     {

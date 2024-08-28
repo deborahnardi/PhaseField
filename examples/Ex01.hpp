@@ -1,6 +1,7 @@
 std::string projectName = "rock_mesh1";
 Geometry *geo1 = new Geometry(projectName);
 Solid *solid1 = new Solid(projectName);
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -40,6 +41,6 @@ factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X, 0.}, {Y, 0.}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 10.}}));
 
-geo1->InitializeGmshAPI();
+geo1->InitializeGmshAPI(visualizeMesh);
 
-solid1->readGeometry(projectName + ".mir");
+// solid1->readGeometry(projectName + ".mir");
