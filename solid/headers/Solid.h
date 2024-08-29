@@ -42,4 +42,6 @@ public:
     void setElements(const std::vector<Solid2D *> &_elements) { elements = _elements; }
 
     void readGeometry(const std::string &_filename);
+    void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
+    void renumberNodesIndexes(std::vector<Node *> &_nodes);
 };

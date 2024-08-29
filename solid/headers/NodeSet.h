@@ -22,4 +22,5 @@ public:
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
     void setNode(const int &_index, Node *_node) { nodes[_index] = _node; }
 
+    void addCondition(BoundaryType _bType, DOFType _dofType, double _value);
 };

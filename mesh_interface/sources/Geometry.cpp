@@ -16,7 +16,7 @@ Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double 
 Line *Geometry::addLine(const std::vector<Point *> &_points)
 {
     Line *line = new Line(_points, lines.size());
-    line->setEntityName("Line_" + std::to_string(line->getIndex() + 1));
+    line->setEntityName("Boundary_" + std::to_string(line->getIndex() + 1));
     lines.push_back(line);
     return line;
 }
@@ -271,11 +271,11 @@ void Geometry::writeMeshInfo()
                 if (coordsPoints[2 * i].first == firstNodeCoords[0] && coordsPoints[2 * i].second == firstNodeCoords[1] && coordsPoints[2 * i + 1].first == lastNodeCoords[0] && coordsPoints[2 * i + 1].second == lastNodeCoords[1])
                 {
                     // Line is on this boundary
-                    std::cout << "Boundary: " << groupName << ", Line: " << 2 * i / 2 << std::endl;
+                    std::cout << "Boundary: " << groupName << ", Line: " << (2 * i / 2) + 1 << std::endl;
                     std::cout << "----------------------------------" << std::endl;
                     count = 0;
                     writtenNodes.clear();
-                    file << "*Nset, nset=" << "Boundary_" + std::to_string(2 * i / 2) << std::endl;
+                    file << "*Nset, nset=" << "Boundary_" + std::to_string((2 * i / 2) + 1) << std::endl;
                     addedGroups.insert(groupName);
 
                     for (std::size_t i = 0; i < elementTypes.size(); i++)
@@ -300,7 +300,7 @@ void Geometry::writeMeshInfo()
                         file << std::endl;
                     }
 
-                    file << "*Elset, elset=" << "Boundary_" + std::to_string((2 * i / 2)) << std::endl;
+                    file << "*Elset, elset=" << "Boundary_" + std::to_string((2 * i / 2) + 1) << std::endl;
 
                     for (std::size_t i = 0; i < elementTypes.size(); i++)
                     {
@@ -420,39 +420,39 @@ void Geometry::writeMeshInfo()
     }
     // ********************************************************************************************************************
 
-    // file << "*BOUNDARY" << std::endl;
+    file << "*BOUNDARY" << std::endl;
 
-    // for (auto *bc : boundaryConditions)
-    // {
-    //     int dirichletOrNeumann = bc->getBType();
+    for (auto *bc : boundaryConditions)
+    {
+        int dirichletOrNeumann = bc->getBType();
 
-    //     if (dirichletOrNeumann == 0) // Dirichlet
-    //     {
-    //         for (auto dofValues : bc->getDOFValues())
-    //         {
-    //             file << bc->getEntityname() << " ";
-    //             file << dofValues.first << " " << dofValues.second;
-    //             file << std::endl;
-    //         }
-    //     }
-    // }
+        if (dirichletOrNeumann == 0) // Dirichlet
+        {
+            for (auto dofValues : bc->getDOFValues())
+            {
+                file << bc->getEntityname() << " ";
+                file << dofValues.first << " " << dofValues.second;
+                file << std::endl;
+            }
+        }
+    }
 
-    // file << "*CLOAD" << std::endl;
+    file << "*CLOAD" << std::endl;
 
-    // for (auto *bc : boundaryConditions)
-    // {
-    //     int dirichletOrNeumann = bc->getBType();
+    for (auto *bc : boundaryConditions)
+    {
+        int dirichletOrNeumann = bc->getBType();
 
-    //     if (dirichletOrNeumann == 1) // Neumann
-    //     {
-    //         for (auto dofValues : bc->getDOFValues())
-    //         {
-    //             file << bc->getEntityname() << " ";
-    //             file << dofValues.first << " " << dofValues.second;
-    //             file << std::endl;
-    //         }
-    //     }
-    // }
+        if (dirichletOrNeumann == 1) // Neumann
+        {
+            for (auto dofValues : bc->getDOFValues())
+            {
+                file << bc->getEntityname() << " ";
+                file << dofValues.first << " " << dofValues.second;
+                file << std::endl;
+            }
+        }
+    }
 
     file << "*END" << std::endl;
     file.close();

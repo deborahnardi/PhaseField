@@ -16,6 +16,31 @@ std::vector<std::string> split(std::string str, char delim)
     return results;
 }
 
+void Solid::removeNonDiscritizedNodes(std::vector<Node *> &_nodes)
+{
+    /*
+    remove_if :: (where it begins, where it ends, condition)
+    lambda function :: [](const Node *node) { return node->getIsDiscritized() == false; } :: [](input parameters) { return output; }
+    lambda function iterates over the vector of nodes and returns the nodes that are not discretized
+    ! :: inverts the condition, if getIsDiscritized() == true, ! makes it false for the remove_if function, so it is not removed;
+    on the other hand, if getIsDiscritized() == false, ! makes it true for the remove_if function, so it is removed
+    */
+    auto newEnd = std::remove_if(_nodes.begin(), _nodes.end(),
+                                 [](const Node *node)
+                                 { return !node->getIsDiscritized(); });
+    _nodes.erase(newEnd, _nodes.end());
+}
+
+void Solid::renumberNodesIndexes(std::vector<Node *> &_nodes)
+{
+    /*
+    [&] :: captures all variables by reference, this is necessary for lambda function to access the variables and modify them
+    */
+    int newIndex = 0;
+    std::for_each(_nodes.begin(), _nodes.end(), [&](Node *node)
+                  { node->setIndex(newIndex++); });
+}
+
 void Solid::readGeometry(const std::string &_filename)
 {
     MPI_Barrier(PETSC_COMM_WORLD);
@@ -71,6 +96,7 @@ void Solid::readGeometry(const std::string &_filename)
 
         for (auto node : elemNodes) // Adding DOFs to the nodes
         {
+            node->setIsDiscritized();
             node->addDOF(new DOF(X));
             node->addDOF(new DOF(Y));
         }
@@ -150,10 +176,11 @@ void Solid::readGeometry(const std::string &_filename)
                 }
 
                 flagElem = true;
-                boundaryElements.push_back(new BoundaryElement(boundaryElements.size() + 1, elemConnectivity));
+                boundaryElements.push_back(new BoundaryElement(boundaryElements.size(), elemConnectivity));
                 elemSets.push_back(elements.back());
                 for (auto node : elemConnectivity)
                 {
+                    node->setIsDiscritized();
                     node->addDOF(new DOF(X));
                     node->addDOF(new DOF(Y));
                 }
@@ -161,6 +188,9 @@ void Solid::readGeometry(const std::string &_filename)
             }
         }
     }
+
+    removeNonDiscritizedNodes(nodes);
+    renumberNodesIndexes(nodes);
 
     numBoundaryElements = boundaryElements.size();
     std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
@@ -191,9 +221,9 @@ void Solid::readGeometry(const std::string &_filename)
             int value = std::stoi(result[2]);
             BoundaryType bdType = DIRICHLET;
 
-            for (auto be : boundaryElements)
-                if (entityName == be->getEntityName())
-                    be->addCondition(bdType, static_cast<DOFType>(dof), value);
+            for (auto nSet : nodeSets)
+                if(entityName == nSet->getName())
+                    nSet->addCondition(bdType, static_cast<DOFType>(dof), value);
         }
     }
 

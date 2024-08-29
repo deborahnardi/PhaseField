@@ -47,8 +47,6 @@ public:
     std::string getEntityName() const { return "Boundary_" + std::to_string(index); }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
-
-    void addCondition(BoundaryType _bType, DOFType _dofType, double _value);
 };
 
 class Solid2D : public Element
