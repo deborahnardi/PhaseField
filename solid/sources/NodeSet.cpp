@@ -16,11 +16,13 @@ void NodeSet::addCondition(BoundaryType _bType, DOFType _dofType, double _value)
                 {
                     dof->setDirichlet();
                     dof->setDirichletValue(_value);
+                    // std::cout << "Node: " << node->getIndex() + 1 << " DOF: " << dof->getDOFType() << " Value: " << _value << std::endl;
                 }
                 else if (_bType == NEUMANN)
                 {
                     dof->setNeumann();
                     dof->setNeumannValue(_value);
+                    // std::cout << "Node: " << node->getIndex() + 1 << " DOF: " << dof->getDOFType() << " Value: " << _value << std::endl;
                 }
                 dofVec.push_back(dof);
             }

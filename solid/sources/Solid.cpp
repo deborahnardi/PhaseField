@@ -68,7 +68,7 @@ void Solid::readGeometry(const std::string &_filename)
 
     numNodes = nodes.size();
 
-    std::cout << "There are: " << numNodes << " nodes" << std::endl;
+    // std::cout << "There are: " << numNodes << " nodes" << std::endl;
     std::string currentName;
 
     for (; std::getline(file, line);)
@@ -102,7 +102,7 @@ void Solid::readGeometry(const std::string &_filename)
         }
     }
 
-    std::cout << "There are: " << elements.size() << " 2D elements" << std::endl;
+    // std::cout << "There are: " << elements.size() << " 2D elements" << std::endl;
 
     num2DElements = elements.size();
 
@@ -193,7 +193,7 @@ void Solid::readGeometry(const std::string &_filename)
     renumberNodesIndexes(nodes);
 
     numBoundaryElements = boundaryElements.size();
-    std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
+    // std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
 
     //***** SETTING DOFs
 
@@ -205,7 +205,7 @@ void Solid::readGeometry(const std::string &_filename)
             globalDOFs.push_back(dof); // Adding the DOF to the global DOF vector
         }
 
-    std::cout << "There are: " << nDOFs << " global DOFs" << std::endl;
+    // std::cout << "There are: " << nDOFs << " global DOFs" << std::endl;
 
     for (; std::getline(file, line);)
     {
@@ -251,7 +251,12 @@ void Solid::readGeometry(const std::string &_filename)
         else if (dof->isNeumann())
             numNeumannDOFs++;
 
-    std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs" << std::endl;
-    std::cout << "There are: " << numNeumannDOFs << " Neumann DOFs" << std::endl;
+    // std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs" << std::endl;
+    // std::cout << "There are: " << numNeumannDOFs << " Neumann DOFs" << std::endl;
     file.close();
+
+    PetscPrintf(PETSC_COMM_WORLD, "Geometry read successfully!\n");
+    PetscPrintf(PETSC_COMM_WORLD, "Number of nodes: %d\n", numNodes);
+    PetscPrintf(PETSC_COMM_WORLD, "Number of 2D elements: %d\n", num2DElements);
+    PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", numBoundaryElements);
 }
