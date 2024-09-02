@@ -222,7 +222,7 @@ void Solid::readGeometry(const std::string &_filename)
             BoundaryType bdType = DIRICHLET;
 
             for (auto nSet : nodeSets)
-                if(entityName == nSet->getName())
+                if (entityName == nSet->getName())
                     nSet->addCondition(bdType, static_cast<DOFType>(dof), value);
         }
     }
@@ -239,16 +239,16 @@ void Solid::readGeometry(const std::string &_filename)
             int value = std::stoi(result[2]);
             BoundaryType bdType = NEUMANN;
 
-            for (auto be : boundaryElements)
-                if (entityName == be->getEntityName())
-                    be->addCondition(bdType, static_cast<DOFType>(dof), value);
+            for (auto nSet : nodeSets)
+                if (entityName == nSet->getName())
+                    nSet->addCondition(bdType, static_cast<DOFType>(dof), value);
         }
     }
 
     for (auto dof : globalDOFs)
         if (dof->isDirichlet())
             numDirichletDOFs++;
-        else
+        else if (dof->isNeumann())
             numNeumannDOFs++;
 
     std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs" << std::endl;
