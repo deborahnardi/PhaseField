@@ -1,8 +1,4 @@
-#include "../headers/Solid.h"
-
-Solid::Solid() {}
-Solid::Solid(const std::string _name) : name(_name) {}
-Solid::~Solid() {}
+#include "../headers/FEM.h"
 
 std::vector<std::string> split(std::string str, char delim)
 {
@@ -16,7 +12,7 @@ std::vector<std::string> split(std::string str, char delim)
     return results;
 }
 
-void Solid::removeNonDiscritizedNodes(std::vector<Node *> &_nodes)
+void FEM::removeNonDiscritizedNodes(std::vector<Node *> &_nodes)
 {
     /*
     remove_if :: (where it begins, where it ends, condition)
@@ -31,7 +27,7 @@ void Solid::removeNonDiscritizedNodes(std::vector<Node *> &_nodes)
     _nodes.erase(newEnd, _nodes.end());
 }
 
-void Solid::renumberNodesIndexes(std::vector<Node *> &_nodes)
+void FEM::renumberNodesIndexes(std::vector<Node *> &_nodes)
 {
     /*
     [&] :: captures all variables by reference, this is necessary for lambda function to access the variables and modify them
@@ -41,7 +37,7 @@ void Solid::renumberNodesIndexes(std::vector<Node *> &_nodes)
                   { node->setIndex(newIndex++); });
 }
 
-void Solid::readGeometry(const std::string &_filename)
+void FEM::readGeometry(const std::string &_filename)
 {
     MPI_Barrier(PETSC_COMM_WORLD);
     PetscPrintf(PETSC_COMM_WORLD, "Reading geometry from file: %s\n", _filename.c_str());

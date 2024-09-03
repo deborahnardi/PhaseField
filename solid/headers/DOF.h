@@ -5,7 +5,6 @@
 class DOF
 {
 private:
-    int index;
     DOFType type;
     double value;
     double vDirichlet = 0., vNeumann = 0.;
@@ -15,9 +14,6 @@ public:
     DOF();
     DOF(const DOFType &_type, const double &_value = 0.);
     ~DOF();
-
-    int setIndex() const { return index; }
-    void setIndex(const int &_index) { index = _index; }
 
     DOFType getDOFType() const { return type; }
     void setDOFType(const DOFType &_type) { type = _type; }
