@@ -17,18 +17,9 @@ void FEM::assembleProblem()
         elem->getContribution();
         MatrixXd Kelem = elem->getElemStiffnessMatrix();
 
-        int n1 = elem->getNode1()->getIndex();
-        int n2 = elem->getNode2()->getIndex();
-
-        for (int i = 0; i < 2; i++)
-        {
-            for (int j = 0; j < 2; j++)
-            {
-                K(2 * n1 + i, 2 * n1 + j) += Kelem(i, j);
-                K(2 * n1 + i, 2 * n2 + j) += Kelem(i, j + 2);
-                K(2 * n2 + i, 2 * n1 + j) += Kelem(i + 2, j);
-                K(2 * n2 + i, 2 * n2 + j) += Kelem(i + 2, j + 2);
-            }
-        }
+        for (int d = 0; d < dim; d++)
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                    K(2 * elem->getNode(i)->getIndex() + d, 2 * elem->getNode(j)->getIndex() + d) += Kelem(2 * i + d, 2 * j + d);
     }
 }

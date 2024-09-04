@@ -20,31 +20,26 @@
 #include "Surface.h"
 #include "PlaneSurface.h"
 #include "BoundaryCondition.h"
+#include "Material.h"
 
 #include "../../enumclass.hpp"
 
 class Geometry
 {
 private:
-    int dim;
-    int elpPoints = 5;
+    int dim, elemDim = 2;
     double edgeLength, meshSizeFactor = 1.0;
-    double xc, yc, xo, yo, xm, ym, xa, ya, xb, yb, maxX = 0, minX = 0, maxY = 0, minY = 0;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
-    double **ellipseCoordinates;
     std::string name;
-    std::vector<int> linesIndexes;
-    std::vector<int> tags, ellipseArcs, ellipseCurves, ellipseSurfaces;
-    std::vector<std::pair<int, int>> entities;
-    std::vector<std::size_t> nodeTags;
-    std::vector<double> nodeCoords, nodeParams;
-    std::vector<int> elemTypes;
-    std::vector<std::vector<std::size_t>> elemTags, elemNodeTags;
+    std::vector<int> linesIndexes, transfiniteLineDivs;
+    std::vector<int> ellipseArcs, ellipseCurves, ellipseSurfaces;
     std::vector<Point *> points;
     std::vector<Line *> lines;
+    std::vector<Line *> transfiniteLines;
     std::vector<LineLoop *> lineLoops;
     std::vector<PlaneSurface *> planeSurfaces;
     std::vector<Inclusion *> inclusions;
+    std::vector<Material *> materials;
     std::vector<MeshFactor *> meshFactors;
     std::vector<BoundaryCondition *> boundaryConditions;
     MeshAlgorithm algorithm;
@@ -56,15 +51,17 @@ public:
 
     double getEdgeLength() const { return edgeLength; }
     MeshAlgorithm getAlgorithm() const { return algorithm; }
-    int getDimention() const { return dim; }
+    int getDimension() const { return dim; }
+    int getElemDimension() const { return elemDim; }
     double getMeshSizeFactor() const { return meshSizeFactor; }
 
-    void setDimention(const int &_dim) { dim = _dim; }
+    void setDimension(const int &_dim) { dim = _dim; }
+    void setElemDimension(const int &_elemDim) { elemDim = _elemDim; }
     void setEdgeLength(const double &_edgeLength) { edgeLength = _edgeLength; }
     void setAlgorithm(const MeshAlgorithm &_algorithm) { algorithm = _algorithm; }
     void setMeshSizeFactor(const double &_meshSizeFactor) { meshSizeFactor = _meshSizeFactor; }
 
-    Point *addPoint(const std::vector<double> &_coordinates, const double &_lc);
+    Point *addPoint(const std::vector<double> &_coordinates, const double &_lc = 0.);
     Line *addLine(const std::vector<Point *> &_points);
     LineLoop *addLineLoop(const std::vector<Line *> &_lines);
     PlaneSurface *addPlaneSurface(LineLoop *_lineLoop);
@@ -72,8 +69,11 @@ public:
     MeshFactor *addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize);
     BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
     BoundaryCondition *addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
+    Material *addMaterial(const double &_E, const double &_nu = 0., const PlaneAnalysis &_plane = PLANE_STRESS);
+    void addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression = 1.0);
 
     void InitializeGmshAPI(const bool &showInterface = false);
     void generateInclusions();
-    void writeMeshInfo();
+    void writeMeshInfo1D();
+    void writeMeshInfo2D();
 };

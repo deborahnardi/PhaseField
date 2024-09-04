@@ -1,7 +1,7 @@
 std::string projectName = "rock_mesh1";
 Geometry *geo1 = new Geometry(projectName);
-FEM *fea = new FEM(projectName);
-bool visualizeMesh = false;
+FEM *solid1 = new FEM(projectName);
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -15,13 +15,13 @@ std::vector<BoundaryCondition *> boundaryConditions;
 
 geo1->setEdgeLength(1000.);
 geo1->setAlgorithm(DELAUNAY);
-geo1->setDimention(2);
+geo1->setDimension(2);
 geo1->setMeshSizeFactor(2.0);
 
-points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.));
-points.push_back(geo1->addPoint({geo1->getEdgeLength(), 0.0, 0.0}, 0.));
-points.push_back(geo1->addPoint({geo1->getEdgeLength(), geo1->getEdgeLength(), 0.0}, 0.));
-points.push_back(geo1->addPoint({0.0, geo1->getEdgeLength(), 0.0}, 0.));
+points.push_back(geo1->addPoint({0.0, 0.0, 0.0}));
+points.push_back(geo1->addPoint({geo1->getEdgeLength(), 0.0, 0.0}));
+points.push_back(geo1->addPoint({geo1->getEdgeLength(), geo1->getEdgeLength(), 0.0}));
+points.push_back(geo1->addPoint({0.0, geo1->getEdgeLength(), 0.0}));
 
 lines.push_back(geo1->addLine({points[0], points[1]}));
 lines.push_back(geo1->addLine({points[1], points[2]}));
@@ -43,4 +43,4 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 
 
 geo1->InitializeGmshAPI(visualizeMesh);
 
-fea->readGeometry(projectName + ".mir");
+solid1->readGeometry(projectName + ".mir");

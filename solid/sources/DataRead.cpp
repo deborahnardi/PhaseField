@@ -52,7 +52,14 @@ void FEM::readGeometry(const std::string &_filename)
     {
         // != std::string::nos -> It is used to indicate that a search or operation has failed. For example, if you use the find function to search for a substring and the substring is not found, find returns std::string::npos to indicate this failure.
         if (line.find("*Element") != std::string::npos) // If the line contains the string "*Element"
+        {
+            std::vector<std::string> result = split(line, ',');        // Split the line by the character ','
+            const auto &lastString = result.back();                    // Get the last string from the vector
+            std::vector<std::string> result2 = split(lastString, '='); // Split the last string by the character '='
+            const auto lastString2 = result2.back();                   // Get the last string from the vector
+            abaqusElementType = lastString2;                           // Set the elementType to the last string
             break;
+        }
 
         int index;
         std::vector<double> coords(3);
@@ -62,10 +69,16 @@ void FEM::readGeometry(const std::string &_filename)
         nodes.push_back(new Node(index - 1, coords));
     }
 
-    numNodes = nodes.size();
+    if (abaqusElementType == "CPS3")
+        readGeometryCPS3(file);
+    else if (abaqusElementType == "T3D2")
+        readGeometryT3D2(file);
+}
 
-    // std::cout << "There are: " << numNodes << " nodes" << std::endl;
+void FEM::readGeometryCPS3(std::ifstream &file)
+{
     std::string currentName;
+    std::string line;
 
     for (; std::getline(file, line);)
     {
@@ -188,6 +201,7 @@ void FEM::readGeometry(const std::string &_filename)
     removeNonDiscritizedNodes(nodes);
     renumberNodesIndexes(nodes);
 
+    numNodes = nodes.size();
     numBoundaryElements = boundaryElements.size();
     // std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
 
@@ -197,7 +211,8 @@ void FEM::readGeometry(const std::string &_filename)
     for (auto node : nodes)
         for (auto dof : node->getDOFs())
         {
-            dof->setIndex(nDOFs++);    // Correspondent index in the global DOF vector
+            dof->setIndex(nDOFs++); // Correspondent index in the global DOF vector
+            // std::cout << "Node index: " << node->getIndex() << " DOF index: " << dof->getIndex() << std::endl;
             globalDOFs.push_back(dof); // Adding the DOF to the global DOF vector
         }
 
@@ -253,6 +268,40 @@ void FEM::readGeometry(const std::string &_filename)
 
     PetscPrintf(PETSC_COMM_WORLD, "Geometry read successfully!\n");
     PetscPrintf(PETSC_COMM_WORLD, "Number of nodes: %d\n", numNodes);
+    PetscPrintf(PETSC_COMM_WORLD, "Number of global DOFs: %d\n", nDOFs);
     PetscPrintf(PETSC_COMM_WORLD, "Number of 2D elements: %d\n", num2DElements);
     PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", numBoundaryElements);
+}
+
+void FEM::readGeometryT3D2(std::ifstream &file)
+{
+    std::string line;
+    std::vector<Node *> connec;
+
+    for (; std::getline(file, line);)
+    {
+        if (line.find("*") != std::string::npos)
+        {
+            std::cout << "The code has found the string: " << line << std::endl;
+            break;
+        }
+
+        connec.clear();
+        std::vector<std::string> result = split(line, ' ');
+
+        int index = std::stoi(result[0]);
+        Node *node1 = nodes[std::stoi(result[1]) - 1];
+        Node *node2 = nodes[std::stoi(result[2]) - 1];
+
+        trussElements.push_back(new Truss(index - 1, node1, node2));
+
+        // for (int i = 1; i < result.size(); i++)
+        // {
+        //     int index = std::stoi(result[i]);
+        //     connec.push_back(nodes[index - 1]);
+        // }
+
+        // trussElements.push_back(new Truss(trussElements.size(), connec));
+    }
+    file.close();
 }

@@ -61,10 +61,11 @@ private:
     double length, area, theta;
     Material *material;
     MatrixXd localStiffnessMatrix, rotationMatrix, K;
+    Node *node1, *node2;
 
 public:
     Truss();
-    Truss(const int &index, const double &_area, Node *_node1, Node *_node2, Material *_material);
+    Truss(const int &index, Node *_node1, Node *_node2);
     ~Truss();
 
     int getIndex() const { return index; }
@@ -89,7 +90,7 @@ public:
     void setRotationMatrix(const MatrixXd &_rotationMatrix) { rotationMatrix = _rotationMatrix; }
     void setElemStiffnessMatrix(const MatrixXd &_K) { K = _K; }
 
-    void getContribution() override {};
+    void getContribution() override;
 };
 
 class Solid2D : public Element

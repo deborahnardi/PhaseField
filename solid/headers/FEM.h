@@ -18,7 +18,7 @@
 class FEM
 {
 private:
-    std::string name, nSetName, elSetName;
+    std::string name, nSetName, elSetName, abaqusElementType;
     std::string filename;
     int numNodes, num2DElements, numBoundaryElements = 0, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0;
     int problemDimension;
@@ -47,6 +47,8 @@ public:
     void setElements(const std::vector<Solid2D *> &_elements) { elements = _elements; }
 
     void readGeometry(const std::string &_filename);
+    void readGeometryCPS3(std::ifstream &file);
+    void readGeometryT3D2(std::ifstream &file);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
 

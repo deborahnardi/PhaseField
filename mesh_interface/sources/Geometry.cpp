@@ -8,6 +8,7 @@ Geometry::~Geometry() {}
 Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double &_lc)
 {
     Point *point = new Point(_coordinates, _lc, points.size());
+    point->setEntityName("Point_" + std::to_string(point->getIndex() + 1));
     points.push_back(point);
 
     return point;
@@ -44,6 +45,22 @@ Inclusion *Geometry::addInclusion(const double &_a, const double &_b, const doub
     return incl;
 }
 
+Material *Geometry::addMaterial(const double &_E, const double &_nu, const PlaneAnalysis &_plane)
+{
+    Material *material = new Material(materials.size(), _E, _nu, _plane);
+    materials.push_back(material);
+    return material;
+}
+
+void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression)
+{
+    for (int i = 0; i < _lines.size(); i++)
+    {
+        transfiniteLines.push_back(_lines[i]);
+        transfiniteLineDivs.push_back(_divisions);
+    }
+}
+
 MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize)
 
 {
@@ -70,14 +87,16 @@ BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryTy
 BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
 {
     BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType);
-    std::string lineName = line->getEntityName();
-    std::cout << "Boundary Condition has been added to: " << lineName << std::endl;
     boundaryConditions.push_back(bCondition);
     return bCondition;
 }
 
 void Geometry::generateInclusions()
 {
+    double xc, yc, xo, yo, xm, ym, xa, ya, xb, yb;
+    double **ellipseCoordinates;
+    std::vector<int> tags;
+    int elpPoints = 5; // Number of points in the ellipse
     tags.resize(elpPoints);
 
     ellipseCoordinates = new double *[elpPoints];
@@ -155,30 +174,24 @@ void Geometry::generateInclusions()
     delete[] ellipseCoordinates;
 };
 
-void Geometry::writeMeshInfo()
+void Geometry::writeMeshInfo1D()
 {
-    // dim = -1 -> all dimensions; tag = -1 -> all tags (get all nodes), includeBoundary = true, returnParametricCoordinates = false
+    std::vector<std::size_t> nodeTags;
+    std::vector<double> nodeCoords, nodeParams;
+    std::vector<int> elemTypes;
+    std::vector<std::vector<std::size_t>> elemTags, elemNodeTags;
 
     gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, -1, -1, true, false);
-
     gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
-
-    std::vector<int> lineElems;
-    std::vector<std::vector<std::size_t>> lineElemsTags, lineElemsNodeTags;
-
-    gmsh::model::mesh::getElements(lineElems, lineElemsTags, lineElemsNodeTags, 1, -1);
     PetscPrintf(PETSC_COMM_WORLD, "Generating Output file...\n");
 
     std::string fileName = name + ".mir";
-    std::ofstream file(fileName.c_str());
+    std::ofstream file(fileName.c_str()); // Opening the output file
 
     file << "*Heading" << std::endl;
     file << fileName.c_str() << std::endl;
 
     std::set<int> writtenNodes;
-
-    // ********************************************************************************************************************
-
     file << "*NODES" << std::endl;
     std::vector<std::tuple<int, double, double, double>> auxPrintNodes;
 
@@ -203,9 +216,105 @@ void Geometry::writeMeshInfo()
         file << std::get<0>(auxPrintNodes[i]) << " " << std::get<1>(auxPrintNodes[i]) << " " << std::get<2>(auxPrintNodes[i]) << " " << std::get<3>(auxPrintNodes[i]) << std::endl;
 
     auxPrintNodes.clear();
+
     // ********************************************************************************************************************
 
-    file << "*Element, type=CPS3, 2DElements_Only" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
+    file << "*Element, type=T3D2" << std::endl; // T3D2 -> linear truss element
+
+    for (int i = 0; i < elemTypes.size(); i++)
+    {
+        if (elemTypes[i] == 1) // 1 -> truss element
+        {
+            for (int j = 0; j < elemTags[i].size(); j++)
+                file << j + 1 << " " << elemNodeTags[i][2 * j] << " " << elemNodeTags[i][2 * j + 1] << std::endl;
+        }
+    }
+
+    file << "*BOUNDARY" << std::endl;
+
+    for (auto *bc : boundaryConditions)
+    {
+        int dirichletOrNeumann = bc->getBType();
+
+        if (dirichletOrNeumann == 0) // Dirichlet
+        {
+            for (auto dofValues : bc->getDOFValues())
+            {
+                file << bc->getEntityname() << " ";
+                file << dofValues.first << " " << dofValues.second;
+                file << std::endl;
+            }
+        }
+    }
+
+    file << "*CLOAD" << std::endl;
+
+    for (auto *bc : boundaryConditions)
+    {
+        int dirichletOrNeumann = bc->getBType();
+
+        if (dirichletOrNeumann == 1) // Neumann
+        {
+            for (auto dofValues : bc->getDOFValues())
+            {
+                file << bc->getEntityname() << " ";
+                file << dofValues.first << " " << dofValues.second;
+                file << std::endl;
+            }
+        }
+    }
+
+    file << "*END" << std::endl;
+    file.close();
+}
+
+void Geometry::writeMeshInfo2D()
+{
+    std::vector<std::pair<int, int>> entities;
+    std::vector<std::size_t> nodeTags;
+    std::vector<double> nodeCoords, nodeParams;
+    std::vector<int> elemTypes;
+    std::vector<std::vector<std::size_t>> elemTags, elemNodeTags;
+    gmsh::model::mesh::getNodes(nodeTags, nodeCoords, nodeParams, -1, -1, true, false);
+
+    gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
+
+    std::vector<int> lineElems;
+    std::vector<std::vector<std::size_t>> lineElemsTags, lineElemsNodeTags;
+
+    gmsh::model::mesh::getElements(lineElems, lineElemsTags, lineElemsNodeTags, 1, -1);
+    PetscPrintf(PETSC_COMM_WORLD, "Generating Output file...\n");
+
+    std::string fileName = name + ".mir";
+    std::ofstream file(fileName.c_str());
+
+    file << "*Heading" << std::endl;
+    file << fileName.c_str() << std::endl;
+
+    std::set<int> writtenNodes;
+
+    file << "*NODES" << std::endl;
+    std::vector<std::tuple<int, double, double, double>> auxPrintNodes;
+
+    for (int i = 0; i < nodeTags.size(); i++)
+    {
+        if (writtenNodes.find(nodeTags[i]) == writtenNodes.end())
+        {
+            auxPrintNodes.push_back(std::make_tuple(nodeTags[i], nodeCoords[3 * i], nodeCoords[3 * i + 1], nodeCoords[3 * i + 2]));
+            writtenNodes.insert(nodeTags[i]);
+        }
+    }
+
+    std::sort(auxPrintNodes.begin(), auxPrintNodes.end(), [](const std::tuple<int, double, double, double> &a, const std::tuple<int, double, double, double> &b)
+              { return std::get<0>(a) < std::get<0>(b); });
+
+    for (int i = 0; i < auxPrintNodes.size(); i++)
+        file << std::get<0>(auxPrintNodes[i]) << " " << std::get<1>(auxPrintNodes[i]) << " " << std::get<2>(auxPrintNodes[i]) << " " << std::get<3>(auxPrintNodes[i]) << std::endl;
+
+    auxPrintNodes.clear();
+    // ********************************************************************************************************************
+
+    file << "*Element, type=CPS3" << std::endl; // CPS3 -> 3-node triangular element, for gmsh -> elemType = 2
 
     for (int i = 0; i < elemTypes.size(); i++)
     {
@@ -490,10 +599,12 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
         gmsh::model::occ::synchronize();
     }
 
-    generateInclusions();
-
-    gmsh::model::occ::removeAllDuplicates();
-    gmsh::model::occ::synchronize();
+    if (inclusions.size() > 0)
+    {
+        generateInclusions();
+        gmsh::model::occ::removeAllDuplicates();
+        gmsh::model::occ::synchronize();
+    }
 
     for (auto line : lines)
     {
@@ -501,57 +612,70 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
         // std::cout << "Boundary_" + std::to_string(line->getIndex() + 1) << ", of dimension: 1, and tag: " << line->getIndex() + 1 << std::endl;
     }
 
-    for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
+    for (auto l : transfiniteLines)
     {
-        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "Inclusion_" + std::to_string(i + 1));
         gmsh::model::occ::synchronize();
+        gmsh::model::mesh::setTransfiniteCurve(l->getIndex() + 1, transfiniteLineDivs[l->getIndex()] + 1, "Progression");
+        gmsh::model::occ::synchronize();
+    }
 
-        if (i == ellipseSurfaces.size() - 1)
+    if (inclusions.size() > 0)
+    {
+        for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
         {
-            gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Host"); // Contain all the boundaries
+            gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "Inclusion_" + std::to_string(i + 1));
             gmsh::model::occ::synchronize();
+
+            if (i == ellipseSurfaces.size() - 1)
+            {
+                gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Host"); // Contain all the boundaries
+                gmsh::model::occ::synchronize();
+            }
         }
     }
 
-    // Global definition for mesh size generation
-    gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
-    gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);      // Defines the maximum mesh size
-    gmsh::option::setNumber("Mesh.MeshSizeFactor", getMeshSizeFactor()); // Defines the mesh size factor
+    if (meshFactors.size() > 0)
+    {
+        // Global definition for mesh size generation
+        gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
+        gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);      // Defines the maximum mesh size
+        gmsh::option::setNumber("Mesh.MeshSizeFactor", getMeshSizeFactor()); // Defines the mesh size factor
 
-    // 0 -> Deactivated; 1 -> Activated
-    gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
-    gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
-    gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
+        // 0 -> Deactivated; 1 -> Activated
+        gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
+        gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
+        gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
 
-    // Refining the region around and inside the inclusions
-    gmsh::model::mesh::field::add("Distance", 1);
-    std::vector<double> doubleEllipseSurfaces(ellipseSurfaces.begin(), ellipseSurfaces.end());
-    gmsh::model::mesh::field::setNumbers(1, "SurfacesList", doubleEllipseSurfaces); // List of surfaces to be refined
-    gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);                       // Number of points to be sampled
+        // Refining the region around and inside the inclusions
+        gmsh::model::mesh::field::add("Distance", 1);
+        std::vector<double> doubleEllipseSurfaces(ellipseSurfaces.begin(), ellipseSurfaces.end());
+        gmsh::model::mesh::field::setNumbers(1, "SurfacesList", doubleEllipseSurfaces); // List of surfaces to be refined
+        gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);                       // Number of points to be sampled
 
-    // We then define a `Threshold' field, which uses the return value of the
-    // `Distance' field 1 in order to define a simple change in element size
-    // depending on the computed distances
-    //
-    // SizeMax -                     /------------------
-    //                              /
-    //                             /
-    //                            /
-    // SizeMin -o----------------/
-    //          |                |    |
-    //        Point         DistMin  DistMax
+        // We then define a `Threshold' field, which uses the return value of the
+        // `Distance' field 1 in order to define a simple change in element size
+        // depending on the computed distances
+        //
+        // SizeMax -                     /------------------
+        //                              /
+        //                             /
+        //                            /
+        // SizeMin -o----------------/
+        //          |                |    |
+        //        Point         DistMin  DistMax
 
-    gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
-    gmsh::model::mesh::field::setNumber(2, "IField", 1);
-    gmsh::model::mesh::field::setNumber(2, "SizeMin", meshMinSizeIncl);
-    gmsh::model::mesh::field::setNumber(2, "SizeMax", meshMaxSizeIncl);
-    gmsh::model::mesh::field::setNumber(2, "DistMin", meshDistMin);
-    gmsh::model::mesh::field::setNumber(2, "DistMax", meshDistMax);
+        gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
+        gmsh::model::mesh::field::setNumber(2, "IField", 1);
+        gmsh::model::mesh::field::setNumber(2, "SizeMin", meshMinSizeIncl);
+        gmsh::model::mesh::field::setNumber(2, "SizeMax", meshMaxSizeIncl);
+        gmsh::model::mesh::field::setNumber(2, "DistMin", meshDistMin);
+        gmsh::model::mesh::field::setNumber(2, "DistMax", meshDistMax);
 
-    gmsh::model::mesh::field::add("Min", 3);
-    gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
+        gmsh::model::mesh::field::add("Min", 3);
+        gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
 
-    gmsh::model::mesh::field::setAsBackgroundMesh(3);
+        gmsh::model::mesh::field::setAsBackgroundMesh(3);
+    }
 
     gmsh::option::setNumber("Mesh.Algorithm", algorithm);
 
@@ -559,7 +683,10 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::mesh::generate(dim);
     gmsh::write(name + ".inp");
 
-    writeMeshInfo();
+    if (elemDim == 2)
+        writeMeshInfo2D();
+    else
+        writeMeshInfo1D();
 
     if (showInterface)
         gmsh::fltk::run();

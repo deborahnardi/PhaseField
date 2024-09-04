@@ -40,9 +40,8 @@ enum PlaneAnalysis
 
 enum ElementType
 {
-    TRUSS_ELEMENT = 0,
-    PLANE_ELEMENT = 1,
-    SHELL_ELEMENT = 2,
-    SOLID_ELEMENT = 3,
+    BOUNDARY_ELEMENT = 0,
+    TRUSS_ELEMENT = 1,
+    SOLID_ELEMENT = 2,
     NONE = -1
 };
