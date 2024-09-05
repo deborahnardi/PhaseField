@@ -21,7 +21,6 @@ public:
 
     // Getters
     int getIndex() const { return index; }
-
     std::vector<Point *> getPoints() const { return points; }
     Point *getPoint(const int &_index) const { return points[_index]; }
     std::string getEntityName() const { return entityName; }

@@ -27,6 +27,7 @@
 class Geometry
 {
 private:
+    bool hasInclusions;
     int dim, elemDim = 2;
     double edgeLength, meshSizeFactor = 1.0;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
@@ -34,7 +35,7 @@ private:
     std::vector<int> linesIndexes, transfiniteLineDivs;
     std::vector<int> ellipseArcs, ellipseCurves, ellipseSurfaces;
     std::vector<Point *> points;
-    std::vector<Line *> lines;
+    std::vector<Line *> lines, bdLines;
     std::vector<Line *> transfiniteLines;
     std::vector<LineLoop *> lineLoops;
     std::vector<PlaneSurface *> planeSurfaces;
@@ -46,7 +47,7 @@ private:
 
 public:
     Geometry();
-    Geometry(const std::string _name);
+    Geometry(const std::string _name, const bool &_hasInclusions = false);
     ~Geometry();
 
     double getEdgeLength() const { return edgeLength; }
@@ -69,11 +70,13 @@ public:
     MeshFactor *addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize);
     BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
     BoundaryCondition *addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
-    Material *addMaterial(const double &_E, const double &_nu = 0., const PlaneAnalysis &_plane = PLANE_STRESS);
+    Material *addMaterial(const double &_E, const double &_nu, const ApplyMaterial &_whereToApply = ALL, const PlaneAnalysis &_plane = PLANE_STRESS, const std::string &_matType = "ELASTIC");
     void addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression = 1.0);
 
     void InitializeGmshAPI(const bool &showInterface = false);
+    void setMeshInclusionProperties();
     void generateInclusions();
-    void writeMeshInfo1D();
-    void writeMeshInfo2D();
+    void writeMeshInfo();
+    // void writeMeshInfo1D();
+    // void writeMeshInfo2D();
 };

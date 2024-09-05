@@ -1,7 +1,7 @@
 std::string projectName = "rock_mesh1";
-Geometry *geo1 = new Geometry(projectName);
+Geometry *geo1 = new Geometry(projectName, true); // true if has inclusions
 FEM *solid1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -12,11 +12,15 @@ std::vector<Line *> lines;
 std::vector<LineLoop *> lineLoops;
 std::vector<PlaneSurface *> planeSurfaces;
 std::vector<BoundaryCondition *> boundaryConditions;
+std::vector<Material *> materials;
 
 geo1->setEdgeLength(1000.);
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(2);
-geo1->setMeshSizeFactor(2.0);
+geo1->setMeshSizeFactor(5.0);
+
+materials.push_back(geo1->addMaterial(1000., 0.2));
+materials.push_back(geo1->addMaterial(2000., 0.2, INCLUSIONS));
 
 points.push_back(geo1->addPoint({0.0, 0.0, 0.0}));
 points.push_back(geo1->addPoint({geo1->getEdgeLength(), 0.0, 0.0}));
@@ -43,4 +47,4 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 
 
 geo1->InitializeGmshAPI(visualizeMesh);
 
-solid1->readGeometry(projectName + ".mir");
+// solid1->readGeometry(projectName + ".mir");

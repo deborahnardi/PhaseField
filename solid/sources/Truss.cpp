@@ -34,7 +34,7 @@ void Truss::getContribution()
         0, 0, 0, 0,
         -1, 0, 1, 0,
         0, 0, 0, 0;
-    localStiffnessMatrix *= material->getYoungModulus() * area / length;
+    // localStiffnessMatrix *= material->getYoungModulus() * area / length;
 
     rotationMatrix = MatrixXd::Zero(4, 4);
     rotationMatrix << cos(theta), sin(theta), 0, 0,

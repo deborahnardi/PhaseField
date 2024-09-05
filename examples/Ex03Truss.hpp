@@ -31,4 +31,4 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(points[1], NEUMANN, {{Y,
 geo1->addMaterial(E);
 
 geo1->InitializeGmshAPI(visualizeMesh);
-truss->readGeometry(projectName + ".mir");
+// truss->readGeometry(projectName + ".mir");

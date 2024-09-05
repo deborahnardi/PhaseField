@@ -2,7 +2,6 @@
 
 #include "Node.h"
 #include "DenseEigen.h"
-#include "Material.h"
 
 class Element
 {
@@ -59,7 +58,6 @@ class Truss : public Element
 {
 private:
     double length, area, theta;
-    Material *material;
     MatrixXd localStiffnessMatrix, rotationMatrix, K;
     Node *node1, *node2;
 
@@ -75,7 +73,6 @@ public:
     Node *getNode1() const { return elemConnectivity[0]; }
     Node *getNode2() const { return elemConnectivity[1]; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
-    Material *getMaterial() const { return material; }
     MatrixXd getLocalStiffnessMatrix() const { return localStiffnessMatrix; }
     MatrixXd getRotationMatrix() const { return rotationMatrix; }
     MatrixXd getElemStiffnessMatrix() const { return K; }
@@ -84,7 +81,6 @@ public:
     void setLength(const double &_length) { length = _length; }
     void setArea(const double &_area) { area = _area; }
     void setTheta(const double &_theta) { theta = _theta; }
-    void setMaterial(Material *_material) { material = _material; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
     void setLocalStiffnessMatrix(const MatrixXd &_localStiffnessMatrix) { localStiffnessMatrix = _localStiffnessMatrix; }
     void setRotationMatrix(const MatrixXd &_rotationMatrix) { rotationMatrix = _rotationMatrix; }
