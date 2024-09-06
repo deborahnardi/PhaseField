@@ -1,7 +1,7 @@
 std::string projectName = "rock_mesh1";
 Geometry *geo1 = new Geometry(projectName, true); // true if has inclusions
 FEM *solid1 = new FEM(projectName);
-bool visualizeMesh = false;
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -14,10 +14,10 @@ std::vector<PlaneSurface *> planeSurfaces;
 std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
-geo1->setEdgeLength(1000.);
+// geo1->setEdgeLength(1000.);
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(2);
-geo1->setMeshSizeFactor(5.0);
+geo1->setMeshSizeFactor(1.0);
 
 materials.push_back(geo1->addMaterial(1000., 0.2));
 materials.push_back(geo1->addMaterial(2000., 0.2, INCLUSIONS));

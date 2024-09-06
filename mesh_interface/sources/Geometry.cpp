@@ -8,7 +8,7 @@ Geometry::~Geometry() {}
 Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double &_lc)
 {
     Point *point = new Point(_coordinates, _lc, points.size());
-    point->setEntityName("Point_" + std::to_string(point->getIndex() + 1));
+    point->setEntityName("p" + std::to_string(point->getIndex() + 1));
     points.push_back(point);
 
     return point;
@@ -17,9 +17,7 @@ Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double 
 Line *Geometry::addLine(const std::vector<Point *> &_points)
 {
     Line *line = new Line(_points, lines.size());
-    Line *bdLine = new Line(_points, bdLines.size());
-    bdLines.push_back(bdLine);
-    line->setEntityName("Boundary_" + std::to_string(line->getIndex() + 1));
+    line->setEntityName("l" + std::to_string(line->getIndex() + 1));
     lines.push_back(line);
     return line;
 }
@@ -27,7 +25,7 @@ Line *Geometry::addLine(const std::vector<Point *> &_points)
 LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 {
     LineLoop *lineLoop = new LineLoop(_lines, lineLoops.size());
-    lineLoop->setEntityName("LineLoop_" + std::to_string(lineLoop->getIndex() + 1));
+    lineLoop->setEntityName("ll" + std::to_string(lineLoop->getIndex() + 1));
     lineLoops.push_back(lineLoop);
     return lineLoop;
 }
@@ -35,7 +33,7 @@ LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 PlaneSurface *Geometry::addPlaneSurface(LineLoop *_lineLoop)
 {
     PlaneSurface *planeSurface = new PlaneSurface(_lineLoop, planeSurfaces.size());
-    planeSurface->setEntityName("PlaneSurface_" + std::to_string(planeSurface->getIndex() + 1));
+    planeSurface->setEntityName("s" + std::to_string(planeSurface->getIndex() + 1));
     planeSurfaces.push_back(planeSurface);
     return planeSurface;
 }
@@ -52,15 +50,12 @@ Material *Geometry::addMaterial(const double &_E, const double &_nu, const Apply
     Material *material = new Material(materials.size(), _nu, _E, _plane, _matType, _whereToApply);
     materials.push_back(material);
     return material;
-}
+} // remove where to apply
 
 void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression)
 {
     for (int i = 0; i < _lines.size(); i++)
-    {
-        transfiniteLines.push_back(_lines[i]);
-        transfiniteLineDivs.push_back(_divisions);
-    }
+        transfiniteLines.push_back(std::make_pair(_lines[i], _divisions));
 }
 
 MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize)
@@ -202,17 +197,17 @@ void Geometry::setMeshInclusionProperties()
         gmsh::model::occ::synchronize();
     }
 
-    for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
-    {
-        gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "DomainInc_" + std::to_string(i + 1));
-        gmsh::model::occ::synchronize();
+    // for (int i = 0; i < ellipseSurfaces.size() + 1; i++)
+    // {
+    //     gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i]}, -1, "DomainInc_" + std::to_string(i + 1));
+    //     gmsh::model::occ::synchronize();
 
-        // if (i == ellipseSurfaces.size() - 1)
-        // {
-        //     gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Host"); // Contain all the boundaries
-        //     gmsh::model::occ::synchronize();
-        // }
-    }
+    //     // if (i == ellipseSurfaces.size() - 1)
+    //     // {
+    //     //     gmsh::model::addPhysicalGroup(2, {ellipseSurfaces[i] + 1}, -1, "Host"); // Contain all the boundaries
+    //     //     gmsh::model::occ::synchronize();
+    //     // }
+    // }
 
     // Global definition for mesh size generation
     gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
@@ -261,10 +256,18 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::add(name);
 
     for (auto point : points)
-        gmsh::model::occ::addPoint(point->getX(), point->getY(), point->getZ());
+    {
+        gmsh::model::occ::addPoint(point->getX(), point->getY(), point->getZ(), point->getLC(), point->getIndex() + 1);
+        gmsh::model::occ::synchronize();
+        gmsh::model::addPhysicalGroup(0, {point->getIndex() + 1}, -1, "p" + std::to_string(point->getIndex() + 1));
+    }
 
     for (auto line : lines)
+    {
         gmsh::model::occ::addLine(line->getPoint(0)->getIndex() + 1, line->getPoint(1)->getIndex() + 1, line->getIndex() + 1);
+        gmsh::model::occ::synchronize();
+        gmsh::model::addPhysicalGroup(1, {line->getIndex() + 1}, -1, "l" + std::to_string(line->getIndex() + 1));
+    }
 
     for (auto lineLoop : lineLoops)
     {
@@ -273,39 +276,30 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
             linesIndexes.push_back(lineLoop->getLine(i)->getIndex() + 1);
 
         gmsh::model::occ::addCurveLoop(linesIndexes, lineLoop->getIndex() + 1);
-        lineLoop->setEntityName("LineLoop_" + std::to_string(lineLoop->getIndex() + 1));
+        gmsh::model::occ::synchronize();
+        lineLoop->setEntityName("ll" + std::to_string(lineLoop->getIndex() + 1));
         gmsh::model::occ::synchronize();
     }
 
     for (auto planeSurface : planeSurfaces)
     {
         int surfaceTag = gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1}, -1);
-        planeSurface->setEntityName("PlaneSurface_" + std::to_string(planeSurface->getIndex() + 1));
-        // gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, "Surface_" + std::to_string(planeSurface->getIndex() + 1));
         gmsh::model::occ::synchronize();
+        planeSurface->setEntityName("s" + std::to_string(planeSurface->getIndex() + 1));
+        gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, "s" + std::to_string(planeSurface->getIndex() + 1));
     }
 
     for (auto l : transfiniteLines)
     {
-        gmsh::model::occ::synchronize();
-        gmsh::model::mesh::setTransfiniteCurve(l->getIndex() + 1, transfiniteLineDivs[l->getIndex()] + 1, "Progression");
-        gmsh::model::occ::synchronize();
-    }
-
-    for (auto line : lines)
-    {
-        gmsh::model::addPhysicalGroup(1, {line->getIndex() + 1}, line->getIndex() + 1, "Boundary_" + std::to_string(line->getIndex() + 1));
+        gmsh::model::mesh::setTransfiniteCurve(l.first->getIndex() + 1, l.second + 1, "Progression");
         gmsh::model::occ::synchronize();
     }
-
-    if (hasInclusions == true)
-        setMeshInclusionProperties();
 
     gmsh::option::setNumber("Mesh.Algorithm", algorithm);
 
     gmsh::model::occ::synchronize();
     gmsh::model::mesh::generate(dim);
-    gmsh::write(name + ".inp");
+    gmsh::write(name + ".msh");
 
     writeMeshInfo();
 
@@ -313,7 +307,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     //     writeMeshInfo2D();
     // else
     //     writeMeshInfo1D();
-
+    gmsh::write("modelo_oc.geo_unrolled");
     if (showInterface)
         gmsh::fltk::run();
 

@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 #include <petscsnes.h>
 #include <petscksp.h>
@@ -32,11 +33,11 @@ private:
     double edgeLength, meshSizeFactor = 1.0;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
     std::string name;
-    std::vector<int> linesIndexes, transfiniteLineDivs;
+    std::vector<int> linesIndexes;
     std::vector<int> ellipseArcs, ellipseCurves, ellipseSurfaces;
     std::vector<Point *> points;
-    std::vector<Line *> lines, bdLines;
-    std::vector<Line *> transfiniteLines;
+    std::vector<Line *> lines;
+    std::vector<std::pair<Line *, int>> transfiniteLines;
     std::vector<LineLoop *> lineLoops;
     std::vector<PlaneSurface *> planeSurfaces;
     std::vector<Inclusion *> inclusions;
@@ -61,6 +62,7 @@ public:
     void setEdgeLength(const double &_edgeLength) { edgeLength = _edgeLength; }
     void setAlgorithm(const MeshAlgorithm &_algorithm) { algorithm = _algorithm; }
     void setMeshSizeFactor(const double &_meshSizeFactor) { meshSizeFactor = _meshSizeFactor; }
+    void setMeshSizeFactors(const double &_minSize, const double &_maxSize, const double &_factor) {};
 
     Point *addPoint(const std::vector<double> &_coordinates, const double &_lc = 0.);
     Line *addLine(const std::vector<Point *> &_points);
