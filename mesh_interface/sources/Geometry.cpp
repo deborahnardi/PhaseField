@@ -22,28 +22,45 @@ Line *Geometry::addLine(const std::vector<Point *> &_points)
     return line;
 }
 
+Circle *Geometry::addCircle(const std::vector<Point *> &_points)
+{
+    Circle *c = new Circle(_points, lines.size());
+    c->setEntityName("c" + std::to_string(c->getIndex() + 1));
+    circles.push_back(c);
+    return c;
+}
+
 LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 {
-    LineLoop *lineLoop = new LineLoop(_lines, lineLoops.size());
-    lineLoop->setEntityName("ll" + std::to_string(lineLoop->getIndex() + 1));
+    LineLoop *lineLoop = new LineLoop(_lines, wires.size());
+    lineLoop->setEntityName("w" + std::to_string(lineLoop->getIndex() + 1));
+    wires.push_back(lineLoop);
     lineLoops.push_back(lineLoop);
     return lineLoop;
 }
 
-PlaneSurface *Geometry::addPlaneSurface(LineLoop *_lineLoop)
+PlaneSurface *Geometry::addPlaneSurface(std::vector<int> _wireTags)
 {
-    PlaneSurface *planeSurface = new PlaneSurface(_lineLoop, planeSurfaces.size());
+    PlaneSurface *planeSurface = new PlaneSurface(_wireTags, planeSurfaces.size());
     planeSurface->setEntityName("s" + std::to_string(planeSurface->getIndex() + 1));
     planeSurfaces.push_back(planeSurface);
     return planeSurface;
 }
 
-// Inclusion *Geometry::addInclusion(const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc)
-// {
-//     Inclusion *incl = new Inclusion(inclusions.size(), _a, _b, _alpha, _xc, _yc, _lc);
-//     inclusions.push_back(incl);
-//     return incl;
-// }
+Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::vector<double> center, const double _lc)
+{
+    // Generating coordinates for the ellipse
+    double aaux = _a * edgeLength;
+    double baux = _b * aaux;
+    double rad = _alpha * M_PI / 180.;                     // Converting to radians
+    std::vector<double> xAxis = {cos(rad), sin(rad), 0.0}; // Positive anticlockwise
+
+    Ellipse *el = new Ellipse(center, _a, _b, wires.size(), 0., 2 * M_PI, xAxis);
+    el->setEntityName("w" + std::to_string(el->getIndex() + 1));
+    wires.push_back(el);
+    ellipses.push_back(el);
+    return el;
+}
 
 Material *Geometry::addMaterial(const double &_E, const double &_nu, const PlaneAnalysis &_plane)
 {
@@ -276,15 +293,26 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
         for (int i = 0; i < lineLoop->getNumLines(); i++)
             linesIndexes.push_back(lineLoop->getLine(i)->getIndex() + 1);
 
-        gmsh::model::occ::addCurveLoop(linesIndexes, lineLoop->getIndex() + 1);
+        gmsh::model::occ::addWire(linesIndexes, lineLoop->getIndex() + 1);
         gmsh::model::occ::synchronize();
-        lineLoop->setEntityName("ll" + std::to_string(lineLoop->getIndex() + 1));
+    }
+
+    for (auto e : ellipses)
+    {
+        gmsh::model::occ::addEllipse(e->getCenter()[0], e->getCenter()[1], e->getCenter()[2], e->getR1(), e->getR2(), -1, e->getAngle1(), e->getAngle2(), {0., 0., 1.}, e->getXAxis());
         gmsh::model::occ::synchronize();
+        int wireTag = e->getIndex() + 1 + lines.size();
+        gmsh::model::occ::addWire({wireTag}, e->getIndex() + 1);
+        gmsh::model::addPhysicalGroup(1, {e->getIndex() + 1}, -1, "e" + std::to_string(e->getIndex() + 1));
     }
 
     for (auto planeSurface : planeSurfaces)
     {
-        int surfaceTag = gmsh::model::occ::addPlaneSurface({planeSurface->getLineLoop()->getIndex() + 1}, -1);
+        std::vector<int> wireTagsAux;
+        for (auto l : planeSurface->getWireTag())
+            wireTagsAux.push_back(l + 1);
+
+        int surfaceTag = gmsh::model::occ::addPlaneSurface(wireTagsAux, -1);
         gmsh::model::occ::synchronize();
         planeSurface->setEntityName("s" + std::to_string(planeSurface->getIndex() + 1));
         gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, "s" + std::to_string(planeSurface->getIndex() + 1));
@@ -301,7 +329,7 @@ void Geometry::InitializeGmshAPI(const bool &showInterface)
     gmsh::model::mesh::generate(dim);
     gmsh::write(name + ".msh");
 
-    writeMeshInfo();
+    // writeMeshInfo();
 
     // if (elemDim == 2)
     //     writeMeshInfo2D();
