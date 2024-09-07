@@ -14,7 +14,7 @@
 
 #include <gmsh.h>
 
-#include "Inclusion.h"
+#include "Ellipse.h"
 #include "Point.h"
 #include "Line.h"
 #include "LineLoop.h"
@@ -28,7 +28,6 @@
 class Geometry
 {
 private:
-    bool hasInclusions;
     int dim, elemDim = 2;
     double edgeLength, meshSizeFactor = 1.0;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
@@ -40,7 +39,7 @@ private:
     std::vector<std::pair<Line *, int>> transfiniteLines;
     std::vector<LineLoop *> lineLoops;
     std::vector<PlaneSurface *> planeSurfaces;
-    std::vector<Inclusion *> inclusions;
+    // std::vector<Inclusion *> inclusions;
     std::vector<Material *> materials;
     std::vector<MeshFactor *> meshFactors;
     std::vector<BoundaryCondition *> boundaryConditions;
@@ -48,7 +47,7 @@ private:
 
 public:
     Geometry();
-    Geometry(const std::string _name, const bool &_hasInclusions = false);
+    Geometry(const std::string _name);
     ~Geometry();
 
     double getEdgeLength() const { return edgeLength; }
@@ -68,17 +67,15 @@ public:
     Line *addLine(const std::vector<Point *> &_points);
     LineLoop *addLineLoop(const std::vector<Line *> &_lines);
     PlaneSurface *addPlaneSurface(LineLoop *_lineLoop);
-    Inclusion *addInclusion(const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
+    // Inclusion *addInclusion(const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
     MeshFactor *addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize);
     BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
     BoundaryCondition *addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
-    Material *addMaterial(const double &_E, const double &_nu, const ApplyMaterial &_whereToApply = ALL, const PlaneAnalysis &_plane = PLANE_STRESS, const std::string &_matType = "ELASTIC");
+    Material *addMaterial(const double &_E, const double &_nu, const PlaneAnalysis &_plane = PLANE_STRESS);
     void addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression = 1.0);
 
     void InitializeGmshAPI(const bool &showInterface = false);
-    void setMeshInclusionProperties();
-    void generateInclusions();
+    // void setMeshInclusionProperties();
+    // void generateInclusions();
     void writeMeshInfo();
-    // void writeMeshInfo1D();
-    // void writeMeshInfo2D();
 };

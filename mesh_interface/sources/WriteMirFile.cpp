@@ -11,8 +11,15 @@ void Geometry::writeMeshInfo()
     file << "*HEADING" << std::endl;
     file << fileName.c_str() << std::endl;
 
+    file << "*MATERIALS" << std::endl;
+    file << materials.size() << std::endl;
+
+    for (auto m : materials)
+        file << m->getIndex() + 1 << " " << m->getPoisson() << " " << m->getYoungModulus() << " " << m->getPlaneAnalysis() << std::endl;
+
     gmsh::vectorpair physicalGroups;
     gmsh::model::getPhysicalGroups(physicalGroups);
+    std::unordered_map<std::string, int> physicalEntities;
 
     file << "*PHYSICALNAMES" << std::endl;
     file << physicalGroups.size() << std::endl;
@@ -21,7 +28,23 @@ void Geometry::writeMeshInfo()
     {
         std::string groupName;
         gmsh::model::getPhysicalName(group.first, group.second, groupName);
-        file << group.first << " " << group.second << " " << groupName << std::endl;
+        file << group.first << " " << group.second << " " << groupName << " ";
+        physicalEntities[groupName] = group.second;
+
+        if (groupName[0] == 'l')
+        {
+            for (auto l : lines)
+                if ((l->getEntityName() == groupName) && (l->getMaterial() != nullptr))
+                    file << l->getMaterial()->getIndex() + 1 << " " << l->getArea() << " " << l->getElementType() << " ";
+        }
+        else if (groupName[0] == 's')
+        {
+
+            for (auto s : planeSurfaces)
+                if ((s->getEntityName() == groupName) && (s->getMaterial() != nullptr))
+                    file << s->getMaterial()->getIndex() + 1 << " " << s->getThickness() << " " << s->getElementType() << " ";
+        }
+        file << std::endl;
     }
 
     file << "*NODES" << std::endl;
@@ -75,23 +98,16 @@ void Geometry::writeMeshInfo()
     for (const auto e : elem)
         file << e << std::endl;
 
-    // // 1 -> 2-node line; 2 -> 3-node triangle; 15 -> 1-node point
-    // gmsh::model::mesh::getElements(elemTypes, elemTags, elemNodeTags, -1, -1);
+    file << "*BOUNDARY" << std::endl;
+    file << boundaryConditions.size() << std::endl;
 
-    // int numElem = 0;
-    // for (auto elemTags : elemTags)
-    //     numElem += elemTags.size();
-
-    // file << numElem << std::endl;
-
-    // for (int i = 0; i < elemTypes.size(); i++)
-    //     for (int j = 0; j < elemTags[i].size(); j++)
-    //     {
-    //         file << elemTypes[i] << " ";
-    //         for (int k = 0; k < numElNodes[elemTypes[i] - 1]; k++)
-    //             file << elemNodeTags[i][numElNodes[elemTypes[i] - 1] * j + k] << " ";
-    //         file << std::endl;
-    //     }
+    for (auto bc : boundaryConditions) // In physicalEntities[bc->getEntityname()] we give the physical name and the function returns the physical tag
+    {
+        file << bc->getIndex() << " " << bc->getBType() << " " << physicalEntities[bc->getEntityname()] << " ";
+        for (auto dofValues : bc->getDOFValues())
+            file << dofValues.first << " " << dofValues.second << " ";
+        file << std::endl;
+    }
 }
 
 // void Geometry::writeMeshInfo()

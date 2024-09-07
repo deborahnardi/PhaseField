@@ -7,16 +7,16 @@ This class creates the Input Data header file for providing the necessary input 
 #include <vector>
 #include <iostream>
 
-class Inclusion
+class Ellipse
 {
 protected:
     int index;
     double a, b, alpha, xc, yc, lc;
 
 public:
-    Inclusion();
-    Inclusion(int _index, const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
-    ~Inclusion();
+    Ellipse();
+    Ellipse(int _index, const double &_a, const double &_b, const double &_alpha, const double &_xc, const double &_yc, const double &_lc);
+    ~Ellipse();
 
     int getIndex() const { return index; }
     double getA() const { return a; }
@@ -43,7 +43,7 @@ public:
     meshMaxSize: Maximum mesh size
 */
 
-class MeshFactor : public Inclusion
+class MeshFactor : public Ellipse
 {
 private:
     int index;

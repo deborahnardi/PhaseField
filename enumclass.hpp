@@ -45,9 +45,3 @@ enum ElementType
     SOLID_ELEMENT = 2,
     NONE = -1
 };
-
-enum ApplyMaterial
-{
-    ALL = 0,
-    INCLUSIONS = 1
-};
