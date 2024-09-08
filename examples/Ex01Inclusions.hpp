@@ -40,10 +40,12 @@ inclusions.push_back(geo1->addInclusion(0.05, 0.20, 60., 0.75, 0.75, 0.));
 inclusions.push_back(geo1->addInclusion(0.10, 0.10, 90., 0.50, 0.50, 0.));
 inclusions.push_back(geo1->addInclusion(0.10, 0.10, 45., 0.25, 0.75, 0.));
 
-factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
+// factors.push_back(geo1->addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1));
 
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X, 0.}, {Y, 0.}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 10.}}));
+
+geo1->setGlobalMeshSize(1e-4, 1e-1);
 
 geo1->InitializeGmshAPI(visualizeMesh);
 

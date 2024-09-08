@@ -61,6 +61,8 @@
     "condition_variable": "cpp",
     "list": "cpp",
     "regex": "cpp",
-    "mutex": "cpp"
+    "mutex": "cpp",
+    "*.lxx": "cpp",
+    "iomanip": "cpp"
   }
 }

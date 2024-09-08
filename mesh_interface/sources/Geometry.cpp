@@ -52,7 +52,8 @@ LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 
     gmsh::model::occ::addWire(linesIndexes, lineLoop->getIndex() + 1);
     gmsh::model::occ::synchronize();
-
+    gmsh::model::addPhysicalGroup(1, {lineLoop->getIndex() + 1}, -1, lineLoop->getEntityName());
+    gmsh::model::occ::synchronize();
     return lineLoop;
 }
 
@@ -74,17 +75,18 @@ PlaneSurface *Geometry::addPlaneSurface(std::vector<Wire *> _wire)
     return planeSurface;
 }
 
-Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::vector<double> center, const double _lc)
+Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::vector<double> center)
 {
     // Generating coordinates for the ellipse
-    double rad = _alpha * M_PI / 180.;                     // Converting to radians
+    double rad = (_alpha + 90.) * M_PI / 180.;             // Converting to radians
     std::vector<double> xAxis = {cos(rad), sin(rad), 0.0}; // Positive anticlockwise
+    double baux = _a * _b;
 
-    Ellipse *el = new Ellipse(center, _a, _b, wires.size(), 0., 2 * M_PI, xAxis);
+    Ellipse *el = new Ellipse(center, _a, baux, wires.size(), 0., 2 * M_PI, xAxis);
     wires.push_back(el);
     ellipses.push_back(el);
 
-    gmsh::model::occ::addEllipse(center[0], center[1], center[2], _a, _b, -1, 0., 2. * M_PI, {0., 0., 1.}, xAxis);
+    gmsh::model::occ::addEllipse(center[0], center[1], center[2], _a, baux, -1, 0., 2. * M_PI, {0., 0., 1.}, xAxis);
     gmsh::model::occ::synchronize();
     int curveTag = ellipses.size() + lines.size();
     gmsh::model::occ::addWire({curveTag}, el->getIndex() + 1);
@@ -104,14 +106,12 @@ void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &
 {
     for (int i = 0; i < _lines.size(); i++)
     {
-        transfiniteLines.push_back(std::make_pair(_lines[i], _divisions));
-
         gmsh::model::mesh::setTransfiniteCurve(_lines[i]->getIndex() + 1, _divisions + 1, "Progression");
         gmsh::model::occ::synchronize();
     }
 }
 
-// MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize)
+// MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize) addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1)
 
 // {
 //     MeshFactor *meshFac = new MeshFactor(meshFactors.size(), _meshMinFac, _meshMaxFac, _meshDistFac, _meshMinSize, _meshMaxSize);
@@ -141,61 +141,67 @@ BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType
     return bCondition;
 }
 
-// void Geometry::setMeshInclusionProperties()
-// {
+void Geometry::setGlobalMeshSize(double meshMinSizeGlobal, double meshMaxSizeGlobal, double meshSizeFactorGlobal)
+{
 
-//     // Global definition for mesh size generation
-//     gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
-//     gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);      // Defines the maximum mesh size
-//     gmsh::option::setNumber("Mesh.MeshSizeFactor", getMeshSizeFactor()); // Defines the mesh size factor
+    // Global definition for mesh size generation
+    gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);
+    gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);
+    gmsh::option::setNumber("Mesh.MeshSizeFactor", meshSizeFactorGlobal);
 
-//     // 0 -> Deactivated; 1 -> Activated
-//     gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
-//     gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
-//     gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
+    // 0 -> Deactivated; 1 -> Activated
+    gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
+    gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
+    gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
+}
 
-//     // Refining the region around and inside the inclusions
-//     gmsh::model::mesh::field::add("Distance", 1);
-//     std::vector<double> doubleEllipseSurfaces(ellipseSurfaces.begin(), ellipseSurfaces.end());
-//     gmsh::model::mesh::field::setNumbers(1, "SurfacesList", doubleEllipseSurfaces); // List of surfaces to be refined
-//     gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);                       // Number of points to be sampled
+void Geometry::setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _meshMinSizeIncl, double _meshMaxSizeIncl, double _meshDistMin, double _meshDistMax)
+{
+    std::vector<double> wireTags;
+    for (auto w : _elipseWires)
+        wireTags.push_back(w->getIndex() + 1);
 
-//     // We then define a `Threshold' field, which uses the return value of the
-//     // `Distance' field 1 in order to define a simple change in element size
-//     // depending on the computed distances
-//     //
-//     // SizeMax -                     /------------------
-//     //                              /
-//     //                             /
-//     //                            /
-//     // SizeMin -o----------------/
-//     //          |                |    |
-//     //        Point         DistMin  DistMax
+    // Refining the region around and inside the inclusions
+    gmsh::model::mesh::field::add("Distance", 1);
+    gmsh::model::mesh::field::setNumbers(1, "SurfacesList", wireTags); // List of surfaces to be refined
+    gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);          // Number of points to be sampled
 
-//     gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
-//     gmsh::model::mesh::field::setNumber(2, "IField", 1);
-//     gmsh::model::mesh::field::setNumber(2, "SizeMin", meshMinSizeIncl);
-//     gmsh::model::mesh::field::setNumber(2, "SizeMax", meshMaxSizeIncl);
-//     gmsh::model::mesh::field::setNumber(2, "DistMin", meshDistMin);
-//     gmsh::model::mesh::field::setNumber(2, "DistMax", meshDistMax);
+    // We then define a `Threshold' field, which uses the return value of the
+    // `Distance' field 1 in order to define a simple change in element size
+    // depending on the computed distances
+    //
+    // SizeMax -                     /------------------
+    //                              /
+    //                             /
+    //                            /
+    // SizeMin -o----------------/
+    //          |                |    |
+    //        Point         DistMin  DistMax
 
-//     gmsh::model::mesh::field::add("Min", 3);
-//     gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
+    gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
+    gmsh::model::mesh::field::setNumber(2, "IField", 1);
+    gmsh::model::mesh::field::setNumber(2, "SizeMin", _meshMinSizeIncl);
+    gmsh::model::mesh::field::setNumber(2, "SizeMax", _meshMaxSizeIncl);
+    gmsh::model::mesh::field::setNumber(2, "DistMin", _meshDistMin);
+    gmsh::model::mesh::field::setNumber(2, "DistMax", _meshDistMax);
 
-//     gmsh::model::mesh::field::setAsBackgroundMesh(3);
-// }
+    gmsh::model::mesh::field::add("Min", 3);
+    gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
 
-void Geometry::InitializeGmshAPI(const bool &showInterface)
+    gmsh::model::mesh::field::setAsBackgroundMesh(3);
+}
+
+void Geometry::GenerateMeshAPI(const bool &showInterface)
 {
     gmsh::option::setNumber("Mesh.Algorithm", algorithm);
     gmsh::model::occ::synchronize();
     gmsh::model::mesh::generate(dim);
-    // gmsh::write(name + ".msh");
+    gmsh::write(name + ".inp");
 
     writeMeshInfo();
     // (elemDim == 2) ? writeMeshInfo2D() : writeMeshInfo1D();
 
-    gmsh::write("modelo_oc.geo_unrolled");
+    // gmsh::write("modelo_oc.geo_unrolled");
     if (showInterface)
         gmsh::fltk::run();
 
