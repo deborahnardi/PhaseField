@@ -28,9 +28,9 @@ lines.push_back(geo1->addLine({points[1], points[2]}));
 lines.push_back(geo1->addLine({points[2], points[3]}));
 lines.push_back(geo1->addLine({points[3], points[0]}));
 
+lineLoops.push_back(geo1->addLineLoop({lines[0], lines[1], lines[2], lines[3]}));
 ellipses.push_back(geo1->addEllipse(0.5 * L, 0.25 * L, 30., {0.5, 0.5, 0.0}, 0.1));
 
-lineLoops.push_back(geo1->addLineLoop({lines[0], lines[1], lines[2], lines[3]}));
 planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[0], ellipses[0]}));
 planeSurfaces.push_back(geo1->addPlaneSurface({ellipses[0]}));
 

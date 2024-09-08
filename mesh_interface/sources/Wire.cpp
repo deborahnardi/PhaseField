@@ -2,7 +2,7 @@
 
 Wire::Wire() {}
 Wire::Wire(const int &_index)
-    : index(_index) {}
+    : index(_index), entityName("w" + std::to_string(index + 1)) {}
 Wire::~Wire() {}
 
 LineLoop::LineLoop() {}

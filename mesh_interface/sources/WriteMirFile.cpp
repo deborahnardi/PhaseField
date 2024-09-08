@@ -48,19 +48,14 @@ void Geometry::writeMeshInfo()
     }
 
     file << "*NODES" << std::endl;
+    std::vector<std::size_t> nodeTags;
+    std::vector<double> coord, parametricCoord;
+    gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord);
 
-    std::size_t numNodes;
-    gmsh::model::mesh::getMaxNodeTag(numNodes);
-    numNodes--;
+    std::size_t numNodes = nodeTags.size();
     file << numNodes << std::endl;
-
-    std::vector<double> nodeCoords, parametricCoord;
-    int dimNode, tagNode;
-    for (int i = 1; i < numNodes + 1; i++)
-    {
-        gmsh::model::mesh::getNode(i, nodeCoords, parametricCoord, dimNode, tagNode);
-        file << i << " " << nodeCoords[0] << " " << nodeCoords[1] << " " << nodeCoords[2] << std::endl;
-    }
+    for (int i = 0; i < numNodes; i++)
+        file << i + 1 << " " << coord[3 * i] << " " << coord[3 * i + 1] << " " << coord[3 * i + 2] << std::endl;
 
     file << "*ELEMENTS" << std::endl;
 

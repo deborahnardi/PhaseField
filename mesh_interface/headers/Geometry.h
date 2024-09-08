@@ -32,7 +32,6 @@ private:
     double edgeLength, meshSizeFactor = 1.0;
     double meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax, meshMinSizeGlobal, meshMaxSizeGlobal;
     std::string name;
-    std::vector<int> linesIndexes;
     std::vector<int> ellipseArcs, ellipseCurves, ellipseSurfaces;
     std::vector<Point *> points;
     std::vector<Line *> lines;

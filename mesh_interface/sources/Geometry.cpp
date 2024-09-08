@@ -1,15 +1,21 @@
 #include "../headers/Geometry.h"
 
 Geometry::Geometry() {}
-Geometry::Geometry(const std::string _name)
-    : name(_name) {}
+Geometry::Geometry(const std::string _name) : name(_name)
+{
+    gmsh::initialize();
+    gmsh::model::add(name);
+}
 Geometry::~Geometry() {}
 
 Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double &_lc)
 {
     Point *point = new Point(_coordinates, _lc, points.size());
-    point->setEntityName("p" + std::to_string(point->getIndex() + 1));
     points.push_back(point);
+
+    gmsh::model::occ::addPoint(_coordinates[0], _coordinates[1], _coordinates[2], _lc, point->getIndex() + 1);
+    gmsh::model::occ::synchronize();
+    gmsh::model::addPhysicalGroup(0, {point->getIndex() + 1}, -1, point->getEntityName());
 
     return point;
 }
@@ -17,8 +23,12 @@ Point *Geometry::addPoint(const std::vector<double> &_coordinates, const double 
 Line *Geometry::addLine(const std::vector<Point *> &_points)
 {
     Line *line = new Line(_points, lines.size());
-    line->setEntityName("l" + std::to_string(line->getIndex() + 1));
     lines.push_back(line);
+
+    gmsh::model::occ::addLine(line->getPoint(0)->getIndex() + 1, line->getPoint(1)->getIndex() + 1, line->getIndex() + 1);
+    gmsh::model::occ::synchronize();
+    gmsh::model::addPhysicalGroup(1, {line->getIndex() + 1}, -1, line->getEntityName());
+
     return line;
 }
 
@@ -33,20 +43,34 @@ Circle *Geometry::addCircle(const std::vector<Point *> &_points)
 LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 {
     LineLoop *lineLoop = new LineLoop(_lines, wires.size());
-    lineLoop->setEntityName("w" + std::to_string(lineLoop->getIndex() + 1));
     wires.push_back(lineLoop);
     lineLoops.push_back(lineLoop);
+
+    std::vector<int> linesIndexes;
+    for (auto l : _lines)
+        linesIndexes.push_back(l->getIndex() + 1);
+
+    gmsh::model::occ::addWire(linesIndexes, lineLoop->getIndex() + 1);
+    gmsh::model::occ::synchronize();
+
     return lineLoop;
 }
 
 PlaneSurface *Geometry::addPlaneSurface(std::vector<Wire *> _wire)
 {
-    std::vector<int> wireTags;
+    std::vector<int> wireTags, wireTagsAux;
     for (auto w : _wire)
+    {
         wireTags.push_back(w->getIndex());
+        wireTagsAux.push_back(w->getIndex() + 1);
+    }
     PlaneSurface *planeSurface = new PlaneSurface(wireTags, planeSurfaces.size());
-    planeSurface->setEntityName("s" + std::to_string(planeSurface->getIndex() + 1));
     planeSurfaces.push_back(planeSurface);
+
+    int surfaceTag = gmsh::model::occ::addPlaneSurface(wireTagsAux, -1);
+    gmsh::model::occ::synchronize();
+    gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, planeSurface->getEntityName());
+
     return planeSurface;
 }
 
@@ -57,9 +81,15 @@ Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::ve
     std::vector<double> xAxis = {cos(rad), sin(rad), 0.0}; // Positive anticlockwise
 
     Ellipse *el = new Ellipse(center, _a, _b, wires.size(), 0., 2 * M_PI, xAxis);
-    el->setEntityName("w" + std::to_string(el->getIndex() + 1));
     wires.push_back(el);
     ellipses.push_back(el);
+
+    gmsh::model::occ::addEllipse(center[0], center[1], center[2], _a, _b, -1, 0., 2. * M_PI, {0., 0., 1.}, xAxis);
+    gmsh::model::occ::synchronize();
+    int curveTag = ellipses.size() + lines.size();
+    gmsh::model::occ::addWire({curveTag}, el->getIndex() + 1);
+    gmsh::model::addPhysicalGroup(1, {el->getIndex() + 1}, -1, el->getEntityName());
+
     return el;
 }
 
@@ -73,7 +103,12 @@ Material *Geometry::addMaterial(const double &_E, const double &_nu, const Plane
 void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression)
 {
     for (int i = 0; i < _lines.size(); i++)
+    {
         transfiniteLines.push_back(std::make_pair(_lines[i], _divisions));
+
+        gmsh::model::mesh::setTransfiniteCurve(_lines[i]->getIndex() + 1, _divisions + 1, "Progression");
+        gmsh::model::occ::synchronize();
+    }
 }
 
 // MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize)
@@ -106,204 +141,59 @@ BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType
     return bCondition;
 }
 
-// void Geometry::generateInclusions()
+// void Geometry::setMeshInclusionProperties()
 // {
-//     double xc, yc, xo, yo, xm, ym, xa, ya, xb, yb;
-//     double **ellipseCoordinates;
-//     std::vector<int> tags;
-//     int elpPoints = 5; // Number of points in the ellipse
-//     tags.resize(elpPoints);
 
-//     ellipseCoordinates = new double *[elpPoints];
+//     // Global definition for mesh size generation
+//     gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
+//     gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);      // Defines the maximum mesh size
+//     gmsh::option::setNumber("Mesh.MeshSizeFactor", getMeshSizeFactor()); // Defines the mesh size factor
 
-//     for (int i = 0; i < elpPoints; i++)
-//         ellipseCoordinates[i] = new double[2];
+//     // 0 -> Deactivated; 1 -> Activated
+//     gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
+//     gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
+//     gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
 
-//     for (auto inclusion : inclusions)
-//     {
-//         // Generating coordinates for the ellipse
-//         double aaux = inclusion->getA() * edgeLength;
-//         double baux = inclusion->getB() * aaux;
-//         double rad = inclusion->getAlpha() * M_PI / 180.; // Converting to radians
+//     // Refining the region around and inside the inclusions
+//     gmsh::model::mesh::field::add("Distance", 1);
+//     std::vector<double> doubleEllipseSurfaces(ellipseSurfaces.begin(), ellipseSurfaces.end());
+//     gmsh::model::mesh::field::setNumbers(1, "SurfacesList", doubleEllipseSurfaces); // List of surfaces to be refined
+//     gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);                       // Number of points to be sampled
 
-//         xc = inclusion->getXc() * edgeLength;
-//         yc = inclusion->getYc() * edgeLength;
+//     // We then define a `Threshold' field, which uses the return value of the
+//     // `Distance' field 1 in order to define a simple change in element size
+//     // depending on the computed distances
+//     //
+//     // SizeMax -                     /------------------
+//     //                              /
+//     //                             /
+//     //                            /
+//     // SizeMin -o----------------/
+//     //          |                |    |
+//     //        Point         DistMin  DistMax
 
-//         xo = xc - aaux * sin(rad);
-//         yo = yc + aaux * cos(rad);
+//     gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
+//     gmsh::model::mesh::field::setNumber(2, "IField", 1);
+//     gmsh::model::mesh::field::setNumber(2, "SizeMin", meshMinSizeIncl);
+//     gmsh::model::mesh::field::setNumber(2, "SizeMax", meshMaxSizeIncl);
+//     gmsh::model::mesh::field::setNumber(2, "DistMin", meshDistMin);
+//     gmsh::model::mesh::field::setNumber(2, "DistMax", meshDistMax);
 
-//         xm = xc + aaux * sin(rad);
-//         ym = yc - aaux * cos(rad);
+//     gmsh::model::mesh::field::add("Min", 3);
+//     gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
 
-//         xa = xc + baux * cos(rad);
-//         ya = yc + baux * sin(rad);
-
-//         xb = xc - baux * cos(rad);
-//         yb = yc - baux * sin(rad);
-
-//         ellipseCoordinates[0][0] = xo;
-//         ellipseCoordinates[0][1] = yo;
-
-//         ellipseCoordinates[1][0] = xa;
-//         ellipseCoordinates[1][1] = ya;
-
-//         ellipseCoordinates[2][0] = xm;
-//         ellipseCoordinates[2][1] = ym;
-
-//         ellipseCoordinates[3][0] = xb;
-//         ellipseCoordinates[3][1] = yb;
-
-//         ellipseCoordinates[4][0] = xc;
-//         ellipseCoordinates[4][1] = yc;
-
-//         for (int i = 0; i < elpPoints; i++) // Each ellipse contains 5 points
-//         {
-//             Point *point = new Point({ellipseCoordinates[i][0], ellipseCoordinates[i][1], 0.0}, inclusion->getLc(), points.size());
-//             points.push_back(point);
-
-//             gmsh::model::occ::addPoint(point->getX(), point->getY(), point->getZ());
-
-//             tags[i] = point->getIndex() + 1;
-//         }
-
-//         for (int i = 0; i < 4; i++) // Each ellipse contains 4 arc lines
-//         {
-//             int centerTag = tags[4];
-//             int majorTag = tags[2];
-//             int startTag = tags[i];
-//             int endTag = tags[(i + 1) % 4]; // Cyclic form of the array
-
-//             int elp = gmsh::model::occ::addEllipseArc(startTag, centerTag, majorTag, endTag);
-//             ellipseArcs.push_back(elp);
-//             lines.push_back(new Line({points[startTag - 1], points[endTag - 1]}, lines.size()));
-//             lines[lines.size() - 1]->setEntityName("Inclusion_" + std::to_string(lines[lines.size() - 1]->getIndex() + 1));
-//         }
-
-//         int cInc = gmsh::model::occ::addCurveLoop({ellipseArcs[4 * inclusion->getIndex()], ellipseArcs[4 * inclusion->getIndex() + 1], ellipseArcs[4 * inclusion->getIndex() + 2], ellipseArcs[4 * inclusion->getIndex() + 3]}, lines.size() + ellipseCurves.size() + 1);
-//         lineLoops.push_back(new LineLoop({lines[lines.size() - 4], lines[lines.size() - 3], lines[lines.size() - 2], lines[lines.size() - 1]}, lineLoops.size()));
-//         ellipseCurves.push_back(lineLoops.size());
-
-//         int pInc = gmsh::model::occ::addPlaneSurface({cInc});
-//         ellipseSurfaces.push_back(pInc);
-
-//         gmsh::model::occ::synchronize();
-//     }
-
-// delete[] ellipseCoordinates;
+//     gmsh::model::mesh::field::setAsBackgroundMesh(3);
 // }
-//;
-
-void Geometry::setMeshInclusionProperties()
-{
-
-    // Global definition for mesh size generation
-    gmsh::option::setNumber("Mesh.MeshSizeMin", meshMinSizeGlobal);      // Defines the minimum mesh size
-    gmsh::option::setNumber("Mesh.MeshSizeMax", meshMaxSizeGlobal);      // Defines the maximum mesh size
-    gmsh::option::setNumber("Mesh.MeshSizeFactor", getMeshSizeFactor()); // Defines the mesh size factor
-
-    // 0 -> Deactivated; 1 -> Activated
-    gmsh::option::setNumber("Mesh.MeshSizeExtendFromBoundary", 0);
-    gmsh::option::setNumber("Mesh.MeshSizeFromPoints", 0);
-    gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
-
-    // Refining the region around and inside the inclusions
-    gmsh::model::mesh::field::add("Distance", 1);
-    std::vector<double> doubleEllipseSurfaces(ellipseSurfaces.begin(), ellipseSurfaces.end());
-    gmsh::model::mesh::field::setNumbers(1, "SurfacesList", doubleEllipseSurfaces); // List of surfaces to be refined
-    gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);                       // Number of points to be sampled
-
-    // We then define a `Threshold' field, which uses the return value of the
-    // `Distance' field 1 in order to define a simple change in element size
-    // depending on the computed distances
-    //
-    // SizeMax -                     /------------------
-    //                              /
-    //                             /
-    //                            /
-    // SizeMin -o----------------/
-    //          |                |    |
-    //        Point         DistMin  DistMax
-
-    gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
-    gmsh::model::mesh::field::setNumber(2, "IField", 1);
-    gmsh::model::mesh::field::setNumber(2, "SizeMin", meshMinSizeIncl);
-    gmsh::model::mesh::field::setNumber(2, "SizeMax", meshMaxSizeIncl);
-    gmsh::model::mesh::field::setNumber(2, "DistMin", meshDistMin);
-    gmsh::model::mesh::field::setNumber(2, "DistMax", meshDistMax);
-
-    gmsh::model::mesh::field::add("Min", 3);
-    gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
-
-    gmsh::model::mesh::field::setAsBackgroundMesh(3);
-}
 
 void Geometry::InitializeGmshAPI(const bool &showInterface)
 {
-    gmsh::initialize();
-    gmsh::model::add(name);
-
-    for (auto point : points)
-    {
-        gmsh::model::occ::addPoint(point->getX(), point->getY(), point->getZ(), point->getLC(), point->getIndex() + 1);
-        gmsh::model::occ::synchronize();
-        gmsh::model::addPhysicalGroup(0, {point->getIndex() + 1}, -1, "p" + std::to_string(point->getIndex() + 1));
-    }
-
-    for (auto line : lines)
-    {
-        gmsh::model::occ::addLine(line->getPoint(0)->getIndex() + 1, line->getPoint(1)->getIndex() + 1, line->getIndex() + 1);
-        gmsh::model::occ::synchronize();
-        gmsh::model::addPhysicalGroup(1, {line->getIndex() + 1}, -1, "l" + std::to_string(line->getIndex() + 1));
-    }
-
-    for (auto lineLoop : lineLoops)
-    {
-        linesIndexes.clear();
-        for (int i = 0; i < lineLoop->getNumLines(); i++)
-            linesIndexes.push_back(lineLoop->getLine(i)->getIndex() + 1);
-
-        gmsh::model::occ::addWire(linesIndexes, lineLoop->getIndex() + 1);
-        gmsh::model::occ::synchronize();
-    }
-
-    for (auto e : ellipses)
-    {
-        gmsh::model::occ::addEllipse(e->getCenter()[0], e->getCenter()[1], e->getCenter()[2], e->getR1(), e->getR2(), -1, e->getAngle1(), e->getAngle2(), {0., 0., 1.}, e->getXAxis());
-        gmsh::model::occ::synchronize();
-        int wireTag = e->getIndex() + 1 + lines.size();
-        gmsh::model::occ::addWire({wireTag}, e->getIndex() + 1);
-        gmsh::model::addPhysicalGroup(1, {e->getIndex() + 1}, -1, "e" + std::to_string(e->getIndex() + 1));
-    }
-
-    for (auto planeSurface : planeSurfaces)
-    {
-        std::vector<int> wireTagsAux;
-        for (auto l : planeSurface->getWireTag())
-            wireTagsAux.push_back(l + 1);
-
-        int surfaceTag = gmsh::model::occ::addPlaneSurface(wireTagsAux, -1);
-        gmsh::model::occ::synchronize();
-        planeSurface->setEntityName("s" + std::to_string(planeSurface->getIndex() + 1));
-        gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, "s" + std::to_string(planeSurface->getIndex() + 1));
-    }
-
-    for (auto l : transfiniteLines)
-    {
-        gmsh::model::mesh::setTransfiniteCurve(l.first->getIndex() + 1, l.second + 1, "Progression");
-        gmsh::model::occ::synchronize();
-    }
-
     gmsh::option::setNumber("Mesh.Algorithm", algorithm);
     gmsh::model::occ::synchronize();
     gmsh::model::mesh::generate(dim);
-    gmsh::write(name + ".msh");
+    // gmsh::write(name + ".msh");
 
-    // writeMeshInfo();
-
-    // if (elemDim == 2)
-    //     writeMeshInfo2D();
-    // else
-    //     writeMeshInfo1D();
+    writeMeshInfo();
+    // (elemDim == 2) ? writeMeshInfo2D() : writeMeshInfo1D();
 
     gmsh::write("modelo_oc.geo_unrolled");
     if (showInterface)
