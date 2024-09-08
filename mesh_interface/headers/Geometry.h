@@ -69,7 +69,7 @@ public:
     Line *addLine(const std::vector<Point *> &_points);
     Circle *addCircle(const std::vector<Point *> &_points);
     LineLoop *addLineLoop(const std::vector<Line *> &_lines);
-    PlaneSurface *addPlaneSurface(std::vector<int> _wireTags);
+    PlaneSurface *addPlaneSurface(std::vector<Wire *> _wire);
     Ellipse *addEllipse(double _a, double _b, const double _alpha, std::vector<double> center, const double _lc);
     // MeshFactor *addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize);
     BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
