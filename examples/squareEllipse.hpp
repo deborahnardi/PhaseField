@@ -48,13 +48,13 @@ materials.push_back(geo1->addMaterial(1000., 0.2));
 
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
-geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 4.);
+// ********************************** MESH GENERATION INFORMATION
 
 double meshMinSizeIncl = 0.1 * a0 * L;
 double meshMaxSizeIncl = 1.0 * a0 * L;
 double meshDistMin = a0 * L;
 double meshDistMax = 1.2 * a0 * L;
 
+geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 4.);
 geo1->setSurfaceRefinement({ellipses[0], ellipses[1], ellipses[2], ellipses[3]}, meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax);
-
 geo1->GenerateMeshAPI(visualizeMesh);

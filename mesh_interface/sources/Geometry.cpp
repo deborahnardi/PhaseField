@@ -111,22 +111,6 @@ void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &
     }
 }
 
-// MeshFactor *Geometry::addMeshFactor(const double &_meshMinFac, const double &_meshMaxFac, const double &_meshDistFac, const double &_meshMinSize, const double &_meshMaxSize) addMeshFactor(0.1, 1.0, 1.2, 1e-4, 1e-1)
-
-// {
-//     MeshFactor *meshFac = new MeshFactor(meshFactors.size(), _meshMinFac, _meshMaxFac, _meshDistFac, _meshMinSize, _meshMaxSize);
-//     meshFactors.push_back(meshFac);
-
-//     meshMinSizeIncl = _meshMinFac * inclusions[0]->getA() * edgeLength;
-//     meshMaxSizeIncl = _meshMaxFac * inclusions[0]->getA() * edgeLength;
-//     meshDistMin = inclusions[0]->getA() * edgeLength;
-//     meshDistMax = _meshDistFac * inclusions[0]->getA() * edgeLength;
-//     meshMinSizeGlobal = _meshMinSize * edgeLength;
-//     meshMaxSizeGlobal = _meshMaxSize * edgeLength;
-
-//     return meshFac;
-// }
-
 BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
 {
     BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), point->getEntityName(), _dofValues, _bType);
@@ -199,7 +183,6 @@ void Geometry::GenerateMeshAPI(const bool &showInterface)
     gmsh::write(name + ".inp");
 
     writeMeshInfo();
-    // (elemDim == 2) ? writeMeshInfo2D() : writeMeshInfo1D();
 
     // gmsh::write("modelo_oc.geo_unrolled");
     if (showInterface)

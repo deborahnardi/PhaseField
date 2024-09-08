@@ -1,7 +1,7 @@
 std::string projectName = "truss";
 Geometry *geo1 = new Geometry(projectName);
 FEM *truss = new FEM(projectName);
-bool visualizeMesh = false;
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -11,8 +11,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 
 double h = 1., b = 1., E = 1000., A0 = 1.;
 geo1->setAlgorithm(DELAUNAY);
-geo1->setDimension(2);
-geo1->setElemDimension(1);
+geo1->setDimension(3);
 
 points.push_back(geo1->addPoint({0.0, 0.0, 0.0}));
 points.push_back(geo1->addPoint({b, h, 0.0}));
@@ -28,7 +27,5 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(points[2], DIRICHLET, {{
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[1], DIRICHLET, {{Z, 0.}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[1], NEUMANN, {{Y, -2000.}}));
 
-geo1->addMaterial(E);
-
-geo1->InitializeGmshAPI(visualizeMesh);
+geo1->GenerateMeshAPI(visualizeMesh);
 // truss->readGeometry(projectName + ".mir");
