@@ -2,16 +2,18 @@
 
 #include "Node.h"
 #include "DenseEigen.h"
+#include "Material.h"
 
 class Element
 {
 protected:
-    int index, elemDimension;
+    int index, elemDimension, physicalEntity;
     std::vector<Node *> elemConnectivity;
+    Material *material;
 
 public:
     Element();
-    Element(const int &_index, const std::vector<Node *> &_elemConnectivity, const int &_elemDimension);
+    Element(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
     ~Element();
 
     int getIndex() const { return index; }
@@ -29,27 +31,10 @@ public:
 
 class BoundaryElement : public Element
 {
-private:
-    std::string entityName;
-
-    struct AppliedBoundaryCondition
-    {
-        BoundaryType bType;
-        std::vector<DOF *> dofs;
-    };
-
-    std::vector<AppliedBoundaryCondition> appliedBCs;
-
 public:
     BoundaryElement();
-    BoundaryElement(const int &index, const std::vector<Node *> &elemConnectivity, const int &elemDimension = 1);
+    BoundaryElement(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
     ~BoundaryElement();
-
-    int getIndex() const { return index; }
-    int getElemDimension() const { return 1; }
-    std::string getEntityName() const { return "Boundary_" + std::to_string(index); }
-    std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
-    Node *getNode(const int &index) const { return elemConnectivity[index]; }
 
     void getContribution() override {};
 };
@@ -59,20 +44,17 @@ class Truss : public Element
 private:
     double length, area, theta;
     MatrixXd localStiffnessMatrix, rotationMatrix, K;
-    Node *node1, *node2;
 
 public:
     Truss();
-    Truss(const int &index, Node *_node1, Node *_node2);
+    Truss(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, const double &area_);
     ~Truss();
 
-    int getIndex() const { return index; }
     int getLength() const { return length; }
     int getArea() const { return area; }
     int getTheta() const { return theta; }
     Node *getNode1() const { return elemConnectivity[0]; }
     Node *getNode2() const { return elemConnectivity[1]; }
-    Node *getNode(const int &index) const { return elemConnectivity[index]; }
     MatrixXd getLocalStiffnessMatrix() const { return localStiffnessMatrix; }
     MatrixXd getRotationMatrix() const { return rotationMatrix; }
     MatrixXd getElemStiffnessMatrix() const { return K; }
@@ -97,15 +79,12 @@ private:
 
 public:
     Solid2D();
-    Solid2D(const int &index, const std::vector<Node *> &elemConnectivity, const int &elemDimension = 2);
+    Solid2D(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
     ~Solid2D();
 
-    int getIndex() const { return index; }
-    int getElemDimension() const { return 2; }
     double getArea() const { return area; }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
-    std::string getEntityName() const { return "Solid2D_" + std::to_string(index); }
     void setArea(const double &_area) { area = _area; }
 
     MatrixXd getElemStiffnessMatrix() const { return K; }

@@ -11,7 +11,7 @@
 class Node
 {
 private:
-    int index;
+    int index, physicalEntity;
     std::vector<double> initialCoordinates;
     std::vector<DOF *> dofs; // Degrees of freedom of the node
     bool isDiscritized = false;
@@ -27,6 +27,7 @@ public:
 
     // Getters
     int getIndex() const { return index; }
+    int getPhysicalEntity() const { return physicalEntity; }
     std::vector<double> getInitialCoordinates() const { return initialCoordinates; }
     double getX() const { return initialCoordinates[0]; }
     double getY() const { return initialCoordinates[1]; }
@@ -39,4 +40,5 @@ public:
     void setDOF(const int &_index, DOF *_dof) { dofs[_index] = _dof; }
     int getNumDOFs() const { return dofs.size(); }
     void setIsDiscritized() { isDiscritized = true; }
+    void setPhysicalEntity(const int &physicalEntity_) { physicalEntity = physicalEntity_; }
 };

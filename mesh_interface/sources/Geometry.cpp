@@ -57,24 +57,6 @@ LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
     return lineLoop;
 }
 
-PlaneSurface *Geometry::addPlaneSurface(std::vector<Wire *> _wire)
-{
-    std::vector<int> wireTags, wireTagsAux;
-    for (auto w : _wire)
-    {
-        wireTags.push_back(w->getIndex());
-        wireTagsAux.push_back(w->getIndex() + 1);
-    }
-    PlaneSurface *planeSurface = new PlaneSurface(wireTags, planeSurfaces.size());
-    planeSurfaces.push_back(planeSurface);
-
-    int surfaceTag = gmsh::model::occ::addPlaneSurface(wireTagsAux, -1);
-    gmsh::model::occ::synchronize();
-    gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, planeSurface->getEntityName());
-
-    return planeSurface;
-}
-
 Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::vector<double> center)
 {
     // Generating coordinates for the ellipse
@@ -93,6 +75,24 @@ Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::ve
     gmsh::model::addPhysicalGroup(1, {el->getIndex() + 1}, -1, el->getEntityName());
 
     return el;
+}
+
+PlaneSurface *Geometry::addPlaneSurface(std::vector<Wire *> _wire)
+{
+    std::vector<int> wireTags, wireTagsAux;
+    for (auto w : _wire)
+    {
+        wireTags.push_back(w->getIndex());
+        wireTagsAux.push_back(w->getIndex() + 1);
+    }
+    PlaneSurface *planeSurface = new PlaneSurface(wireTags, planeSurfaces.size());
+    planeSurfaces.push_back(planeSurface);
+
+    int surfaceTag = gmsh::model::occ::addPlaneSurface(wireTagsAux, -1);
+    gmsh::model::occ::synchronize();
+    gmsh::model::addPhysicalGroup(2, {surfaceTag}, -1, planeSurface->getEntityName());
+
+    return planeSurface;
 }
 
 Material *Geometry::addMaterial(const double &_E, const double &_nu, const PlaneAnalysis &_plane)

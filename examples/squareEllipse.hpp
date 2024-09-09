@@ -1,6 +1,7 @@
 std::string projectName = "squareEllipse";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
-bool visualizeMesh = true;
+FEM *analysis1 = new FEM(projectName);
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -45,16 +46,24 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 10.0}}));
 
 materials.push_back(geo1->addMaterial(1000., 0.2));
+materials.push_back(geo1->addMaterial(5000., 0.15));
 
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
+planeSurfaces[1]->setAttributes(materials[1], 1., SOLID_ELEMENT);
+planeSurfaces[2]->setAttributes(materials[1], 1., SOLID_ELEMENT);
+planeSurfaces[3]->setAttributes(materials[1], 1., SOLID_ELEMENT);
+planeSurfaces[4]->setAttributes(materials[1], 1., SOLID_ELEMENT);
 
-// ********************************** MESH GENERATION INFORMATION
+// ********************************** MESH GENERATION INFORMATION **********************************
 
 double meshMinSizeIncl = 0.1 * a0 * L;
 double meshMaxSizeIncl = 1.0 * a0 * L;
 double meshDistMin = a0 * L;
 double meshDistMax = 1.2 * a0 * L;
 
-geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 4.);
+geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 10.);
 geo1->setSurfaceRefinement({ellipses[0], ellipses[1], ellipses[2], ellipses[3]}, meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax);
 geo1->GenerateMeshAPI(visualizeMesh);
+
+// ********************************** FEM INFORMATION **********************************
+analysis1->readGeometry(projectName + ".mir");

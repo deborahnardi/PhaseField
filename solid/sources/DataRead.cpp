@@ -45,263 +45,127 @@ void FEM::readGeometry(const std::string &_filename)
     std::ifstream file(_filename); // Open file
     std::string line;
 
+    // ********** MATERIALS **********
+
+    while (line != "*MATERIALS")
+        std::getline(file, line);
+
+    int numMaterials;
+    std::getline(file, line);
+    numMaterials = std::stoi(line);
+    for (int i = 0; i < numMaterials; i++)
+    {
+        std::getline(file, line);
+        std::vector<std::string> result = split(line, ' ');
+        int index = std::stoi(result[0]);
+        double poisson = std::stod(result[1]);
+        double youngModulus = std::stod(result[2]);
+        PlaneAnalysis planeAnalysis = static_cast<PlaneAnalysis>(std::stoi(result[3]));
+        materials.push_back(new Material(index, poisson, youngModulus, planeAnalysis));
+    }
+
+    // ********** PHYSICALNAMES **********
+
+    while (line != "*PHYSICALNAMES")
+        std::getline(file, line);
+
+    int numPhysicalNames;
+    std::getline(file, line);
+    numPhysicalNames = std::stoi(line);
+
+    struct PhysicalEntity // A strucuct is a user-defined data type that groups related data under one name
+    {
+        int indexType, material = -1, dimension;
+        std::string name;
+        double value = 0.0;
+        ElementType elementType = NONE;
+    };
+
+    PhysicalEntity physicalEntities[numPhysicalNames]; // Array of PhysicalEntity
+
+    for (int i = 0; i < numPhysicalNames; i++)
+    {
+        std::getline(file, line);
+        std::vector<std::string> result = split(line, ' ');
+        physicalEntities[i].dimension = std::stoi(result[0]);
+        physicalEntities[i].indexType = std::stoi(result[1]);
+        physicalEntities[i].name = result[2];
+
+        if (result.size() > 3)
+        {
+            physicalEntities[i].material = std::stoi(result[3]) - 1;
+            physicalEntities[i].value = std::stod(result[4]);
+            physicalEntities[i].elementType = static_cast<ElementType>(std::stoi(result[5]));
+        }
+    }
+
+    // ********** NODES **********
+
     while (line != "*NODES")
         std::getline(file, line);
 
-    for (; std::getline(file, line);)
+    int numNodes;
+    std::getline(file, line);
+    numNodes = std::stoi(line);
+
+    for (int i = 0; i < numNodes; i++)
     {
-        // != std::string::nos -> It is used to indicate that a search or operation has failed. For example, if you use the find function to search for a substring and the substring is not found, find returns std::string::npos to indicate this failure.
-        if (line.find("*Element") != std::string::npos) // If the line contains the string "*Element"
-        {
-            std::vector<std::string> result = split(line, ',');        // Split the line by the character ','
-            const auto &lastString = result.back();                    // Get the last string from the vector
-            std::vector<std::string> result2 = split(lastString, '='); // Split the last string by the character '='
-            const auto lastString2 = result2.back();                   // Get the last string from the vector
-            abaqusElementType = lastString2;                           // Set the elementType to the last string
-            break;
-        }
-
-        int index;
-        std::vector<double> coords(3);
-
-        std::istringstream iss(line); // Uses istringstream to parse/analyze the line
-        iss >> index >> coords[0] >> coords[1] >> coords[2];
-        nodes.push_back(new Node(index - 1, coords));
-    }
-
-    if (abaqusElementType == "CPS3")
-        readGeometryCPS3(file);
-    else if (abaqusElementType == "T3D2")
-        readGeometryT3D2(file);
-}
-
-void FEM::readGeometryCPS3(std::ifstream &file)
-{
-    std::string currentName;
-    std::string line;
-
-    for (; std::getline(file, line);)
-    {
-        if (line.find("*") != std::string::npos) // If "*" is not found, line.find() returns std::string::npos
-        {
-            std::vector<std::string> result = split(line, ',');
-            const auto &lastString = result.back();
-            std::vector<std::string> result2 = split(lastString, '=');
-            const auto lastString2 = result2.back();
-            nSetName = lastString2;
-            currentName = "nSet";
-            break;
-        }
-        int index;
-        std::vector<int> elemConnectivity(3);
-        std::istringstream iss(line);
-        iss >> index >> elemConnectivity[0] >> elemConnectivity[1] >> elemConnectivity[2];
-
-        std::vector<Node *> elemNodes;
-        for (int i = 0; i < 3; i++)
-            elemNodes.push_back(nodes[elemConnectivity[i] - 1]);
-
-        elements.push_back(new Solid2D(index - 1, elemNodes));
-
-        for (auto node : elemNodes) // Adding DOFs to the nodes
-        {
-            node->setIsDiscritized();
-            node->addDOF(new DOF(X));
-            node->addDOF(new DOF(Y));
-        }
-    }
-
-    // std::cout << "There are: " << elements.size() << " 2D elements" << std::endl;
-
-    num2DElements = elements.size();
-
-    std::vector<Node *> elemConnectivity;
-    std::vector<Element *> elemSets;
-    bool flagNode = false, flagElem = false;
-
-    for (; std::getline(file, line);)
-    {
-        if (line.find("*BOUNDARY") != std::string::npos)
-        {
-            elementSets.push_back(new ElementSet(elSetName, elemSets));
-            elemSets.clear();
-
-            break;
-        }
-        else if (line.find("*Elset") != std::string::npos)
-        {
-            std::vector<std::string> result = split(line, ',');
-            const auto &lastString = result.back();
-            std::vector<std::string> result2 = split(lastString, '=');
-            const auto lastString2 = result2.back();
-            elSetName = lastString2;
-            currentName = "elSet";
-            flagElem = false;
-
-            if (flagNode == true)
-            {
-                nodeSets.push_back(new NodeSet(nSetName, elemConnectivity));
-                elemConnectivity.clear();
-            }
-        }
-        else if (line.find("*Nset") != std::string::npos)
-        {
-            std::vector<std::string> result = split(line, ',');
-            const auto &lastString = result.back();
-            std::vector<std::string> result2 = split(lastString, '=');
-            const auto lastString2 = result2.back();
-            nSetName = lastString2;
-            currentName = "nSet";
-            flagNode = false;
-
-            if (flagElem == true)
-            {
-                elementSets.push_back(new ElementSet(elSetName, elemSets));
-                elemSets.clear();
-            }
-        }
-        else
-        {
-            if (currentName == "nSet")
-            {
-                // std::cout << "The code has found the string: " << line << std::endl;
-                std::vector<std::string> result = split(line, ' ');
-
-                for (const auto &token : result)
-                {
-                    int index = std::stoi(token);
-                    elemConnectivity.push_back(nodes[index - 1]);
-                }
-                flagNode = true;
-            }
-            else
-            {
-                // std::cout << "The code has found the string: " << line << std::endl;
-                std::vector<std::string> result = split(line, ' ');
-                for (size_t i = 1; i < result.size(); i++)
-                {
-                    int index = std::stoi(result[i]);
-                    elemConnectivity.push_back(nodes[index - 1]);
-                }
-
-                flagElem = true;
-                boundaryElements.push_back(new BoundaryElement(boundaryElements.size(), elemConnectivity));
-                elemSets.push_back(elements.back());
-                for (auto node : elemConnectivity)
-                {
-                    node->setIsDiscritized();
-                    node->addDOF(new DOF(X));
-                    node->addDOF(new DOF(Y));
-                }
-                elemConnectivity.clear();
-            }
-        }
-    }
-
-    removeNonDiscritizedNodes(nodes);
-    renumberNodesIndexes(nodes);
-
-    numNodes = nodes.size();
-    numBoundaryElements = boundaryElements.size();
-    // std::cout << "There are: " << numBoundaryElements << " boundary elements" << std::endl;
-
-    //***** SETTING DOFs
-
-    nDOFs = 0;
-    for (auto node : nodes)
-        for (auto dof : node->getDOFs())
-        {
-            dof->setIndex(nDOFs++); // Correspondent index in the global DOF vector
-            // std::cout << "Node index: " << node->getIndex() << " DOF index: " << dof->getIndex() << std::endl;
-            globalDOFs.push_back(dof); // Adding the DOF to the global DOF vector
-        }
-
-    // std::cout << "There are: " << nDOFs << " global DOFs" << std::endl;
-
-    for (; std::getline(file, line);)
-    {
-        if (line.find("*BOUNDARY") != std::string::npos)
-            continue;
-        else if (line.find("*CLOAD") != std::string::npos)
-            break;
-        else
-        {
-            std::vector<std::string> result = split(line, ' ');
-            std::string entityName = result[0];
-            int dof = std::stoi(result[1]);
-            int value = std::stoi(result[2]);
-            BoundaryType bdType = DIRICHLET;
-
-            for (auto nSet : nodeSets)
-                if (entityName == nSet->getName())
-                    nSet->addCondition(bdType, static_cast<DOFType>(dof), value);
-        }
-    }
-
-    for (; std::getline(file, line);)
-    {
-        if (line.find("*END") != std::string::npos)
-            break;
-        else
-        {
-            std::vector<std::string> result = split(line, ' ');
-            std::string entityName = result[0];
-            int dof = std::stoi(result[1]);
-            int value = std::stoi(result[2]);
-            BoundaryType bdType = NEUMANN;
-
-            for (auto nSet : nodeSets)
-                if (entityName == nSet->getName())
-                    nSet->addCondition(bdType, static_cast<DOFType>(dof), value);
-        }
-    }
-
-    for (auto dof : globalDOFs)
-        if (dof->isDirichlet())
-            numDirichletDOFs++;
-        else if (dof->isNeumann())
-            numNeumannDOFs++;
-
-    // std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs" << std::endl;
-    // std::cout << "There are: " << numNeumannDOFs << " Neumann DOFs" << std::endl;
-    file.close();
-
-    PetscPrintf(PETSC_COMM_WORLD, "Geometry read successfully!\n");
-    PetscPrintf(PETSC_COMM_WORLD, "Number of nodes: %d\n", numNodes);
-    PetscPrintf(PETSC_COMM_WORLD, "Number of global DOFs: %d\n", nDOFs);
-    PetscPrintf(PETSC_COMM_WORLD, "Number of 2D elements: %d\n", num2DElements);
-    PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", numBoundaryElements);
-}
-
-void FEM::readGeometryT3D2(std::ifstream &file)
-{
-    std::string line;
-    std::vector<Node *> connec;
-
-    for (; std::getline(file, line);)
-    {
-        if (line.find("*") != std::string::npos)
-        {
-            std::cout << "The code has found the string: " << line << std::endl;
-            break;
-        }
-
-        connec.clear();
+        std::getline(file, line);
         std::vector<std::string> result = split(line, ' ');
-
         int index = std::stoi(result[0]);
-        Node *node1 = nodes[std::stoi(result[1]) - 1];
-        Node *node2 = nodes[std::stoi(result[2]) - 1];
-
-        trussElements.push_back(new Truss(index - 1, node1, node2));
-
-        // for (int i = 1; i < result.size(); i++)
-        // {
-        //     int index = std::stoi(result[i]);
-        //     connec.push_back(nodes[index - 1]);
-        // }
-
-        // trussElements.push_back(new Truss(trussElements.size(), connec));
+        double x = std::stod(result[1]);
+        double y = std::stod(result[2]);
+        double z = std::stod(result[3]);
+        nodes.push_back(new Node(index - 1, {x, y, z}));
     }
+
+    // ********** ELEMENTS **********
+
+    while (line != "*ELEMENTS")
+        std::getline(file, line);
+
+    int numElements;
+    std::getline(file, line);
+    numElements = std::stoi(line);
+
+    for (int i = 0; i < numElements; i++)
+    {
+        std::getline(file, line);
+        std::cout << line << std::endl;
+        std::vector<std::string> result = split(line, ' ');
+        int index = std::stoi(result[0]);
+        int gmshElemType = std::stoi(result[1]);                      // 2: 3-node triangle; 1: 2-node line; 15: 1-node point;
+        int physicalEntity = std::stoi(result[2]);                    // Physical entity is the number of the physical entity, i.e, 1 for p1, 2 for p2, etc.
+        std::string name = physicalEntities[physicalEntity - 1].name; // -1 because the physical entity vector starts at 0
+        std::vector<Node *> connectivity;
+
+        if (gmshElemType == 15)
+            nodes[stoi(result[3]) - 1]->setPhysicalEntity(physicalEntity);
+
+        for (int j = 3; j < result.size(); j++)
+            connectivity.push_back(nodes[std::stoi(result[j]) - 1]);
+
+        Material *material = nullptr;
+
+        double value = physicalEntities[physicalEntity - 1].value;
+        int elemDim = physicalEntities[physicalEntity - 1].dimension;
+
+        switch (physicalEntities[physicalEntity - 1].elementType)
+        {
+        case TRUSS_ELEMENT:
+            material = materials[physicalEntities[physicalEntity - 1].material];
+            elements.push_back(new Truss(elements.size(), elemDim, connectivity, material, physicalEntity, value));
+            break;
+        case SOLID_ELEMENT:
+            material = materials[physicalEntities[physicalEntity - 1].material];
+            elements.push_back(new Solid2D(elements.size(), elemDim, connectivity, material, physicalEntity));
+            break;
+        default:
+            std::cout << "Size: " << bdElements.size() << ", Elem dim:" << elemDim << ", Connectivity size: " << connectivity.size() << ", Material: " << material << ", Physical entity: " << physicalEntity << std::endl;
+            bdElements.push_back(new BoundaryElement(bdElements.size(), elemDim, connectivity, material, physicalEntity));
+            break;
+        }
+    }
+
     file.close();
 }

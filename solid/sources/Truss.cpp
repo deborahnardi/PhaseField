@@ -1,13 +1,11 @@
 #include "../headers/Element.h"
 
 Truss::Truss() {}
-Truss::Truss(const int &index, Node *_node1, Node *_node2)
-    : Element(index, elemConnectivity, 1)
+Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, const double &area_)
+    : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity), area(area_)
 {
-    node1 = _node1;
-    node2 = _node2;
-    elemConnectivity.push_back(_node1);
-    elemConnectivity.push_back(_node2);
+    Node *_node1 = elemConnectivity[0];
+    Node *_node2 = elemConnectivity[1];
 
     length = pow((_node2->getX() - _node1->getX()) * (_node2->getX() - _node1->getX()) +
                      (_node2->getY() - _node1->getY()) * (_node2->getY() - _node1->getY()),
