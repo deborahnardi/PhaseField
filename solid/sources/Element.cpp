@@ -22,23 +22,19 @@ BoundaryElement::~BoundaryElement() {}
 
 void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _value)
 {
-    bdType = _bdType;
-    type = _type;
-    value = _value;
-
     for (auto n : elemConnectivity)
         for (auto dof : n->getDOFs())
-            if (dof->getDOFType() == type)
+            if (dof->getDOFType() == _type)
             {
-                if (bdType = NEUMANN)
+                if (_bdType == NEUMANN)
                 {
                     dof->setNeumann();
-                    dof->setNeumannValue(value);
+                    dof->setNeumannValue(_value);
                 }
-                else if (bdType == DIRICHLET)
+                else if (_bdType == DIRICHLET)
                 {
                     dof->setDirichlet();
-                    dof->setDirichletValue(value);
+                    dof->setDirichletValue(_value);
                 }
             }
 }
