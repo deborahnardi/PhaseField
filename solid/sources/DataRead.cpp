@@ -131,12 +131,11 @@ void FEM::readGeometry(const std::string &_filename)
     for (int i = 0; i < numElements; i++)
     {
         std::getline(file, line);
-        std::cout << line << std::endl;
         std::vector<std::string> result = split(line, ' ');
         int index = std::stoi(result[0]);
-        int gmshElemType = std::stoi(result[1]);                      // 2: 3-node triangle; 1: 2-node line; 15: 1-node point;
-        int physicalEntity = std::stoi(result[2]);                    // Physical entity is the number of the physical entity, i.e, 1 for p1, 2 for p2, etc.
-        std::string name = physicalEntities[physicalEntity - 1].name; // -1 because the physical entity vector starts at 0
+        int gmshElemType = std::stoi(result[1]);                  // 2: 3-node triangle; 1: 2-node line; 15: 1-node point;
+        int physicalEntity = std::stoi(result[2]) - 1;            // Physical entity is the number of the physical entity, i.e, 1 for p1, 2 for p2, etc.
+        std::string name = physicalEntities[physicalEntity].name; // -1 because the physical entity vector starts at 0
         std::vector<Node *> connectivity;
 
         if (gmshElemType == 15)
@@ -150,22 +149,60 @@ void FEM::readGeometry(const std::string &_filename)
         double value = physicalEntities[physicalEntity - 1].value;
         int elemDim = physicalEntities[physicalEntity - 1].dimension;
 
-        switch (physicalEntities[physicalEntity - 1].elementType)
+        switch (physicalEntities[physicalEntity].elementType)
         {
         case TRUSS_ELEMENT:
-            material = materials[physicalEntities[physicalEntity - 1].material];
+            material = materials[physicalEntities[physicalEntity].material];
             elements.push_back(new Truss(elements.size(), elemDim, connectivity, material, physicalEntity, value));
             break;
         case SOLID_ELEMENT:
-            material = materials[physicalEntities[physicalEntity - 1].material];
+            material = materials[physicalEntities[physicalEntity].material];
             elements.push_back(new Solid2D(elements.size(), elemDim, connectivity, material, physicalEntity));
             break;
         default:
-            std::cout << "Size: " << bdElements.size() << ", Elem dim:" << elemDim << ", Connectivity size: " << connectivity.size() << ", Material: " << material << ", Physical entity: " << physicalEntity << std::endl;
             bdElements.push_back(new BoundaryElement(bdElements.size(), elemDim, connectivity, material, physicalEntity));
             break;
         }
     }
 
+    // ********** SETTING DOFS **********
+
+    for (auto n : nodes)
+        for (auto dof : n->getDOFs())
+        {
+            dof->setIndex(globalDOFs.size());
+            globalDOFs.push_back(dof);
+        }
+
+    // ********** BOUNDARY CONDITIONS **********
+
+    while (line != "*BOUNDARY")
+        std::getline(file, line);
+
+    int numBCs;
+    std::getline(file, line);
+    numBCs = std::stoi(line);
+
+    for (int i = 0; i < numBCs; i++)
+    {
+        std::getline(file, line);
+        std::vector<std::string> result = split(line, ' ');
+        int index = std::stoi(result[0]);
+        BoundaryType bdType = static_cast<BoundaryType>(std::stoi(result[1])); // 0: Dirichlet; 1: Neumann
+        int physicalEntity = std::stoi(result[2]) - 1;
+        int numAppliedBCs = (result.size() - 3) / 2;
+
+
+        for (auto b : bdElements)
+            if (b->getPhysicalEntity() == physicalEntity)
+                for (int j = 0; j < numAppliedBCs; j++)
+                    b->addCondition(bdType, static_cast<DOFType>(std::stoi(result[2 * j + 3])), std::stod(result[2 * j + 4]));
+    }
+
+    for (auto dof : globalDOFs)
+        if (dof->isDirichlet())
+            numDirichletDOFs++;
+
+    std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs." << std::endl;
     file.close();
 }

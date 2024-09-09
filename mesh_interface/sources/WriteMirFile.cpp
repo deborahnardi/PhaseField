@@ -98,7 +98,7 @@ void Geometry::writeMeshInfo()
 
     for (auto bc : boundaryConditions) // In physicalEntities[bc->getEntityname()] we give the physical name and the function returns the physical tag
     {
-        file << bc->getIndex() << " " << bc->getBType() << " " << physicalEntities[bc->getEntityname()] << " ";
+        file << bc->getIndex() + 1 << " " << bc->getBType() << " " << physicalEntities[bc->getEntityName()] << " ";
         for (auto dofValues : bc->getDOFValues())
             file << dofValues.first << " " << dofValues.second << " ";
         file << std::endl;

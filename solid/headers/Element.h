@@ -3,6 +3,7 @@
 #include "Node.h"
 #include "DenseEigen.h"
 #include "Material.h"
+#include "../../enumclass.hpp"
 
 class Element
 {
@@ -10,6 +11,9 @@ protected:
     int index, elemDimension, physicalEntity;
     std::vector<Node *> elemConnectivity;
     Material *material;
+    BoundaryType bdType;
+    DOFType type;
+    double value;
 
 public:
     Element();
@@ -18,6 +22,7 @@ public:
 
     int getIndex() const { return index; }
     int getElemDimension() const { return elemDimension; }
+    int getPhysicalEntity() const { return physicalEntity; }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &_index) const { return elemConnectivity[_index]; }
 
@@ -26,6 +31,7 @@ public:
     void setElemConnectivity(const std::vector<Node *> &_elemConnectivity) { elemConnectivity = _elemConnectivity; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
+    virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
     virtual void getContribution() {};
 };
 
@@ -37,6 +43,7 @@ public:
     ~BoundaryElement();
 
     void getContribution() override {};
+    void addCondition(BoundaryType _bdType, DOFType _type, double _value) override;
 };
 
 class Truss : public Element

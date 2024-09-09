@@ -19,7 +19,7 @@ public:
     ~BoundaryCondition();
 
     int getIndex() const { return index; }
-    std::string getEntityname() const { return entityName; }
+    std::string getEntityName() const { return entityName; }
     std::vector<std::pair<DOFType, double>> getDOFValues() const { return dofValues; }
     BoundaryType getBType() const { return bType; }
 

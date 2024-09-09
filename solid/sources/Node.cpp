@@ -8,7 +8,7 @@ Node::~Node() {}
 void Node::addDOF(DOF *_dof)
 {
     for (const auto &existingDOF : dofs)
-        if (existingDOF->getDOFType() == _dof->getDOFType())
+        if (existingDOF->getDOFType() == _dof->getDOFType()) // For avoiding the addition of the same DOF twice
             return;
 
     dofs.push_back(_dof);
