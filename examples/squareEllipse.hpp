@@ -19,7 +19,7 @@ double a0 = 0.05;
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
 
-points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.25 * L));
+points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.25 * L)); // Those are lists (dynamic arrays) of pointers to the objects
 points.push_back(geo1->addPoint({L, 0.0, 0.0}, 0.25 * L));
 points.push_back(geo1->addPoint({L, L, 0.0}, 0.25 * L));
 points.push_back(geo1->addPoint({0.0, L, 0.0}, 0.25 * L));
