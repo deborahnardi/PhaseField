@@ -6,12 +6,13 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
 {
     Node *_node1 = elemConnectivity[0];
     Node *_node2 = elemConnectivity[1];
+    area = area_;
 
     length = pow((_node2->getX() - _node1->getX()) * (_node2->getX() - _node1->getX()) +
                      (_node2->getY() - _node1->getY()) * (_node2->getY() - _node1->getY()),
                  0.5);
 
-    theta = atan((_node2->getY() - _node1->getY()) / (_node2->getX() - _node1->getX()));
+    theta = atan((_node2->getY() - _node1->getY()) / (_node2->getX() - _node1->getX())); // Theta is in radians
 
     if (_node2->getX() - _node1->getX() < 0)
         theta += M_PI;
@@ -32,7 +33,7 @@ void Truss::getContribution()
         0, 0, 0, 0,
         -1, 0, 1, 0,
         0, 0, 0, 0;
-    // localStiffnessMatrix *= material->getYoungModulus() * area / length;
+    localStiffnessMatrix *= material->getYoungModulus() * area / length;
 
     rotationMatrix = MatrixXd::Zero(4, 4);
     rotationMatrix << cos(theta), sin(theta), 0, 0,

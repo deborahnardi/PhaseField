@@ -17,9 +17,9 @@ int main(int argc, char **args)
 
     // #include "examples/Ex01Inclusions.hpp"
     // #include "examples/square.hpp"
-#include "examples/squareEllipse.hpp"
-    //   #include "examples/Ex02NumericalIntegration.hpp"
-    // #include "examples/Ex03Truss.hpp"
+    // #include "examples/squareEllipse.hpp"
+    //    #include "examples/Ex02NumericalIntegration.hpp"
+#include "examples/Ex03Truss.hpp"
 
     PetscFinalize(); // Finalize main program
     return 0;

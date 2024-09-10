@@ -146,8 +146,8 @@ void FEM::readGeometry(const std::string &_filename)
 
         Material *material = nullptr;
 
-        double value = physicalEntities[physicalEntity - 1].value;
-        int elemDim = physicalEntities[physicalEntity - 1].dimension;
+        double value = physicalEntities[physicalEntity].value;
+        int elemDim = physicalEntities[physicalEntity].dimension;
 
         switch (physicalEntities[physicalEntity].elementType)
         {
@@ -174,6 +174,8 @@ void FEM::readGeometry(const std::string &_filename)
             globalDOFs.push_back(dof);
         }
 
+    numElements = elements.size();
+    nDOFs = globalDOFs.size();
     // ********** BOUNDARY CONDITIONS **********
 
     while (line != "*BOUNDARY")
@@ -192,7 +194,6 @@ void FEM::readGeometry(const std::string &_filename)
         int physicalEntity = std::stoi(result[2]) - 1;
         int numAppliedBCs = (result.size() - 3) / 2;
 
-
         for (auto b : bdElements)
             if (b->getPhysicalEntity() == physicalEntity)
                 for (int j = 0; j < numAppliedBCs; j++)
@@ -203,6 +204,12 @@ void FEM::readGeometry(const std::string &_filename)
         if (dof->isDirichlet())
             numDirichletDOFs++;
 
-    std::cout << "There are: " << numDirichletDOFs << " Dirichlet DOFs." << std::endl;
     file.close();
+
+    PetscPrintf(PETSC_COMM_WORLD, "Geometry read successfully!\n");
+    PetscPrintf(PETSC_COMM_WORLD, "Number of nodes: %d\n", numNodes);
+    PetscPrintf(PETSC_COMM_WORLD, "Number of elements: %d\n", numElements);
+    PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", bdElements.size());
+    PetscPrintf(PETSC_COMM_WORLD, "Number of Dirichlet DOFs: %d\n", numDirichletDOFs);
+    PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", globalDOFs.size());
 }

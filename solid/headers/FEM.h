@@ -18,7 +18,7 @@ class FEM
 {
 private:
     std::string name, filename;
-    int numNodes, num2DElements, numBoundaryElements = 0, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0;
+    int numNodes, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0;
     int problemDimension;
     std::vector<Material *> materials;
     std::vector<Node *> nodes;

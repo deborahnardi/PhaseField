@@ -14,6 +14,7 @@ protected:
     BoundaryType bdType;
     DOFType type;
     double value;
+    MatrixXd K;
 
 public:
     Element();
@@ -31,6 +32,7 @@ public:
     void setElemConnectivity(const std::vector<Node *> &_elemConnectivity) { elemConnectivity = _elemConnectivity; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
+    virtual MatrixXd getElemStiffnessMatrix() const = 0;
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
     virtual void getContribution() {};
 };
@@ -44,6 +46,7 @@ public:
 
     void getContribution() override {};
     void addCondition(BoundaryType _bdType, DOFType _type, double _value) override;
+    MatrixXd getElemStiffnessMatrix() const override { return K; }
 };
 
 class Truss : public Element
@@ -64,7 +67,7 @@ public:
     Node *getNode2() const { return elemConnectivity[1]; }
     MatrixXd getLocalStiffnessMatrix() const { return localStiffnessMatrix; }
     MatrixXd getRotationMatrix() const { return rotationMatrix; }
-    MatrixXd getElemStiffnessMatrix() const { return K; }
+    MatrixXd getElemStiffnessMatrix() const override { return K; }
 
     void setIndex(const int &_index) { index = _index; }
     void setLength(const double &_length) { length = _length; }
@@ -94,6 +97,6 @@ public:
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
     void setArea(const double &_area) { area = _area; }
 
-    MatrixXd getElemStiffnessMatrix() const { return K; }
+    MatrixXd getElemStiffnessMatrix() const override { return K; }
     void getContribution() override {};
 };

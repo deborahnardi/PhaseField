@@ -61,7 +61,7 @@ double meshMaxSizeIncl = 1.0 * a0 * L;
 double meshDistMin = a0 * L;
 double meshDistMax = 1.2 * a0 * L;
 
-geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 10.);
+geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 5.);
 geo1->setSurfaceRefinement({ellipses[0], ellipses[1], ellipses[2], ellipses[3]}, meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax);
 geo1->GenerateMeshAPI(visualizeMesh);
 
