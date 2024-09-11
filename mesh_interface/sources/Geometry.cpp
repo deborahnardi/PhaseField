@@ -120,6 +120,8 @@ BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryTy
 
 BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
 {
+    std::cout << "Pointer: " << line << " points to the line: " << line->getEntityName() << std::endl;
+    std::cout << "Memory address: " << &_bType << " that holds the info/value: " << _bType << std::endl;
     BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType);
     boundaryConditions.push_back(bCondition);
     return bCondition;
