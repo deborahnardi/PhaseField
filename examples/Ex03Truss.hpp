@@ -37,4 +37,4 @@ lines[1]->setAttributes(materials[0], A0, TRUSS_ELEMENT);
 geo1->GenerateMeshAPI(visualizeMesh);
 
 truss->readGeometry(projectName + ".mir");
-truss->assembleProblem();
+truss->solveFEMProblem();

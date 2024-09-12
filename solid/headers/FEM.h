@@ -17,17 +17,21 @@
 class FEM
 {
 private:
-    std::string name, filename;
     int numNodes, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0;
-    int problemDimension;
+    int rank, size;
+    std::string name, filename;
     std::vector<Material *> materials;
     std::vector<Node *> nodes;
     std::vector<Element *> elements, bdElements;
     std::vector<DOF *> globalDOFs;
 
+    MatrixXd K;
+    VectorXd F;
+    VectorXd U;
+
 public:
     FEM();
-    FEM(const std::string _name, const int &_problemDimension = 2); // Only 2D problems are supported
+    FEM(const std::string _name); // Only 2D problems are supported
     ~FEM();
 
     std::string getName() const { return name; }
@@ -46,6 +50,13 @@ public:
     /*
                         SOLVE FEM PROBLEM METHODS
     */
-
+    void solveFEMProblem();
     void assembleProblem();
+    void setBoundaryConditions();
+    void solveLinearSystem();
+
+    void solveFEMProblemPETSc();
+    void assembleProblemPETSc();
+    void setBoundaryConditionsPETSc();
+    void solveLinearSystemPETSc();
 };
