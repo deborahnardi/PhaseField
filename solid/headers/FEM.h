@@ -21,8 +21,8 @@ private:
     int rank, size;
     std::string name, filename;
     std::vector<Material *> materials;
-    std::vector<Node *> nodes;
-    std::vector<Element *> elements, bdElements;
+    std::vector<Node *> nodes, partitionedNodes;
+    std::vector<Element *> elements, bdElements, partitionedElements, partitionedBoundaryElements;
     std::vector<DOF *> globalDOFs;
 
     MatrixXd K;
@@ -46,6 +46,7 @@ public:
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
+    void decomposeElements();
 
     /*
                         SOLVE FEM PROBLEM METHODS

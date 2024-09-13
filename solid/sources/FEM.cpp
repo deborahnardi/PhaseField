@@ -9,17 +9,6 @@ FEM::FEM(const std::string _name)
 };
 FEM::~FEM() {}
 
-void FEM::solveFEMProblem()
-{
-    K = MatrixXd::Zero(nDOFs, nDOFs);
-    F = VectorXd::Zero(nDOFs);
-    U = VectorXd::Zero(nDOFs);
-
-    assembleProblem();
-    setBoundaryConditions();
-    solveLinearSystem();
-}
-
 void FEM::solveFEMProblemPETSc()
 {
     // Defining matrix and vector using PETSc
@@ -32,6 +21,17 @@ void FEM::solveFEMProblemPETSc()
     assembleProblemPETSc();
     setBoundaryConditionsPETSc();
     solveLinearSystemPETSc();
+}
+
+void FEM::solveFEMProblem()
+{
+    K = MatrixXd::Zero(nDOFs, nDOFs);
+    F = VectorXd::Zero(nDOFs);
+    U = VectorXd::Zero(nDOFs);
+
+    assembleProblem();
+    setBoundaryConditions();
+    solveLinearSystem();
 }
 
 void FEM::solveLinearSystem()

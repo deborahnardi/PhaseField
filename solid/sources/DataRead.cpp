@@ -212,4 +212,34 @@ void FEM::readGeometry(const std::string &_filename)
     PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", bdElements.size());
     PetscPrintf(PETSC_COMM_WORLD, "Number of Dirichlet DOFs: %d\n", numDirichletDOFs);
     PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", globalDOFs.size());
+
+    decomposeElements();
+}
+
+void FEM::decomposeElements()
+{
+    MPI_Barrier(PETSC_COMM_WORLD); // Synchronizes all processes with PETSc communicator
+    PetscPrintf(PETSC_COMM_WORLD, "Decomposing elements...\n");
+
+    // PARTIONING NODES
+    int start = int(floor(rank * nodes.size() / size));     // Start index of the elements for the current process
+    int end = int(floor((rank + 1) * nodes.size() / size)); // End index of the elements for the current process
+    for (int i = start; i < end; i++)
+        partitionedNodes.push_back(nodes[i]);
+
+    // PARTIONING DOMAIN ELEMENTS
+    int start = int(floor(rank * elements.size() / size));
+    int end = int(floor((rank + 1) * elements.size() / size));
+    for (int i = start; i < end; i++)
+        partitionedElements.push_back(elements[i]);
+
+    // PARTIONING BOUNDARY ELEMENTS
+    start = int(floor(rank * bdElements.size() / size));
+    end = int(floor((rank + 1) * bdElements.size() / size));
+    for (int i = start; i < end; i++)
+        partitionedBoundaryElements.push_back(bdElements[i]);
+
+    // PARTIONING GLOBAL DOFS 
+    Vec x;
+    PetscInt _start[size], _end[size]; // Array of integers: start and end of the global DOFs for each process
 }
