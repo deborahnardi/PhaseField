@@ -26,38 +26,41 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
 }
 Truss::~Truss() {}
 
-void Truss::getContribution(Mat &matrix, Vec &rhs)
+void Truss::getContribution(Mat &matrix) // stiffness matrix and nodal equivalent force COLOCAR IERR
 {
-    // localStiffnessMatrix = MatrixXd::Zero(4, 4);
-    // localStiffnessMatrix << 1, 0, -1, 0,
-    //     0, 0, 0, 0,
-    //     -1, 0, 1, 0,
-    //     0, 0, 0, 0;
-    // localStiffnessMatrix *= material->getYoungModulus() * area / length;
+    PetscInt numElDOF = 4;
+    PetscInt *indx = new PetscInt[4]();
+    PetscScalar *localStiff = new PetscScalar[16]();
+    PetscInt count = 0;
 
-    // rotationMatrix = MatrixXd::Zero(4, 4);
-    // rotationMatrix << cos(theta), sin(theta), 0, 0,
-    //     -sin(theta), cos(theta), 0, 0,
-    //     0, 0, cos(theta), sin(theta),
-    //     0, 0, -sin(theta), cos(theta);
+    for (auto node : elemConnectivity)
+        for (auto dof : node->getDOFs())
+        {
+            indx[count] = dof->getIndex();
+            count++;
+        }
 
-    // K = rotationMatrix.transpose() * localStiffnessMatrix * rotationMatrix;
+    PetscScalar k = material->getYoungModulus() * area / length;
 
-    // Translating the above code to PETSc
-    PetscScalar localStiffnessMatrix[16] = {1, 0, -1, 0,
-                                            0, 0, 0, 0,
-                                            -1, 0, 1, 0,
-                                            0, 0, 0, 0};
-    for (int i = 0; i < 16; i++)
-        localStiffnessMatrix[i] *= material->getYoungModulus() * area / length;
+    localStiff[0] = k * cos(theta) * cos(theta);
+    localStiff[1] = k * cos(theta) * sin(theta);
+    localStiff[2] = k * -cos(theta) * cos(theta);
+    localStiff[3] = k * -cos(theta) * sin(theta);
+    localStiff[4] = k * cos(theta) * sin(theta);
+    localStiff[5] = k * sin(theta) * sin(theta);
+    localStiff[6] = k * -cos(theta) * sin(theta);
+    localStiff[7] = k * -sin(theta) * sin(theta);
+    localStiff[8] = k * -cos(theta) * cos(theta);
+    localStiff[9] = k * -cos(theta) * sin(theta);
+    localStiff[10] = k * cos(theta) * cos(theta);
+    localStiff[11] = k * cos(theta) * sin(theta);
+    localStiff[12] = k * -cos(theta) * sin(theta);
+    localStiff[13] = k * -sin(theta) * sin(theta);
+    localStiff[14] = k * cos(theta) * sin(theta);
+    localStiff[15] = k * sin(theta) * sin(theta);
 
-    PetscScalar rotationMatrix[16] = {
-        cos(theta), sin(theta), 0, 0,
-        -sin(theta), cos(theta), 0, 0,
-        0, 0, cos(theta), sin(theta),
-        0, 0, -sin(theta), cos(theta)};
+    MatSetValues(matrix, numElDOF, indx, numElDOF, indx, localStiff, ADD_VALUES);
 
-    PetscScalar rotationMatrix[16] = {0};
-
-    // Multiplying the rotation matrix by the local stiffness matrix
+    delete[] indx;
+    delete[] localStiff;
 }

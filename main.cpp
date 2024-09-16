@@ -15,28 +15,28 @@ static char help[] = "Solves the phase-field problem using Finete Element Method
 int main(int argc, char **argv)
 {
 
-    // PetscInitialize(&argc, &argv, (char *)0, help); // Starts main program invoking PETSc
+    PetscInitialize(&argc, &argv, (char *)0, help); // Starts main program invoking PETSc
 
-    // DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
-    // #include "examples/pointerAndReference.hpp"
-    // #include "examples/Ex01Inclusions.hpp"
-    // #include "examples/square.hpp"
-    // #include "examples/squareEllipse.hpp"
-    //      #include "examples/Ex02NumericalIntegration.hpp"
-    //  #include "examples/Ex03Truss.hpp"
-    // #include "examples/Ex04Truss.hpp"
+// DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
+// #include "examples/pointerAndReference.hpp"
+// #include "examples/Ex01Inclusions.hpp"
+// #include "examples/square.hpp"
+// #include "examples/squareEllipse.hpp"
+//      #include "examples/Ex02NumericalIntegration.hpp"
+//  #include "examples/Ex03Truss.hpp"
+#include "examples/Ex04Truss.hpp"
 
     // =======================================
 
     // PETSC Examples
     // PetscFunctionBeginUser; // States the beginning of a user-defined function/program
-    PetscErrorCode ierr; // PETSc error code
-    ierr = PetscInitialize(&argc, &argv, (char *)0, help);
-    CHKERRQ(ierr);
+    // PetscErrorCode ierr; // PETSc error code
+    // ierr = PetscInitialize(&argc, &argv, (char *)0, help);
+    // CHKERRQ(ierr);
 
-    PETScExs *p = new PETScExs();
-    p->PETScSequentialTest();
+    // PETScExs *p = new PETScExs();
+    // p->PETScSequentialTest();
 
     PetscFinalize(); // Finalize main program
-    return ierr;
+    // return ierr;
 }

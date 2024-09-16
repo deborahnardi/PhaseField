@@ -72,7 +72,16 @@ PetscErrorCode FEM::assembleProblemPETSc()
     CHKERRQ(ierr);
 
     for (auto e : partitionedElements)
-        e->getContribution();
+        e->getContribution(matrix);
+
+    // boundary conditions de neumann aqui
+    // monta matriz e vetores
+
+    // MatZeroRowsColumns(tangent, numDirichletBC, dirichletBC, 1., sol, rhs); APLICA CONDICOES DE DIRICHLET
+
+    // Print the global stiffness matrix on the terminal
+    PetscPrintf(PETSC_COMM_WORLD, "Global stiffness matrix:\n");
+    MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
 }
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem without PETSc
@@ -101,12 +110,23 @@ void FEM::setBoundaryConditions()
 {
     // Setting NEUMANN boundary conditions
 
+    // for (auto bd : bdElements)
+    //     for (auto node : bd->getElemConnectivity())
+    //         for (auto dof : node->getDOFs())
+    //             if (dof->isNeumann())
+    //             {
+    //                 F(dof->getIndex()) += dof->getNeumannValue();
+    //                 numNeumannDOFs++;
+    //             }
+
     for (auto bd : bdElements)
         for (auto node : bd->getElemConnectivity())
             for (auto dof : node->getDOFs())
                 if (dof->isNeumann())
                 {
-                    F(dof->getIndex()) += dof->getNeumannValue();
+                    PetscInt pos = dof->getIndex();
+                    PetscScalar value = dof->getNeumannValue();
+                    VecSetValues(rhs, 1, &pos, &value, ADD_VALUES);
                     numNeumannDOFs++;
                 }
 
@@ -133,24 +153,24 @@ void FEM::setBoundaryConditions()
 
 void FEM::assembleProblem()
 {
-    int dim = 2;
+    // int dim = 2;
 
-    for (auto elem : elements)
-    {
-        elem->getContribution();
-        MatrixXd Kelem = elem->getElemStiffnessMatrix();
+    // for (auto elem : elements)
+    // {
+    //     elem->getContribution();
+    //     MatrixXd Kelem = elem->getElemStiffnessMatrix();
 
-        // Print the stiffness matrix of each element on the terminal
-        std::cout << "Element stiffness matrix: " << std::endl;
-        std::cout << Kelem << std::endl;
+    //     // Print the stiffness matrix of each element on the terminal
+    //     std::cout << "Element stiffness matrix: " << std::endl;
+    //     std::cout << Kelem << std::endl;
 
-        for (int d = 0; d < dim; d++)
-            for (int i = 0; i < 2; i++)
-                for (int j = 0; j < 2; j++)
-                    K(2 * elem->getNode(i)->getIndex() + d, 2 * elem->getNode(j)->getIndex() + d) += Kelem(2 * i + d, 2 * j + d);
-    }
+    //     for (int d = 0; d < dim; d++)
+    //         for (int i = 0; i < 2; i++)
+    //             for (int j = 0; j < 2; j++)
+    //                 K(2 * elem->getNode(i)->getIndex() + d, 2 * elem->getNode(j)->getIndex() + d) += Kelem(2 * i + d, 2 * j + d);
+    // }
 
-    // Print the global stiffness matrix on the terminal
-    std::cout << "Global stiffness matrix: " << std::endl;
-    std::cout << K << std::endl;
+    // // Print the global stiffness matrix on the terminal
+    // std::cout << "Global stiffness matrix: " << std::endl;
+    // std::cout << K << std::endl;
 }
