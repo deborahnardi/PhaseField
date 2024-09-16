@@ -45,6 +45,8 @@ add_subdirectory(mesh_interface/headers)
 add_subdirectory(mesh_interface/sources)
 add_subdirectory(solid/headers)
 add_subdirectory(solid/sources)
+add_subdirectory(petsc/headers)
+add_subdirectory(petsc/sources)
 
 #Specify where the headers files must be found
 include_directories(
@@ -52,9 +54,11 @@ include_directories(
 	"${PROJECT_SOURCE_DIR}/mesh_interface/sources"
    "${PROJECT_SOURCE_DIR}/solid/headers"
    "${PROJECT_SOURCE_DIR}/solid/sources"
+   "${PROJECT_SOURCE_DIR}/petsc/headers"
+   "${PROJECT_SOURCE_DIR}/petsc/sources"
 )
 
-add_library(solid_library ${HEADERS} ${SOURCES} ${MESH_INT} ${MESH_INT_SRC})
+add_library(solid_library ${HEADERS} ${SOURCES} ${MESH_INT} ${MESH_INT_SRC} ${PETSC_HEADERS} ${PETSC_SCR})
 
 set(GMSH_PATH "NONE" CACHE STRING "Gmsh build directory.")
 if(${GMSH_PATH} STREQUAL "NONE")

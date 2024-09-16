@@ -9,6 +9,11 @@ FEM::FEM(const std::string _name)
 };
 FEM::~FEM() {}
 
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem PETSc
+----------------------------------------------------------------------------------
+*/
+
 void FEM::solveFEMProblemPETSc()
 {
     // Defining matrix and vector using PETSc
@@ -22,6 +27,39 @@ void FEM::solveFEMProblemPETSc()
     setBoundaryConditionsPETSc();
     solveLinearSystemPETSc();
 }
+
+void FEM::assembleProblemPETSc()
+{
+    // Defining matrix and vector using PETSc
+
+    PetscInt dim = 2;
+    PetscInt nDOFs = nodes.size() * dim;
+    PetscErrorCode ierr;
+    // Getting each element contribution to the global stiffness matrix with PETSc
+
+    for (auto elem : elements)
+    {
+        elem->getContribution();
+        Mat Kelem = elem->getElemStiffnessMatrix();
+
+        // Print the stiffness matrix of each element on the terminal
+        CHKERRQ(ierr);
+
+        for (int d = 0; d < dim; d++)
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                {
+                    PetscInt row = 2 * elem->getNode(i)->getIndex() + d;
+                    PetscInt col = 2 * elem->getNode(j)->getIndex() + d;
+                    ierr = MatSetValue(K, row, col, Kelem(2 * i + d, 2 * j + d), ADD_VALUES);
+                    CHKERRQ(ierr);
+                }
+    }
+}
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem without PETSc
+----------------------------------------------------------------------------------
+*/
 
 void FEM::solveFEMProblem()
 {

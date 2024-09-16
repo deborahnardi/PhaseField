@@ -58,7 +58,7 @@ public:
     void solveLinearSystem();
 
     void solveFEMProblemPETSc();
-    void assembleProblemPETSc() {};
+    void assembleProblemPETSc();
     void setBoundaryConditionsPETSc() {};
     void solveLinearSystemPETSc() {};
 };
