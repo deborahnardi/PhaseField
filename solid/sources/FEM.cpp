@@ -77,7 +77,7 @@ void FEM::setBoundaryConditions()
 
 void FEM::assembleProblem()
 {
-    int dim = problemDimension;
+    int dim = 2;
 
     for (auto elem : elements)
     {

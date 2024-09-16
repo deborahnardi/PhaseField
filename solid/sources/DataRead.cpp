@@ -214,6 +214,7 @@ void FEM::readGeometry(const std::string &_filename)
     PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", globalDOFs.size());
 
     decomposeElements();
+    matrixPreAllocation();
 }
 
 void FEM::decomposeElements()
@@ -222,24 +223,71 @@ void FEM::decomposeElements()
     PetscPrintf(PETSC_COMM_WORLD, "Decomposing elements...\n");
 
     // PARTIONING NODES
-    int start = int(floor(rank * nodes.size() / size));     // Start index of the elements for the current process
-    int end = int(floor((rank + 1) * nodes.size() / size)); // End index of the elements for the current process
+    Vec x;               // Declaring a vector x in PETSc
+    PetscInt start, end; // Array of integers: start and end of the global DOFs for each process
+
+    VecCreate(PETSC_COMM_WORLD, &x);            // Creates a vector x in PETSc
+    VecSetSizes(x, PETSC_DECIDE, nodes.size()); // Sets the size of the vector x; PETSC_DECIDE means that PETSc will decide the size of the vector for each process
+    VecSetFromOptions(x);                       // Good practice
+    VecGetOwnershipRange(x, &start, &end);      // Gets the range of the global DOFs for each process
+
+    VecDestroy(&x); // Destroys the vector x
+
     for (int i = start; i < end; i++)
         partitionedNodes.push_back(nodes[i]);
 
+    // std::cout << "Rank: " << rank << " start: " << start << " end: " << end << " Number of nodes: " << partitionedNodes.size() << " " << std::endl;
+
     // PARTIONING DOMAIN ELEMENTS
-    int start = int(floor(rank * elements.size() / size));
-    int end = int(floor((rank + 1) * elements.size() / size));
+    VecCreate(PETSC_COMM_WORLD, &x);
+    VecSetSizes(x, PETSC_DECIDE, elements.size());
+    VecSetFromOptions(x);
+    VecGetOwnershipRange(x, &start, &end);
+
+    VecDestroy(&x);
+
     for (int i = start; i < end; i++)
         partitionedElements.push_back(elements[i]);
 
-    // PARTIONING BOUNDARY ELEMENTS
-    start = int(floor(rank * bdElements.size() / size));
-    end = int(floor((rank + 1) * bdElements.size() / size));
-    for (int i = start; i < end; i++)
-        partitionedBoundaryElements.push_back(bdElements[i]);
+    // std::cout << "Rank: " << rank << " start: " << start << " end: " << end << " Number of elements: " << partitionedElements.size() << std::endl;
 
-    // PARTIONING GLOBAL DOFS 
+    // PARTIONING GLOBAL DOF
+    VecCreate(PETSC_COMM_WORLD, &x);
+    VecSetSizes(x, PETSC_DECIDE, nDOFs);
+    VecSetFromOptions(x);
+    VecGetOwnershipRange(x, &start, &end);
+
+    VecDestroy(&x);
+
+    for (int i = start; i < end; i++)
+        partitionedDOFs.push_back(globalDOFs[i]);
+
+    // std::cout << "Rank: " << rank << "start: " << start << " end: " << end << " Number of DOFs: " << partitionedDOFs.size() << std::endl;
+
+    PetscPrintf(PETSC_COMM_WORLD, "Elements decomposed successfully!\n");
+
+    // MISSING BOUNDARY ELEMENTS YET
+}
+
+void FEM::matrixPreAllocation()
+{
     Vec x;
-    PetscInt _start[size], _end[size]; // Array of integers: start and end of the global DOFs for each process
+    PetscInt _start[size], _end[size]; // Arrays of integers: start and end of the global DOFs for each process
+
+    VecCreate(PETSC_COMM_WORLD, &x);
+    VecSetSizes(x, PETSC_DECIDE, nDOFs);
+    VecSetFromOptions(x);
+    VecGetOwnershipRange(x, &_start[rank], &_end[rank]);
+
+    VecDestroy(&x);
+
+    // Broadcasting the start and end of the global DOFs for each process
+    for (int i = 0; i < size; i++)
+    {
+        MPI_Bcast(&_start[i], 1, MPI_INT, i, PETSC_COMM_WORLD); // i is the root process
+        MPI_Bcast(&_end[i], 1, MPI_INT, i, PETSC_COMM_WORLD);
+    }
+
+    PetscInt &start = _start[rank];
+    PetscInt &end = _end[rank];
 }

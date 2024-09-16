@@ -1,6 +1,6 @@
 std::string projectName = "square";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
-bool visualizeMesh = false;
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 

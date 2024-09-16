@@ -23,7 +23,7 @@ private:
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes;
     std::vector<Element *> elements, bdElements, partitionedElements, partitionedBoundaryElements;
-    std::vector<DOF *> globalDOFs;
+    std::vector<DOF *> globalDOFs, partitionedDOFs;
 
     MatrixXd K;
     VectorXd F;
@@ -47,6 +47,7 @@ public:
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
     void decomposeElements();
+    void matrixPreAllocation();
 
     /*
                         SOLVE FEM PROBLEM METHODS
@@ -57,7 +58,7 @@ public:
     void solveLinearSystem();
 
     void solveFEMProblemPETSc();
-    void assembleProblemPETSc();
-    void setBoundaryConditionsPETSc();
-    void solveLinearSystemPETSc();
+    void assembleProblemPETSc() {};
+    void setBoundaryConditionsPETSc() {};
+    void solveLinearSystemPETSc() {};
 };
