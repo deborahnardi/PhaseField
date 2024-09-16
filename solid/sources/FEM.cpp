@@ -28,33 +28,51 @@ void FEM::solveFEMProblemPETSc()
     solveLinearSystemPETSc();
 }
 
-void FEM::assembleProblemPETSc()
+PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo)
 {
-    // Defining matrix and vector using PETSc
+    PetscLogDouble bytes;
 
-    PetscInt dim = 2;
-    PetscInt nDOFs = nodes.size() * dim;
-    PetscErrorCode ierr;
-    // Getting each element contribution to the global stiffness matrix with PETSc
+    (getSolverType() == SolverType::Sequential)
+        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 0, NULL, &A)
+        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, size, size, PETSC_DECIDE, PETSC_DECIDE, 0, NULL, 0, NULL, &A);
+    CHKERRQ(ierr);
 
-    for (auto elem : elements)
+    ierr = MatSetFromOptions(A);
+    CHKERRQ(ierr);
+
+    ierr = VecCreate(PETSC_COMM_WORLD, &b);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(b, PETSC_DECIDE, mSize);
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(b);
+    CHKERRQ(ierr);
+    ierr = VecDuplicate(b, &x);
+    CHKERRQ(ierr);
+
+    if (showInfo)
     {
-        elem->getContribution();
-        Mat Kelem = elem->getElemStiffnessMatrix();
-
-        // Print the stiffness matrix of each element on the terminal
-        CHKERRQ(ierr);
-
-        for (int d = 0; d < dim; d++)
-            for (int i = 0; i < 2; i++)
-                for (int j = 0; j < 2; j++)
-                {
-                    PetscInt row = 2 * elem->getNode(i)->getIndex() + d;
-                    PetscInt col = 2 * elem->getNode(j)->getIndex() + d;
-                    ierr = MatSetValue(K, row, col, Kelem(2 * i + d, 2 * j + d), ADD_VALUES);
-                    CHKERRQ(ierr);
-                }
+        PetscMemoryGetCurrentUsage(&bytes);
+        PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
+        PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
     }
+}
+
+PetscErrorCode FEM::assembleProblemPETSc()
+{
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscPrintf(PETSC_COMM_WORLD, "Assembling problem...\n");
+
+    createPETScVariables(matrix, rhs, solution, nDOFs, true);
+
+    ierr = MatZeroEntries(matrix);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(rhs);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(solution);
+    CHKERRQ(ierr);
+
+    for (auto e : partitionedElements)
+        e->getContribution();
 }
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem without PETSc

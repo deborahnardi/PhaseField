@@ -1,10 +1,7 @@
 #pragma once
 
 #include "hdf5.h"
-#include <petscsnes.h>
 #include <petscksp.h>
-#include <petscdraw.h>
-#include <petscmat.h>
 #include <metis.h>
 
 #include "Node.h"
@@ -24,10 +21,15 @@ private:
     std::vector<Node *> nodes, partitionedNodes;
     std::vector<Element *> elements, bdElements, partitionedElements, partitionedBoundaryElements;
     std::vector<DOF *> globalDOFs, partitionedDOFs;
+    SolverType solverType;
 
     MatrixXd K;
     VectorXd F;
     VectorXd U;
+
+    Mat matrix;
+    Vec rhs, solution;
+    PetscErrorCode ierr;
 
 public:
     FEM();
@@ -36,12 +38,16 @@ public:
 
     std::string getName() const { return name; }
     std::vector<Node *> getNodes() const { return nodes; }
+    std::vector<Element *> getElements() const { return elements; }
+    std::vector<DOF *> getGlobalDOFs() const { return globalDOFs; }
+    SolverType getSolverType() const { return solverType; }
 
     /*
                         DATA INPUT METHODS
     */
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
+    void setSolverType(const SolverType _solverType) { solverType = _solverType; }
 
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
@@ -58,7 +64,8 @@ public:
     void solveLinearSystem();
 
     void solveFEMProblemPETSc();
-    void assembleProblemPETSc();
+    PetscErrorCode assembleProblemPETSc();
+    PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
     void setBoundaryConditionsPETSc() {};
     void solveLinearSystemPETSc() {};
 };

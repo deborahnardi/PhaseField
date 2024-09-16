@@ -2,9 +2,8 @@
 
 enum SolverType
 {
-    EMumps,
-    ESuiteSparse,
-    EIterative
+    Sequential,
+    Parallel
 };
 
 enum BoundaryType

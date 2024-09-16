@@ -26,20 +26,38 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
 }
 Truss::~Truss() {}
 
-void Truss::getContribution()
+void Truss::getContribution(Mat &matrix, Vec &rhs)
 {
-    localStiffnessMatrix = MatrixXd::Zero(4, 4);
-    localStiffnessMatrix << 1, 0, -1, 0,
-        0, 0, 0, 0,
-        -1, 0, 1, 0,
-        0, 0, 0, 0;
-    localStiffnessMatrix *= material->getYoungModulus() * area / length;
+    // localStiffnessMatrix = MatrixXd::Zero(4, 4);
+    // localStiffnessMatrix << 1, 0, -1, 0,
+    //     0, 0, 0, 0,
+    //     -1, 0, 1, 0,
+    //     0, 0, 0, 0;
+    // localStiffnessMatrix *= material->getYoungModulus() * area / length;
 
-    rotationMatrix = MatrixXd::Zero(4, 4);
-    rotationMatrix << cos(theta), sin(theta), 0, 0,
+    // rotationMatrix = MatrixXd::Zero(4, 4);
+    // rotationMatrix << cos(theta), sin(theta), 0, 0,
+    //     -sin(theta), cos(theta), 0, 0,
+    //     0, 0, cos(theta), sin(theta),
+    //     0, 0, -sin(theta), cos(theta);
+
+    // K = rotationMatrix.transpose() * localStiffnessMatrix * rotationMatrix;
+
+    // Translating the above code to PETSc
+    PetscScalar localStiffnessMatrix[16] = {1, 0, -1, 0,
+                                            0, 0, 0, 0,
+                                            -1, 0, 1, 0,
+                                            0, 0, 0, 0};
+    for (int i = 0; i < 16; i++)
+        localStiffnessMatrix[i] *= material->getYoungModulus() * area / length;
+
+    PetscScalar rotationMatrix[16] = {
+        cos(theta), sin(theta), 0, 0,
         -sin(theta), cos(theta), 0, 0,
         0, 0, cos(theta), sin(theta),
-        0, 0, -sin(theta), cos(theta);
+        0, 0, -sin(theta), cos(theta)};
 
-    K = rotationMatrix.transpose() * localStiffnessMatrix * rotationMatrix;
+    PetscScalar rotationMatrix[16] = {0};
+
+    // Multiplying the rotation matrix by the local stiffness matrix
 }
