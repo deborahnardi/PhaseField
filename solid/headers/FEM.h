@@ -32,6 +32,7 @@ private:
     Vec rhs, solution;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
+    bool showMatrix = false;
 
 public:
     FEM();
@@ -74,4 +75,5 @@ public:
     PetscErrorCode setBoundaryConditions();
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
+    void setPrintMatrix(const bool &_showMatrix) { showMatrix = _showMatrix; }
 };

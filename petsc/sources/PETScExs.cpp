@@ -183,3 +183,185 @@ PetscErrorCode PETScExs::PETScSequentialTest()
     ierr = KSPDestroy(&ksp);
     CHKERRQ(ierr);
 }
+
+PetscErrorCode PETScExs::PETScParallelTest()
+{
+    Vec x, b, u;    // Approx solution, rhs, exact solution
+    Mat A;          // Linear system matrix
+    KSP ksp;        // Defines the Krylov subspace method
+    PetscReal norm; // Norm of solution error
+    PetscInt i, j, Ii, J, Istart, Iend, m = 8, n = 7, its;
+    PetscErrorCode ierr;
+    PetscBool flg;
+    PetscScalar v;
+
+    /*-------------------------------------------------------------------------------------
+        Create the matrix and right-hand-side vector that define the linear system, Ax = b.
+    ---------------------------------------------------------------------------------------*/
+
+    ierr = MatCreate(PETSC_COMM_WORLD, &A);
+    CHKERRQ(ierr);
+    ierr = MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, m * n, m * n);
+    CHKERRQ(ierr);
+    ierr = MatSetFromOptions(A);
+    CHKERRQ(ierr);
+    /*
+        MatMPIAIJSetPreallocation(Mat mat, PetscInt d_nz, const PetscInt d_nnz[], PetscInt o_nz, const PetscInt o_nnz[]);
+
+        mat: matrix;
+        d_nz: number of non-zero (NZ) elements per row in the diagonal portion of the matrix; you can use PETSC_DECIDE to have PETSc determine the number of non-zeros;
+        d_nnz: array containing the number of non-zeros in the various rows of the diagonal portion of the matrix; if you don't know the number of non-zeros, you can use NULL;
+        o_nz: number of non-zero elements per row in the off-diagonal portion of the matrix; you can use PETSC_DECIDE to have PETSc determine the number of non-zeros;
+        o_nnz: array containing the number of non-zeros in the various rows of the off-diagonal portion of the matrix; if you don't know the number of non-zeros, you can use NULL.
+    */
+    ierr = MatMPIAIJSetPreallocation(A, 5, NULL, 5, NULL); // Parallel version of the matrix
+    CHKERRQ(ierr);
+    ierr = MatSeqAIJSetPreallocation(A, 5, NULL); // Sequential version of the matrix
+    CHKERRQ(ierr);
+    ierr = MatSeqSBAIJSetPreallocation(A, 1, 5, NULL); // Symmetric block version of the matrix (Sequential)
+    CHKERRQ(ierr);
+    ierr = MatMPISBAIJSetPreallocation(A, 1, 5, NULL, 5, NULL); // Symmetric block version of the matrix (Parallel)
+    CHKERRQ(ierr);
+    /*
+        MatMPISELLSetPreallocation: MPISELL means MPI Sparse Element-wise Linked List. This format is used for matrices that are not symmetric and have a general sparsity pattern.
+    */
+    ierr = MatMPISELLSetPreallocation(A, 5, NULL, 5, NULL);
+    CHKERRQ(ierr);
+    ierr = MatSeqSELLSetPreallocation(A, 5, NULL);
+    CHKERRQ(ierr);
+
+    /*
+        Determine wich rows of the matrix are locally owned.
+    */
+    ierr = MatGetOwnershipRange(A, &Istart, &Iend);
+    CHKERRQ(ierr);
+
+    /*
+        Set matrix elements for the 2-D, 5-point stencil in parallel.
+    */
+
+    for (Ii = Istart; Ii < Iend; Ii++)
+    {
+        v = -1.0;
+        i = Ii / n;
+        j = Ii - i * n;
+        if (i > 0)
+        {
+            J = Ii - n;
+            ierr =
+                MatSetValues(A, 1, &Ii, 1, &J, &v, ADD_VALUES);
+            CHKERRQ(ierr);
+        }
+        if (i < m - 1)
+        {
+            J = Ii + n;
+            ierr =
+                MatSetValues(A, 1, &Ii, 1, &J, &v, ADD_VALUES);
+            CHKERRQ(ierr);
+        }
+        if (j > 0)
+        {
+            J = Ii - 1;
+            ierr =
+                MatSetValues(A, 1, &Ii, 1, &J, &v, ADD_VALUES);
+            CHKERRQ(ierr);
+        }
+        if (j < n - 1)
+        {
+            J = Ii + 1;
+            ierr =
+                MatSetValues(A, 1, &Ii, 1, &J, &v, ADD_VALUES);
+            CHKERRQ(ierr);
+        }
+        v = 4.0;
+        ierr = MatSetValues(A, 1, &Ii, 1, &Ii, &v, ADD_VALUES);
+        CHKERRQ(ierr);
+    }
+
+    ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+
+    ierr = MatSetOption(A, MAT_SYMMETRIC, PETSC_TRUE);
+    CHKERRQ(ierr);
+
+    /*----------------------------------------------------------------
+                        CREATE PARALLEL VECTORS
+    ------------------------------------------------------------------
+    */
+
+    ierr = VecCreate(PETSC_COMM_WORLD, &u);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(u, PETSC_DECIDE, m * n);
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(u);
+    CHKERRQ(ierr);
+    ierr = VecDuplicate(u, &x);
+    CHKERRQ(ierr);
+    ierr = VecDuplicate(u, &b);
+    CHKERRQ(ierr);
+
+    /*--------------------------------------------------------------
+                        Set exact solution
+    ----------------------------------------------------------------
+    */
+
+    ierr = VecSet(u, 1.0);
+    CHKERRQ(ierr);
+    ierr = MatMult(A, u, b);
+
+    /*
+        View the exact solution vector
+    */
+    ierr = VecView(u, PETSC_VIEWER_STDOUT_WORLD);
+    CHKERRQ(ierr);
+
+    /*---------------------------------------------------------------
+            Create the linear solver and set various options
+    -----------------------------------------------------------------
+    */
+    ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
+    CHKERRQ(ierr);
+    ierr = KSPSetOperators(ksp, A, A);
+    CHKERRQ(ierr);
+    ierr = KSPSetTolerances(ksp, 1.e-2 / ((m + 1) * (n + 1)), 1e-50, PETSC_DEFAULT, PETSC_DEFAULT);
+    CHKERRQ(ierr);
+    ierr = KSPSetFromOptions(ksp);
+    CHKERRQ(ierr);
+
+    /*---------------------------------------------------------------
+                        Solve the linear system
+    -----------------------------------------------------------------
+    */
+    ierr = KSPSolve(ksp, b, x);
+    CHKERRQ(ierr);
+
+    /*----------------------------------------------------------------
+                    Check the solution and clean up
+    ------------------------------------------------------------------
+    */
+    ierr = VecAXPY(x, -1.0, u); // x = x - u to get the error
+    CHKERRQ(ierr);
+    ierr = VecNorm(x, NORM_2, &norm);
+    CHKERRQ(ierr);
+    ierr = KSPGetIterationNumber(ksp, &its);
+    CHKERRQ(ierr);
+
+    ierr = PetscPrintf(PETSC_COMM_WORLD, "Norm of error %g iterations%D\n", double(norm), its);
+    CHKERRQ(ierr);
+
+    /*
+        Free work space. All PETSc objects should be destroyed when they are no longer needed.
+    */
+    ierr = KSPDestroy(&ksp);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&u);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&b);
+    CHKERRQ(ierr);
+    ierr = MatDestroy(&A);
+    CHKERRQ(ierr);
+}

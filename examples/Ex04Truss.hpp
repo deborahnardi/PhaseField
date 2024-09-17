@@ -44,5 +44,6 @@ geo1->GenerateMeshAPI(visualizeMesh);
 
 truss->readGeometry(projectName + ".mir");
 truss->setSolverType(SEQ);
+truss->setPrintMatrix(true);
 truss->solveFEMProblem();
-// truss->solveFEMProblemNoPetsc();
+//  truss->solveFEMProblemNoPetsc();

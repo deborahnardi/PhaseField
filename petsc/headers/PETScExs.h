@@ -10,4 +10,5 @@ public:
     ~PETScExs();
 
     PetscErrorCode PETScSequentialTest();
+    PetscErrorCode PETScParallelTest();
 };

@@ -17,7 +17,6 @@ FEM::~FEM() {}
 PetscErrorCode FEM::solveFEMProblem()
 {
     assembleProblem();
-    setBoundaryConditions();
     solveLinearSystem(matrix, rhs, solution);
 }
 
@@ -56,32 +55,13 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
 
     // Print the global stiffness matrix on the terminal
-    PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
-    MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-
-    printGlobalMatrix(matrix);
-}
-
-PetscErrorCode FEM::printGlobalMatrix(Mat &A)
-{
-    PetscInt i, j, rows, cols;
-    PetscScalar value;
-    const int width = 10; // Columns width
-
-    ierr = MatGetSize(A, &rows, &cols);
-    CHKERRQ(ierr);
-
-    std::cout << "Global stiffness matrix:" << std::endl;
-
-    for (i = 0; i < rows; i++)
+    if (showMatrix)
     {
-        for (j = 0; j < cols; j++)
-        {
-            ierr = MatGetValue(A, i, j, &value);
-            CHKERRQ(ierr);
-            std::cout << std::setw(width) << std::fixed << std::setprecision(4) << value << " ";
-        }
-        std::cout << std::endl;
+        ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
+        CHKERRQ(ierr);
+        ierr = MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
+        CHKERRQ(ierr);
+        printGlobalMatrix(matrix);
     }
 }
 
@@ -162,6 +142,8 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     ierr = KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD); // Prints the Krylov subspace method information
     CHKERRQ(ierr);
 
+    ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
+
     ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
     CHKERRQ(ierr);
 
@@ -177,6 +159,29 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     CHKERRQ(ierr);
     ierr = MatDestroy(&A);
     CHKERRQ(ierr);
+}
+
+PetscErrorCode FEM::printGlobalMatrix(Mat &A)
+{
+    PetscInt i, j, rows, cols;
+    PetscScalar value;
+    const int width = 10; // Columns width
+
+    ierr = MatGetSize(A, &rows, &cols);
+    CHKERRQ(ierr);
+
+    std::cout << "Global stiffness matrix:" << std::endl;
+
+    for (i = 0; i < rows; i++)
+    {
+        for (j = 0; j < cols; j++)
+        {
+            ierr = MatGetValue(A, i, j, &value);
+            CHKERRQ(ierr);
+            std::cout << std::setw(width) << std::fixed << std::setprecision(4) << value << " ";
+        }
+        std::cout << std::endl;
+    }
 }
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem without PETSc
@@ -247,10 +252,17 @@ void FEM::assembleProblemNoPetsc()
         std::cout << "Element stiffness matrix: " << std::endl;
         std::cout << Kelem << std::endl;
 
-        for (int d = 0; d < dim; d++)
-            for (int i = 0; i < 2; i++)
-                for (int j = 0; j < 2; j++)
-                    K(2 * elem->getNode(i)->getIndex() + d, 2 * elem->getNode(j)->getIndex() + d) += Kelem(2 * i + d, 2 * j + d);
+        int dof1 = elem->getNode(0)->getDOF(0)->getIndex();
+        int dof2 = elem->getNode(1)->getDOF(0)->getIndex();
+
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 2; j++)
+            {
+                K(dof1 + i, dof1 + j) += Kelem(i, j);
+                K(dof1 + i, dof2 + j) += Kelem(i, j + 2);
+                K(dof2 + i, dof1 + j) += Kelem(i + 2, j);
+                K(dof2 + i, dof2 + j) += Kelem(i + 2, j + 2);
+            }
     }
 
     // Print the global stiffness matrix on the terminal
