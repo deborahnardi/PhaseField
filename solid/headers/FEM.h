@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iomanip> // Para std::setw e std::fixed
 #include "hdf5.h"
 #include <petscksp.h>
 #include <metis.h>
@@ -29,6 +30,7 @@ private:
 
     Mat matrix;
     Vec rhs, solution;
+    PetscInt *dirichletBC;
     PetscErrorCode ierr;
 
 public:
@@ -58,14 +60,18 @@ public:
     /*
                         SOLVE FEM PROBLEM METHODS
     */
-    void solveFEMProblem();
-    void assembleProblem();
-    void setBoundaryConditions();
-    void solveLinearSystem();
-
-    void solveFEMProblemPETSc();
-    PetscErrorCode assembleProblemPETSc();
+    void solveFEMProblemNoPetsc();
+    void assembleProblemNoPetsc();
+    void setBoundaryConditionsNoPetsc();
+    void solveLinearSystemNoPetsc();
+    /*----------------------------------------------------------------------------------
+                                    PETSc Methods
+    ------------------------------------------------------------------------------------
+    */
+    PetscErrorCode solveFEMProblem();
+    PetscErrorCode assembleProblem();
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
-    void setBoundaryConditionsPETSc() {};
-    void solveLinearSystemPETSc() {};
+    PetscErrorCode setBoundaryConditions();
+    PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
+    PetscErrorCode printGlobalMatrix(Mat &A);
 };

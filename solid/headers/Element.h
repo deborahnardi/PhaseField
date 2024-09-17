@@ -21,6 +21,7 @@ protected:
     DOFType type;
     double value;
     MatrixXd K;
+    PetscErrorCode ierr;
 
 public:
     Element();
@@ -40,7 +41,9 @@ public:
 
     virtual MatrixXd getElemStiffnessMatrix() const = 0;
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
-    virtual void getContribution(Mat &matrix) {};
+
+    virtual PetscErrorCode getContribution(Mat &matrix) {};
+    virtual void getContribution() {};
 };
 
 class BoundaryElement : public Element
@@ -50,7 +53,8 @@ public:
     BoundaryElement(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
     ~BoundaryElement();
 
-    void getContribution(Mat &matrix) override {};
+    PetscErrorCode getContribution(Mat &matrix) override {};
+    void getContribution() override {};
     void addCondition(BoundaryType _bdType, DOFType _type, double _value) override;
     MatrixXd getElemStiffnessMatrix() const override { return K; }
 };
@@ -84,7 +88,8 @@ public:
     void setRotationMatrix(const MatrixXd &_rotationMatrix) { rotationMatrix = _rotationMatrix; }
     void setElemStiffnessMatrix(const MatrixXd &_K) { K = _K; }
 
-    void getContribution(Mat &matrix) override;
+    PetscErrorCode getContribution(Mat &matrix) override;
+    void getContribution() override;
 };
 
 class Solid2D : public Element
@@ -104,5 +109,6 @@ public:
     void setArea(const double &_area) { area = _area; }
 
     MatrixXd getElemStiffnessMatrix() const override { return K; }
-    void getContribution(Mat &matrix) override {};
+    PetscErrorCode getContribution(Mat &matrix) override {};
+    void getContribution() override {};
 };

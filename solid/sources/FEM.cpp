@@ -14,26 +14,83 @@ FEM::~FEM() {}
 ----------------------------------------------------------------------------------
 */
 
-void FEM::solveFEMProblemPETSc()
+PetscErrorCode FEM::solveFEMProblem()
 {
-    // Defining matrix and vector using PETSc
+    assembleProblem();
+    setBoundaryConditions();
+    solveLinearSystem(matrix, rhs, solution);
+}
 
-    Mat K;
-    Vec F, U;
+PetscErrorCode FEM::assembleProblem()
+{
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscPrintf(PETSC_COMM_WORLD, "Assembling problem...\n");
 
-    PetscErrorCode ierr;
+    createPETScVariables(matrix, rhs, solution, nDOFs, true);
 
-    assembleProblemPETSc();
-    setBoundaryConditionsPETSc();
-    solveLinearSystemPETSc();
+    ierr = MatZeroEntries(matrix);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(rhs);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(solution);
+    CHKERRQ(ierr);
+
+    for (auto e : partitionedElements)
+        e->getContribution(matrix);
+
+    // Neumann boundary conditions
+    setBoundaryConditions();
+
+    // Assemble the matrix and the right-hand side vector
+    ierr = VecAssemblyBegin(rhs);
+    CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(rhs);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+
+    // Apply Dirichlet boundary conditions
+    ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs);
+    CHKERRQ(ierr);
+
+    // Print the global stiffness matrix on the terminal
+    PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
+    MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
+
+    printGlobalMatrix(matrix);
+}
+
+PetscErrorCode FEM::printGlobalMatrix(Mat &A)
+{
+    PetscInt i, j, rows, cols;
+    PetscScalar value;
+    const int width = 10; // Columns width
+
+    ierr = MatGetSize(A, &rows, &cols);
+    CHKERRQ(ierr);
+
+    std::cout << "Global stiffness matrix:" << std::endl;
+
+    for (i = 0; i < rows; i++)
+    {
+        for (j = 0; j < cols; j++)
+        {
+            ierr = MatGetValue(A, i, j, &value);
+            CHKERRQ(ierr);
+            std::cout << std::setw(width) << std::fixed << std::setprecision(4) << value << " ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo)
 {
     PetscLogDouble bytes;
 
-    (getSolverType() == SolverType::Sequential)
-        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 0, NULL, &A)
+    (getSolverType() == SEQ)
+        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 1800, NULL, &A) // 1800 is the number of non-zero elements per row
         : ierr = MatCreateAIJ(PETSC_COMM_WORLD, size, size, PETSC_DECIDE, PETSC_DECIDE, 0, NULL, 0, NULL, &A);
     CHKERRQ(ierr);
 
@@ -57,68 +114,8 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     }
 }
 
-PetscErrorCode FEM::assembleProblemPETSc()
+PetscErrorCode FEM::setBoundaryConditions()
 {
-    MPI_Barrier(PETSC_COMM_WORLD);
-    PetscPrintf(PETSC_COMM_WORLD, "Assembling problem...\n");
-
-    createPETScVariables(matrix, rhs, solution, nDOFs, true);
-
-    ierr = MatZeroEntries(matrix);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(rhs);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(solution);
-    CHKERRQ(ierr);
-
-    for (auto e : partitionedElements)
-        e->getContribution(matrix);
-
-    // boundary conditions de neumann aqui
-    // monta matriz e vetores
-
-    // MatZeroRowsColumns(tangent, numDirichletBC, dirichletBC, 1., sol, rhs); APLICA CONDICOES DE DIRICHLET
-
-    // Print the global stiffness matrix on the terminal
-    PetscPrintf(PETSC_COMM_WORLD, "Global stiffness matrix:\n");
-    MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-}
-/*----------------------------------------------------------------------------------
-                Assembling and solving problem without PETSc
-----------------------------------------------------------------------------------
-*/
-
-void FEM::solveFEMProblem()
-{
-    K = MatrixXd::Zero(nDOFs, nDOFs);
-    F = VectorXd::Zero(nDOFs);
-    U = VectorXd::Zero(nDOFs);
-
-    assembleProblem();
-    setBoundaryConditions();
-    solveLinearSystem();
-}
-
-void FEM::solveLinearSystem()
-{
-    U = K.fullPivLu().solve(F);
-    std::cout << "Displacement vector: " << std::endl;
-    std::cout << U << std::endl;
-}
-
-void FEM::setBoundaryConditions()
-{
-    // Setting NEUMANN boundary conditions
-
-    // for (auto bd : bdElements)
-    //     for (auto node : bd->getElemConnectivity())
-    //         for (auto dof : node->getDOFs())
-    //             if (dof->isNeumann())
-    //             {
-    //                 F(dof->getIndex()) += dof->getNeumannValue();
-    //                 numNeumannDOFs++;
-    //             }
-
     for (auto bd : bdElements)
         for (auto node : bd->getElemConnectivity())
             for (auto dof : node->getDOFs())
@@ -126,7 +123,93 @@ void FEM::setBoundaryConditions()
                 {
                     PetscInt pos = dof->getIndex();
                     PetscScalar value = dof->getNeumannValue();
-                    VecSetValues(rhs, 1, &pos, &value, ADD_VALUES);
+                    ierr = VecSetValues(rhs, 1, &pos, &value, ADD_VALUES);
+                    CHKERRQ(ierr);
+                    numNeumannDOFs++;
+                }
+}
+
+PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
+{
+    KSP ksp;
+    PC pc;
+    PetscInt its;
+
+    ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
+    CHKERRQ(ierr);
+    ierr = KSPSetOperators(ksp, A, A);
+    CHKERRQ(ierr);
+    ierr = KSPGetPC(ksp, &pc);
+    CHKERRQ(ierr);
+    ierr = KSPSetFromOptions(ksp);
+    CHKERRQ(ierr);
+    ierr = KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
+    CHKERRQ(ierr);
+
+    switch (getSolverType())
+    {
+    case SEQ:
+        ierr = PCSetType(pc, PCJACOBI);
+        CHKERRQ(ierr);
+        break;
+    }
+
+    ierr = KSPSolve(ksp, b, x);
+    CHKERRQ(ierr);
+    ierr = KSPGetIterationNumber(ksp, &its); // Gets the number of iterations
+    CHKERRQ(ierr);
+
+    ierr = KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD); // Prints the Krylov subspace method information
+    CHKERRQ(ierr);
+
+    ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
+    CHKERRQ(ierr);
+
+    /*
+         Clean up
+    */
+
+    ierr = KSPDestroy(&ksp);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&b);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    ierr = MatDestroy(&A);
+    CHKERRQ(ierr);
+}
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem without PETSc
+----------------------------------------------------------------------------------
+*/
+void FEM::solveFEMProblemNoPetsc()
+{
+    K = MatrixXd::Zero(nDOFs, nDOFs);
+    F = VectorXd::Zero(nDOFs);
+    U = VectorXd::Zero(nDOFs);
+
+    assembleProblemNoPetsc();
+    setBoundaryConditionsNoPetsc();
+    solveLinearSystemNoPetsc();
+}
+
+void FEM::solveLinearSystemNoPetsc()
+{
+    U = K.fullPivLu().solve(F);
+    std::cout << "Displacement vector: " << std::endl;
+    std::cout << U << std::endl;
+}
+
+void FEM::setBoundaryConditionsNoPetsc()
+{
+    // Setting NEUMANN boundary conditions
+
+    for (auto bd : bdElements)
+        for (auto node : bd->getElemConnectivity())
+            for (auto dof : node->getDOFs())
+                if (dof->isNeumann())
+                {
+                    F(dof->getIndex()) += dof->getNeumannValue();
                     numNeumannDOFs++;
                 }
 
@@ -151,26 +234,26 @@ void FEM::setBoundaryConditions()
     std::cout << F << std::endl;
 }
 
-void FEM::assembleProblem()
+void FEM::assembleProblemNoPetsc()
 {
-    // int dim = 2;
+    int dim = 2;
 
-    // for (auto elem : elements)
-    // {
-    //     elem->getContribution();
-    //     MatrixXd Kelem = elem->getElemStiffnessMatrix();
+    for (auto elem : elements)
+    {
+        elem->getContribution();
+        MatrixXd Kelem = elem->getElemStiffnessMatrix();
 
-    //     // Print the stiffness matrix of each element on the terminal
-    //     std::cout << "Element stiffness matrix: " << std::endl;
-    //     std::cout << Kelem << std::endl;
+        // Print the stiffness matrix of each element on the terminal
+        std::cout << "Element stiffness matrix: " << std::endl;
+        std::cout << Kelem << std::endl;
 
-    //     for (int d = 0; d < dim; d++)
-    //         for (int i = 0; i < 2; i++)
-    //             for (int j = 0; j < 2; j++)
-    //                 K(2 * elem->getNode(i)->getIndex() + d, 2 * elem->getNode(j)->getIndex() + d) += Kelem(2 * i + d, 2 * j + d);
-    // }
+        for (int d = 0; d < dim; d++)
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                    K(2 * elem->getNode(i)->getIndex() + d, 2 * elem->getNode(j)->getIndex() + d) += Kelem(2 * i + d, 2 * j + d);
+    }
 
-    // // Print the global stiffness matrix on the terminal
-    // std::cout << "Global stiffness matrix: " << std::endl;
-    // std::cout << K << std::endl;
+    // Print the global stiffness matrix on the terminal
+    std::cout << "Global stiffness matrix: " << std::endl;
+    std::cout << K << std::endl;
 }

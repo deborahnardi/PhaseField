@@ -26,7 +26,7 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
 }
 Truss::~Truss() {}
 
-void Truss::getContribution(Mat &matrix) // stiffness matrix and nodal equivalent force COLOCAR IERR
+PetscErrorCode Truss::getContribution(Mat &matrix)
 {
     PetscInt numElDOF = 4;
     PetscInt *indx = new PetscInt[4]();
@@ -59,8 +59,27 @@ void Truss::getContribution(Mat &matrix) // stiffness matrix and nodal equivalen
     localStiff[14] = k * cos(theta) * sin(theta);
     localStiff[15] = k * sin(theta) * sin(theta);
 
-    MatSetValues(matrix, numElDOF, indx, numElDOF, indx, localStiff, ADD_VALUES);
+    ierr = MatSetValues(matrix, numElDOF, indx, numElDOF, indx, localStiff, ADD_VALUES);
+    CHKERRQ(ierr);
 
     delete[] indx;
     delete[] localStiff;
+}
+
+void Truss::getContribution()
+{
+    localStiffnessMatrix = MatrixXd::Zero(4, 4);
+    localStiffnessMatrix << 1, 0, -1, 0,
+        0, 0, 0, 0,
+        -1, 0, 1, 0,
+        0, 0, 0, 0;
+    localStiffnessMatrix *= material->getYoungModulus() * area / length;
+
+    rotationMatrix = MatrixXd::Zero(4, 4);
+    rotationMatrix << cos(theta), sin(theta), 0, 0,
+        -sin(theta), cos(theta), 0, 0,
+        0, 0, cos(theta), sin(theta),
+        0, 0, -sin(theta), cos(theta);
+
+    K = rotationMatrix.transpose() * localStiffnessMatrix * rotationMatrix;
 }

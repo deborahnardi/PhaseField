@@ -204,6 +204,11 @@ void FEM::readGeometry(const std::string &_filename)
         if (dof->isDirichlet())
             numDirichletDOFs++;
 
+    dirichletBC = new PetscInt[numDirichletDOFs](); // Array that holds the dofs that have Dirichlet boundary conditions
+    for (int i = 0, j = 0; i < nDOFs; i++)
+        if (globalDOFs[i]->isDirichlet())
+            dirichletBC[j++] = i;
+
     file.close();
 
     PetscPrintf(PETSC_COMM_WORLD, "Geometry read successfully!\n");

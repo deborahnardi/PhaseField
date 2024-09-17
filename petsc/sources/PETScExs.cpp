@@ -151,6 +151,7 @@ PetscErrorCode PETScExs::PETScSequentialTest()
     CHKERRQ(ierr);
 
     ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
+    CHKERRQ(ierr);
 
     /*
         Check the solution and clean up

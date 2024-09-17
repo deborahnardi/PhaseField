@@ -2,8 +2,8 @@
 
 enum SolverType
 {
-    Sequential,
-    Parallel
+    SEQ = 0,
+    PARALLEL = 1
 };
 
 enum BoundaryType
