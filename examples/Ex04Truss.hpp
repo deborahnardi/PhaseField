@@ -43,6 +43,6 @@ lines[4]->setAttributes(materials[0], A0, TRUSS_ELEMENT);
 geo1->GenerateMeshAPI(visualizeMesh);
 
 truss->readGeometry(projectName + ".mir");
-truss->setPrintMatrix(false);
+truss->setPrintMatrix(true);
 truss->solveFEMProblem();
 // truss->solveFEMProblemNoPetsc();

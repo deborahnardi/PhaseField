@@ -41,7 +41,10 @@ PetscErrorCode FEM::assembleProblem()
         elements[Ii]->getContribution(matrix);
 
     // Neumann boundary conditions
-    setBoundaryConditions();
+    for (int Ii = IIstart; Ii < IIend; Ii++)
+        bdElements[Ii]->getContribution(rhs);
+
+    // setBoundaryConditions();
 
     // Assemble the matrix and the right-hand side vector
     ierr = VecAssemblyBegin(rhs);
@@ -85,6 +88,18 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     ierr = VecSetFromOptions(x);
     CHKERRQ(ierr);
     ierr = VecGetOwnershipRange(x, &Istart, &Iend);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+
+    // PARTIONING BOUNDARY ELEMENTS (FOR NEUMANN CONDITIONS)
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, bdElements.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &IIstart, &IIend);
     CHKERRQ(ierr);
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);

@@ -160,6 +160,8 @@ void FEM::readGeometry(const std::string &_filename)
             elements.push_back(new Solid2D(elements.size(), elemDim, connectivity, material, physicalEntity));
             break;
         default:
+            material = materials[physicalEntities[physicalEntity].material];
+            std::cout << bdElements.size() << std::endl;
             bdElements.push_back(new BoundaryElement(bdElements.size(), elemDim, connectivity, material, physicalEntity));
             break;
         }
@@ -218,8 +220,8 @@ void FEM::readGeometry(const std::string &_filename)
     PetscPrintf(PETSC_COMM_WORLD, "Number of Dirichlet DOFs: %d\n", numDirichletDOFs);
     PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", globalDOFs.size());
 
-    decomposeElements();
-    matrixPreAllocation();
+    // decomposeElements();
+    // matrixPreAllocation();
 }
 
 void FEM::decomposeElements()
@@ -238,8 +240,8 @@ void FEM::decomposeElements()
 
     VecDestroy(&x); // Destroys the vector x
 
-    for (int i = start; i < end; i++)
-        partitionedNodes.push_back(nodes[i]);
+    // for (int i = start; i < end; i++)
+    //     partitionedNodes.push_back(nodes[i]);
 
     // std::cout << "Rank: " << rank << " start: " << start << " end: " << end << " Number of nodes: " << partitionedNodes.size() << " " << std::endl;
 
@@ -264,8 +266,8 @@ void FEM::decomposeElements()
 
     VecDestroy(&x);
 
-    for (int i = start; i < end; i++)
-        partitionedDOFs.push_back(globalDOFs[i]);
+    // for (int i = start; i < end; i++)
+    //     partitionedDOFs.push_back(globalDOFs[i]);
 
     // std::cout << "Rank: " << rank << "start: " << start << " end: " << end << " Number of DOFs: " << partitionedDOFs.size() << std::endl;
 

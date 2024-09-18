@@ -9,6 +9,7 @@
 #include "Element.h"
 #include "DOF.h"
 #include "Material.h"
+#include "BoundaryElement.h"
 
 #include "../../enumclass.hpp"
 
@@ -20,8 +21,9 @@ private:
     std::string name, filename;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes;
-    std::vector<Element *> elements, bdElements, partitionedElements, partitionedBoundaryElements;
-    std::vector<DOF *> globalDOFs, partitionedDOFs;
+    std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
+    std::vector<BoundaryElement *> bdElements;
+    std::vector<DOF *> globalDOFs;
 
     MatrixXd K;
     VectorXd F;
@@ -29,7 +31,7 @@ private:
 
     Mat matrix;
     Vec rhs, solution;
-    PetscInt Istart, Iend;
+    PetscInt Istart, Iend, IIstart, IIend;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;

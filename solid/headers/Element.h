@@ -5,12 +5,6 @@
 #include "Material.h"
 #include "../../enumclass.hpp"
 
-#include <petscsnes.h>
-#include <petscksp.h>
-#include <petscdraw.h>
-#include <petscmat.h>
-#include <metis.h>
-
 class Element
 {
 protected:

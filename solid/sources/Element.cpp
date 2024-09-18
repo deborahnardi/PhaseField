@@ -7,40 +7,6 @@ Element::~Element() {}
 
 // **************************
 
-BoundaryElement::BoundaryElement() {}
-BoundaryElement::BoundaryElement(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity)
-    : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity)
-{
-    for (auto n : _elemConnectivity)
-    {
-        n->setIsDiscritized();
-        n->addDOF(new DOF(X, 0.));
-        n->addDOF(new DOF(Y, 0.));
-    }
-}
-BoundaryElement::~BoundaryElement() {}
-
-void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _value)
-{
-    for (auto n : elemConnectivity)
-        for (auto dof : n->getDOFs())
-            if (dof->getDOFType() == _type)
-            {
-                if (_bdType == NEUMANN)
-                {
-                    dof->setNeumann();
-                    dof->setNeumannValue(_value);
-                }
-                else if (_bdType == DIRICHLET)
-                {
-                    dof->setDirichlet();
-                    dof->setDirichletValue(_value);
-                }
-            }
-}
-
-// **************************
-
 Solid2D::Solid2D() {}
 Solid2D::Solid2D(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity)
     : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity)

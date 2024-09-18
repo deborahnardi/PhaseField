@@ -5,6 +5,12 @@
 #include <string>
 #include <fstream>
 
+#include <petscsnes.h>
+#include <petscksp.h>
+#include <petscdraw.h>
+#include <petscmat.h>
+#include <metis.h>
+
 #include "../../enumclass.hpp"
 #include "DOF.h"
 
