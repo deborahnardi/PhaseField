@@ -30,7 +30,7 @@ geo1->addTransfiniteLine(lines, 1);
 
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[0], DIRICHLET, {{X, 0.}, {Y, 0.}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[2], DIRICHLET, {{Y, 0.}}));
-boundaryConditions.push_back(geo1->addBoundaryCondition(points[3], NEUMANN, {{Y, -1000.}}));
+boundaryConditions.push_back(geo1->addBoundaryCondition(points[3], NEUMANN, {{Y, -2000.}}));
 
 materials.push_back(geo1->addMaterial(E, 0.0));
 
@@ -43,7 +43,6 @@ lines[4]->setAttributes(materials[0], A0, TRUSS_ELEMENT);
 geo1->GenerateMeshAPI(visualizeMesh);
 
 truss->readGeometry(projectName + ".mir");
-truss->setSolverType(SEQ);
-truss->setPrintMatrix(true);
+truss->setPrintMatrix(false);
 truss->solveFEMProblem();
-//  truss->solveFEMProblemNoPetsc();
+// truss->solveFEMProblemNoPetsc();

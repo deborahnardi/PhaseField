@@ -32,14 +32,6 @@ PetscErrorCode Truss::getContribution(Mat &matrix)
     PetscInt *indx = new PetscInt[4]();
     PetscScalar *localStiff = new PetscScalar[16]();
     PetscInt count = 0;
-
-    for (auto node : elemConnectivity)
-        for (auto dof : node->getDOFs())
-        {
-            indx[count] = dof->getIndex();
-            count++;
-        }
-
     PetscScalar k = material->getYoungModulus() * area / length;
 
     localStiff[0] = k * cos(theta) * cos(theta);
@@ -58,6 +50,13 @@ PetscErrorCode Truss::getContribution(Mat &matrix)
     localStiff[13] = k * -sin(theta) * sin(theta);
     localStiff[14] = k * cos(theta) * sin(theta);
     localStiff[15] = k * sin(theta) * sin(theta);
+
+    for (auto node : elemConnectivity)
+        for (auto dof : node->getDOFs())
+        {
+            indx[count] = dof->getIndex();
+            count++;
+        }
 
     ierr = MatSetValues(matrix, numElDOF, indx, numElDOF, indx, localStiff, ADD_VALUES);
     CHKERRQ(ierr);

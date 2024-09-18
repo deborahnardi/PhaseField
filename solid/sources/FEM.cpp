@@ -34,8 +34,11 @@ PetscErrorCode FEM::assembleProblem()
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
 
-    for (auto e : partitionedElements)
-        e->getContribution(matrix);
+    // for (auto e : partitionedElements)
+    //     e->getContribution(matrix);
+
+    for (int Ii = Istart; Ii < Iend; Ii++)
+        elements[Ii]->getContribution(matrix);
 
     // Neumann boundary conditions
     setBoundaryConditions();
@@ -65,14 +68,29 @@ PetscErrorCode FEM::assembleProblem()
     }
 }
 
-PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo)
+PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
 {
     PetscLogDouble bytes;
 
-    (getSolverType() == SEQ)
-        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 1800, NULL, &A) // 1800 is the number of non-zero elements per row
-        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, size, size, PETSC_DECIDE, PETSC_DECIDE, 0, NULL, 0, NULL, &A);
+    (size == 1)
+        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 1800, NULL, &A)                                        // 1800 is the number of non-zero elements per row, this can be improved by pre allocating the matrix
+        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, 1800, NULL, 3000, NULL, &A); // Again, 1800 is the number of non-zero elements per row, 3000 is the number of non-zero elements per row in the off-diagonal portion of the matrix. Both can be improved by pre allocating the matrix
     CHKERRQ(ierr);
+
+    // PARTIONING DOMAIN ELEMENTS
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, elements.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &Istart, &Iend);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+
+    // for (int i = Istart; i < Iend; i++)
+    //     partitionedElements.push_back(elements[i]);
 
     ierr = MatSetFromOptions(A);
     CHKERRQ(ierr);
@@ -88,9 +106,12 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
 
     if (showInfo)
     {
-        PetscMemoryGetCurrentUsage(&bytes);
-        PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
-        PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
+        ierr = PetscMemoryGetCurrentUsage(&bytes);
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
+        CHKERRQ(ierr);
     }
 }
 
@@ -119,16 +140,16 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     CHKERRQ(ierr);
     ierr = KSPSetOperators(ksp, A, A);
     CHKERRQ(ierr);
-    ierr = KSPGetPC(ksp, &pc);
-    CHKERRQ(ierr);
     ierr = KSPSetFromOptions(ksp);
     CHKERRQ(ierr);
     ierr = KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
     CHKERRQ(ierr);
 
-    switch (getSolverType())
+    switch (size)
     {
-    case SEQ:
+    case 1:
+        ierr = KSPGetPC(ksp, &pc);
+        CHKERRQ(ierr);
         ierr = PCSetType(pc, PCJACOBI);
         CHKERRQ(ierr);
         break;

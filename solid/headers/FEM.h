@@ -22,7 +22,6 @@ private:
     std::vector<Node *> nodes, partitionedNodes;
     std::vector<Element *> elements, bdElements, partitionedElements, partitionedBoundaryElements;
     std::vector<DOF *> globalDOFs, partitionedDOFs;
-    SolverType solverType;
 
     MatrixXd K;
     VectorXd F;
@@ -30,6 +29,7 @@ private:
 
     Mat matrix;
     Vec rhs, solution;
+    PetscInt Istart, Iend;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;
@@ -43,14 +43,12 @@ public:
     std::vector<Node *> getNodes() const { return nodes; }
     std::vector<Element *> getElements() const { return elements; }
     std::vector<DOF *> getGlobalDOFs() const { return globalDOFs; }
-    SolverType getSolverType() const { return solverType; }
 
     /*
                         DATA INPUT METHODS
     */
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
-    void setSolverType(const SolverType _solverType) { solverType = _solverType; }
 
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);

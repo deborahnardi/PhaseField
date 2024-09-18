@@ -243,13 +243,13 @@ void FEM::decomposeElements()
 
     // std::cout << "Rank: " << rank << " start: " << start << " end: " << end << " Number of nodes: " << partitionedNodes.size() << " " << std::endl;
 
-    // PARTIONING DOMAIN ELEMENTS
-    VecCreate(PETSC_COMM_WORLD, &x);
-    VecSetSizes(x, PETSC_DECIDE, elements.size());
-    VecSetFromOptions(x);
-    VecGetOwnershipRange(x, &start, &end);
+    // // PARTIONING DOMAIN ELEMENTS
+    // VecCreate(PETSC_COMM_WORLD, &x);
+    // VecSetSizes(x, PETSC_DECIDE, elements.size());
+    // VecSetFromOptions(x);
+    // VecGetOwnershipRange(x, &start, &end);
 
-    VecDestroy(&x);
+    // VecDestroy(&x);
 
     for (int i = start; i < end; i++)
         partitionedElements.push_back(elements[i]);

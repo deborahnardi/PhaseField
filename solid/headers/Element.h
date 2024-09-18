@@ -46,19 +46,6 @@ public:
     virtual void getContribution() {};
 };
 
-class BoundaryElement : public Element
-{
-public:
-    BoundaryElement();
-    BoundaryElement(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
-    ~BoundaryElement();
-
-    PetscErrorCode getContribution(Mat &matrix) override {};
-    void getContribution() override {};
-    void addCondition(BoundaryType _bdType, DOFType _type, double _value) override;
-    MatrixXd getElemStiffnessMatrix() const override { return K; }
-};
-
 class Truss : public Element
 {
 private:
