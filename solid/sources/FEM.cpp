@@ -37,9 +37,13 @@ PetscErrorCode FEM::assembleProblem()
     // for (auto e : partitionedElements)
     //     e->getContribution(matrix);
 
+    PetscScalar integral = 0.0;
     for (int Ii = Istart; Ii < Iend; Ii++)
+    {
         elements[Ii]->getContribution(matrix);
-
+        elements[Ii]->Test(integral);
+    }
+    std::cout << "Integral: " << integral << std::endl;
     // Neumann boundary conditions
     for (int Ii = IIstart; Ii < IIend; Ii++)
         bdElements[Ii]->getContribution(rhs);
@@ -80,6 +84,7 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, 1800, NULL, 3000, NULL, &A); // Again, 1800 is the number of non-zero elements per row, 3000 is the number of non-zero elements per row in the off-diagonal portion of the matrix. Both can be improved by pre allocating the matrix
     CHKERRQ(ierr);
 
+    // ----------------------------------------------------------------
     // PARTIONING DOMAIN ELEMENTS
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
     CHKERRQ(ierr);
@@ -91,7 +96,7 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     CHKERRQ(ierr);
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
-
+    // ----------------------------------------------------------------
     // PARTIONING BOUNDARY ELEMENTS (FOR NEUMANN CONDITIONS)
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
     CHKERRQ(ierr);
@@ -103,9 +108,7 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     CHKERRQ(ierr);
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
-
-    // for (int i = Istart; i < Iend; i++)
-    //     partitionedElements.push_back(elements[i]);
+    // ----------------------------------------------------------------
 
     ierr = MatSetFromOptions(A);
     CHKERRQ(ierr);

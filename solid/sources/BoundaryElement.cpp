@@ -43,7 +43,7 @@ void BoundaryElement::getContribution(Vec &rhs)
         if (c.bdType == NEUMANN)
             if (elemDimension == 0)
             {
-                PetscInt dofA = c.dofs[0]->getIndex();
+                PetscInt dofA = c.dofs[0]->getIndex(); // c.dofs[0] because if elemDimension == 0, it is only a node -> only one DOF
                 PetscScalar value = c.value;
                 VecSetValues(rhs, 1, &dofA, &value, ADD_VALUES);
             }

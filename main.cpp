@@ -20,11 +20,11 @@ int main(int argc, char **argv)
 // DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
 // #include "examples/pointerAndReference.hpp"
 // #include "examples/Ex01Inclusions.hpp"
-// #include "examples/square.hpp"
-// #include "examples/squareEllipse.hpp"
-//       #include "examples/Ex02NumericalIntegration.hpp"
-//   #include "examples/Ex03Truss.hpp"
-#include "examples/Ex04Truss.hpp"
+#include "examples/square.hpp"
+    // #include "examples/squareEllipse.hpp"
+    // #include "examples/Ex02NumericalIntegration.hpp"
+    //    #include "examples/Ex03Truss.hpp"
+    //  #include "examples/Ex04Truss.hpp"
 
     // =======================================
 

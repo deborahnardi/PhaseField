@@ -3,6 +3,8 @@
 #include "Node.h"
 #include "DenseEigen.h"
 #include "Material.h"
+#include "ShapeFunction.h"
+#include "Quadrature.h"
 #include "../../enumclass.hpp"
 
 class Element
@@ -38,6 +40,7 @@ public:
 
     virtual PetscErrorCode getContribution(Mat &matrix) {};
     virtual void getContribution() {};
+    virtual void Test(PetscScalar &integral) {};
 };
 
 class Truss : public Element
@@ -76,8 +79,11 @@ public:
 class Solid2D : public Element
 {
 private:
+    int numHammerPoints = 3;
     double area;
     MatrixXd K;
+    ShapeFunction *sF;
+    Quadrature *q;
 
 public:
     Solid2D();
@@ -90,6 +96,7 @@ public:
     void setArea(const double &_area) { area = _area; }
 
     MatrixXd getElemStiffnessMatrix() const override { return K; }
-    PetscErrorCode getContribution(Mat &matrix) override {};
+    PetscErrorCode getContribution(Mat &matrix) override;
     void getContribution() override {};
+    void Test(PetscScalar &integral) override;
 };
