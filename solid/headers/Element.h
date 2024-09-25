@@ -79,7 +79,7 @@ public:
 class Solid2D : public Element
 {
 private:
-    int numHammerPoints = 3;
+    int numHammerPoints = 3, numElNodes = 3;
     double area;
     MatrixXd K;
     ShapeFunction *sF;
