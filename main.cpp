@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     // #include "examples/squareEllipse.hpp"
     // #include "examples/Ex02NumericalIntegration.hpp"
     //    #include "examples/Ex03Truss.hpp"
-    //  #include "examples/Ex04Truss.hpp"
+    // #include "examples/Ex04Truss.hpp"
 
     // =======================================
 

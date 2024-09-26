@@ -37,15 +37,9 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
         double dX_dXi[2][2] = {};
 
         for (int a = 0; a < 3; a++)
-        {
             for (int i = 0; i < 2; i++)
-            {
                 for (int j = 0; j < 2; j++)
-                {
                     dX_dXi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
-                }
-            }
-        }
 
         double jac = dX_dXi[0][0] * dX_dXi[1][1] - dX_dXi[0][1] * dX_dXi[1][0];
         double wJac = weight * jac;
@@ -59,28 +53,28 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
         */
 
         for (int a = 0; a < 3; a++)
-        {
             for (int b = 0; b < 3; b++)
             {
                 double aux = 0.;
 
                 for (int k = 0; k < 2; k++)
-                {
                     aux += dN[a][k] * dN[b][k];
-                }
 
                 for (int i = 0; i < 2; i++)
                 {
                     localStiffnessMatrix[2 * a + i][2 * b + i] += G * aux * wJac; // Due to Kronnecker delta
 
                     for (int j = 0; j < 2; j++)
-                    {
                         localStiffnessMatrix[2 * a + i][2 * b + j] += (G * dN[a][j] * dN[b][i] + lame * dN[a][i] * dN[b][j]) * wJac;
-                    }
                 }
             }
-        }
+
+        delete[] N;
+        delete[] dN;
     }
+
+    delete[] coords;
+    delete[] weights;
 }
 
 void Solid2D::Test(PetscScalar &integral)
@@ -162,7 +156,7 @@ void Solid2D::getContribution()
 
                 for (int i = 0; i < 2; i++)
                 {
-                    localStiff(2 * a + i, 2 * a + i) += G * contraction * wJac; // Due to Kroenecker delta
+                    localStiff(2 * a + i, 2 * b + i) += G * contraction * wJac; // Due to Kroenecker delta
 
                     for (int j = 0; j < 2; j++)
                         localStiff(2 * a + i, 2 * b + j) += G * dN[a][j] * dN[b][i] + lame * dN[a][i] * dN[b][j] * wJac;

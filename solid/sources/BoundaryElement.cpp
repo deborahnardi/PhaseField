@@ -34,7 +34,35 @@ void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _
                 }
                 dofVec.push_back(dof);
             }
-    conditions.push_back({_bdType, dofVec, _value});
+    conditions.push_back({_bdType, dofVec, _value}); // Each boundary element has its own conditions
+}
+
+void BoundaryElement::getContributionNoPetsc(VectorXd &F, MatrixXd &K)
+{
+    for (auto c : conditions)
+        if (c.bdType == NEUMANN)
+            if (elemDimension == 0)
+            {
+                F(c.dofs[0]->getIndex()) += c.value;
+                numNeumannDOFs++;
+            }
+            else
+            {
+                for (auto dof : c.dofs)
+                    if (dof->getIndex() == -1)
+                        return;
+
+                for (auto dof : c.dofs)
+                    F(dof->getIndex()) += c.value;
+            }
+        else if (c.bdType == DIRICHLET)
+            for (auto dof : c.dofs)
+            {
+                K.row(dof->getIndex()).setZero();
+                K.col(dof->getIndex()).setZero();
+                K(dof->getIndex(), dof->getIndex()) = 1; // Setting the diagonal to 1
+                F(dof->getIndex()) = c.value;            // If a prescribed displacement value is given
+            }
 }
 
 void BoundaryElement::getContribution(Vec &rhs)

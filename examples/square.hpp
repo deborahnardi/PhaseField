@@ -32,7 +32,7 @@ lineLoops.push_back(geo1->addLineLoop({lines[0], lines[1], lines[2], lines[3]}))
 planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[0]}));
 
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X, 0.0}, {Y, 0.0}}));
-boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 10.0}}));
+boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 1.0}}));
 
 materials.push_back(geo1->addMaterial(1000., 0.0));
 
