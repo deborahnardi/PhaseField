@@ -16,7 +16,7 @@ protected:
     BoundaryType bdType;
     DOFType type;
     double value;
-    MatrixXd K;
+    MatrixXd K, localStiff;
     PetscErrorCode ierr;
 
 public:
@@ -35,7 +35,8 @@ public:
     void setElemConnectivity(const std::vector<Node *> &_elemConnectivity) { elemConnectivity = _elemConnectivity; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
-    virtual MatrixXd getElemStiffnessMatrix() const = 0;
+    virtual MatrixXd getElemStiffnessMatrix() const = 0; // const 0 means that the function has no implementation in the base class
+    virtual void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) {};
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
 
     virtual PetscErrorCode getContribution(Mat &matrix) {};
@@ -47,7 +48,7 @@ class Truss : public Element
 {
 private:
     double length, area, theta;
-    MatrixXd localStiffnessMatrix, rotationMatrix, K;
+    MatrixXd localStiffnessMatrix, rotationMatrix;
 
 public:
     Truss();
@@ -59,18 +60,16 @@ public:
     int getTheta() const { return theta; }
     Node *getNode1() const { return elemConnectivity[0]; }
     Node *getNode2() const { return elemConnectivity[1]; }
-    MatrixXd getLocalStiffnessMatrix() const { return localStiffnessMatrix; }
+    MatrixXd getLocalStiffnessMatrix() const { return localStiffnessMatrix; } // Without rotation
     MatrixXd getRotationMatrix() const { return rotationMatrix; }
-    MatrixXd getElemStiffnessMatrix() const override { return K; }
+    MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
+    void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) override;
 
     void setIndex(const int &_index) { index = _index; }
     void setLength(const double &_length) { length = _length; }
     void setArea(const double &_area) { area = _area; }
     void setTheta(const double &_theta) { theta = _theta; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
-    void setLocalStiffnessMatrix(const MatrixXd &_localStiffnessMatrix) { localStiffnessMatrix = _localStiffnessMatrix; }
-    void setRotationMatrix(const MatrixXd &_rotationMatrix) { rotationMatrix = _rotationMatrix; }
-    void setElemStiffnessMatrix(const MatrixXd &_K) { K = _K; }
 
     PetscErrorCode getContribution(Mat &matrix) override;
     void getContribution() override;
@@ -81,7 +80,6 @@ class Solid2D : public Element
 private:
     int numHammerPoints = 3, numElNodes = 3;
     double area;
-    MatrixXd K;
     ShapeFunction *sF;
     Quadrature *q;
 
@@ -94,9 +92,10 @@ public:
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &index) const { return elemConnectivity[index]; }
     void setArea(const double &_area) { area = _area; }
+    void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) override;
 
-    MatrixXd getElemStiffnessMatrix() const override { return K; }
+    MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
     PetscErrorCode getContribution(Mat &matrix) override;
-    void getContribution() override {};
+    void getContribution() override;
     void Test(PetscScalar &integral) override;
 };

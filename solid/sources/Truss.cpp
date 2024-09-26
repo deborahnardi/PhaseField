@@ -79,6 +79,30 @@ void Truss::getContribution()
         -sin(theta), cos(theta), 0, 0,
         0, 0, cos(theta), sin(theta),
         0, 0, -sin(theta), cos(theta);
+    localStiff = rotationMatrix.transpose() * localStiffnessMatrix * rotationMatrix;
+}
 
-    K = rotationMatrix.transpose() * localStiffnessMatrix * rotationMatrix;
+void Truss::assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff)
+{
+    /*
+        dof1: first degree of freedom of the first node
+        dof2: second degree of freedom of the first node
+
+        Note that in the loop below, dof1 + i gets the degrees of freedom of the first node (x and y);
+        dof2 + i gets the degrees of freedom of the second node (x and y).
+    */
+    int dof1 = getNode1()->getDOF(0)->getIndex();
+    int dof2 = getNode2()->getDOF(0)->getIndex();
+
+    std::cout << "Kelem:" << std::endl;
+    std::cout << localStiff << std::endl;
+
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++)
+        {
+            GlobalStiff(dof1 + i, dof1 + j) += localStiff(i, j);
+            GlobalStiff(dof1 + i, dof2 + j) += localStiff(i, j + 2);
+            GlobalStiff(dof2 + i, dof1 + j) += localStiff(i + 2, j);
+            GlobalStiff(dof2 + i, dof2 + j) += localStiff(i + 2, j + 2);
+        }
 }

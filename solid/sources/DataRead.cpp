@@ -162,6 +162,7 @@ void FEM::readGeometry(const std::string &_filename)
         default:
             material = materials[physicalEntities[physicalEntity].material];
             bdElements.push_back(new BoundaryElement(bdElements.size(), elemDim, connectivity, material, physicalEntity));
+            std::cout << "Boundary element dim: " << elemDim << " and name: " << name << " has been added!" << std::endl;
             break;
         }
     }

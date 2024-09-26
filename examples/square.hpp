@@ -1,4 +1,4 @@
-std::string projectName = "squareEllipse";
+std::string projectName = "square";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
 FEM *analysis1 = new FEM(projectName);
 bool visualizeMesh = true;
@@ -13,15 +13,14 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
-double a0 = 0.05;
 
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
 
-points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.25 * L)); // Those are lists (dynamic arrays) of pointers to the objects
-points.push_back(geo1->addPoint({L, 0.0, 0.0}, 0.25 * L));
-points.push_back(geo1->addPoint({L, L, 0.0}, 0.25 * L));
-points.push_back(geo1->addPoint({0.0, L, 0.0}, 0.25 * L));
+points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, 0.5 * L)); // Those are lists (dynamic arrays) of pointers to the objects
+points.push_back(geo1->addPoint({L, 0.0, 0.0}, 0.5 * L));
+points.push_back(geo1->addPoint({L, L, 0.0}, 0.5 * L));
+points.push_back(geo1->addPoint({0.0, L, 0.0}, 0.5 * L));
 
 lines.push_back(geo1->addLine({points[0], points[1]}));
 lines.push_back(geo1->addLine({points[1], points[2]}));
@@ -35,7 +34,7 @@ planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[0]}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X, 0.0}, {Y, 0.0}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], NEUMANN, {{X, 10.0}}));
 
-materials.push_back(geo1->addMaterial(1000., 0.2));
+materials.push_back(geo1->addMaterial(1000., 0.0));
 
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
@@ -45,5 +44,6 @@ geo1->GenerateMeshAPI(visualizeMesh);
 
 // ********************************** FEM INFORMATION **********************************
 analysis1->readGeometry(projectName + ".mir");
-analysis1->solveFEMProblem();
+// analysis1->solveFEMProblem();
+analysis1->solveFEMProblemNoPetsc();
 // ********************************* NUMERICAL INTEGRATION *********************************

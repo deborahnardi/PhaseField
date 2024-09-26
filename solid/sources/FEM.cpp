@@ -287,21 +287,10 @@ void FEM::assembleProblemNoPetsc()
         elem->getContribution();
         MatrixXd Kelem = elem->getElemStiffnessMatrix();
 
-        // Print the stiffness matrix of each element on the terminal
         std::cout << "Element stiffness matrix: " << std::endl;
         std::cout << Kelem << std::endl;
 
-        int dof1 = elem->getNode(0)->getDOF(0)->getIndex();
-        int dof2 = elem->getNode(1)->getDOF(0)->getIndex();
-
-        for (int i = 0; i < 2; i++)
-            for (int j = 0; j < 2; j++)
-            {
-                K(dof1 + i, dof1 + j) += Kelem(i, j);
-                K(dof1 + i, dof2 + j) += Kelem(i, j + 2);
-                K(dof2 + i, dof1 + j) += Kelem(i + 2, j);
-                K(dof2 + i, dof2 + j) += Kelem(i + 2, j + 2);
-            }
+        elem->assembleGlobalStiffnessMatrix(K);
     }
 
     // Print the global stiffness matrix on the terminal
