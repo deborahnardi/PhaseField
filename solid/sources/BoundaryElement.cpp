@@ -12,6 +12,13 @@ BoundaryElement::BoundaryElement(const int &_index, const int &_elemDimension, c
         n->addDOF(new DOF(X, 0.));
         n->addDOF(new DOF(Y, 0.));
     }
+
+    if (elemDimension == 1)
+    {
+        numQuadraturePoints = 1;
+        sF = new S2ShapeFunction();
+        q = new LineQuadrature(numQuadraturePoints);
+    }
 }
 BoundaryElement::~BoundaryElement() {}
 
@@ -48,12 +55,34 @@ void BoundaryElement::getContributionNoPetsc(VectorXd &F, MatrixXd &K)
             }
             else
             {
-                for (auto dof : c.dofs)
-                    if (dof->getIndex() == -1)
-                        return;
+                double **coords = q->getQuadratureCoordinates();
+                double *weights = q->getQuadratureWeights();
 
-                for (auto dof : c.dofs)
-                    F(dof->getIndex()) += c.value;
+                for (int ig = 0; ig < numQuadraturePoints; ig++) // ig stands for gauss points
+                {
+                    double *xi = coords[ig];
+                    double weight = weights[ig];
+
+                    double *N = sF->evaluateShapeFunction(xi);
+                    double **dN = sF->getShapeFunctionDerivative(xi);
+
+                    // jac for 1D element in 2D space is the same as the length of the element
+
+                    double tangent[2] = {};
+                    for (int a = 0; a < numBdNodes; a++)
+                        for (int i = 0; i < 2; i++)
+                            tangent[i] += dN[a][0] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+                    double jac = sqrt(tangent[0] * tangent[0] + tangent[1] * tangent[1]);
+                    double wJac = weight * jac;
+
+                    for (int a = 0; a < numBdNodes; a++)
+                    {
+                        int pos = c.dofs[a]->getIndex();
+                        double ti = N[a] * c.value * wJac;
+                        F(pos) += ti;
+                    }
+                }
             }
         else if (c.bdType == DIRICHLET)
             for (auto dof : c.dofs)

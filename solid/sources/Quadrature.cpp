@@ -5,10 +5,54 @@ Quadrature::Quadrature(int _numIntPoints)
     : numIntPoints(_numIntPoints) {};
 Quadrature::~Quadrature() {}
 
+LineQuadrature::LineQuadrature() {}
+LineQuadrature::LineQuadrature(int numIntPoints)
+    : Quadrature(numIntPoints)
+{
+    coordinates = new double *[numIntPoints];
+    weights = new double[numIntPoints];
+    for (int i = 0; i < numIntPoints; i++)
+        coordinates[i] = new double[1];
+
+    getQuadrature();
+}
+LineQuadrature::~LineQuadrature() {}
+
+void LineQuadrature::getQuadrature()
+{
+    double xmga = 0., xlga = 1., zga, pga[3], ppga, z1ga;
+    int mga = (numIntPoints + 1) / 2;
+
+    for (int iga = 1; iga <= mga; iga++)
+    {
+        zga = std::cos(M_PI * (double(iga) - 0.25) / (double(numIntPoints) + 0.5));
+        z1ga = 100.;
+        while (fabs(zga - z1ga) > 1.0e-15)
+        {
+            pga[0] = 1., pga[1] = 0.;
+            for (int jga = 1; jga <= numIntPoints; jga++)
+            {
+                pga[2] = pga[1];
+                pga[1] = pga[0];
+                pga[0] = ((2. * double(jga) - 1.) * zga * pga[1] - (double(jga) - 1.) * pga[2]) / (double(jga));
+            }
+
+            ppga = numIntPoints * (zga * pga[0] - pga[1]) / (zga * zga - 1.);
+            z1ga = zga;
+            zga = z1ga - pga[0] / ppga;
+        }
+
+        coordinates[iga - 1][0] = xmga - xlga * zga;
+        coordinates[numIntPoints - iga][0] = xmga + xlga * zga;
+
+        weights[iga - 1] = 2. * xlga / ((1. - zga * zga) * ppga * ppga);
+        weights[numIntPoints - iga] = weights[iga - 1];
+    }
+}
+
 TriangularQuadrature::TriangularQuadrature() {};
 TriangularQuadrature::TriangularQuadrature(int numIntPoints)
     : Quadrature(numIntPoints)
-
 {
     /*
         coordinates -> [address 1, address 2, ..., address numIntPoints]

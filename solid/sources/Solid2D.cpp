@@ -172,9 +172,6 @@ void Solid2D::assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff)
     int dof2 = getNode(1)->getDOF(0)->getIndex();
     int dof3 = getNode(2)->getDOF(0)->getIndex();
 
-    std::cout << "Kelem:" << std::endl;
-    std::cout << localStiff << std::endl;
-
     for (int i = 0; i < 2; i++)
         for (int j = 0; j < 2; j++)
         {

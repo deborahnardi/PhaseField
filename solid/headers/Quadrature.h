@@ -1,5 +1,7 @@
 #pragma once
 
+#include <math.h>
+
 class Quadrature
 {
 protected:
@@ -15,6 +17,16 @@ public:
     virtual void getQuadrature() {};
     double **getQuadratureCoordinates() { return coordinates; }
     double *getQuadratureWeights() { return weights; }
+};
+
+class LineQuadrature : public Quadrature
+{
+public:
+    LineQuadrature();
+    LineQuadrature(int numIntPoints);
+    ~LineQuadrature();
+
+    void getQuadrature() override;
 };
 
 class TriangularQuadrature : public Quadrature

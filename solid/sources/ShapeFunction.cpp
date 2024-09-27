@@ -6,6 +6,42 @@ ShapeFunction::~ShapeFunction() {};
 T3ShapeFunction::T3ShapeFunction() { numNodes = 3; };
 T3ShapeFunction::~T3ShapeFunction() {};
 
+S2ShapeFunction::S2ShapeFunction() { numNodes = 2; };
+S2ShapeFunction::~S2ShapeFunction() {};
+
+/*---------------------------------------------------------------
+            L2 Shape Function (For Boundary Elements)
+-----------------------------------------------------------------
+*/
+
+double *S2ShapeFunction::evaluateShapeFunction(double *&xi)
+{
+    double *N = new double[numNodes];
+    double xi1 = xi[0];
+
+    N[0] = 0.5 * (1 - xi1);
+    N[1] = 0.5 * (1 + xi1);
+
+    return N;
+}
+
+double **S2ShapeFunction::getShapeFunctionDerivative(double *&xi)
+{
+    double **dN = new double *[numNodes];
+    for (int i = 0; i < numNodes; i++)
+        dN[i] = new double[1];
+
+    dN[0][0] = -0.5;
+    dN[1][0] = 0.5;
+
+    return dN;
+}
+
+/*---------------------------------------------------------------
+            T3 Shape Function (For Solid Elements)
+-----------------------------------------------------------------
+*/
+
 double *T3ShapeFunction::evaluateShapeFunction(double *&xi)
 {
     /*

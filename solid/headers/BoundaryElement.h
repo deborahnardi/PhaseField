@@ -3,14 +3,19 @@
 #include "Node.h"
 #include "DenseEigen.h"
 #include "Material.h"
+#include "ShapeFunction.h"
+#include "Quadrature.h"
 #include "../../enumclass.hpp"
 
 class BoundaryElement
 {
 private:
-    int index, elemDimension, physicalEntity, numBdNodes, numNeumannDOFs = 0;
+    int index, elemDimension, physicalEntity, numQuadraturePoints, numBdNodes, numNeumannDOFs = 0;
+    double *N, **dN;
     std::vector<Node *> elemConnectivity;
     Material *material;
+    ShapeFunction *sF;
+    Quadrature *q;
 
     struct BoundaryCondition
     {

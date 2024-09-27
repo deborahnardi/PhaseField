@@ -17,6 +17,17 @@ public:
     int getNumNodes() { return numNodes; };
 };
 
+class S2ShapeFunction : public ShapeFunction
+{
+public:
+    S2ShapeFunction();
+    ~S2ShapeFunction();
+
+    double *evaluateShapeFunction(double *&xi) override;
+    double **getShapeFunctionDerivative(double *&xi) override;
+    void getNodalXi(double **&coord) override {};
+};
+
 class T3ShapeFunction : public ShapeFunction
 {
 public:
