@@ -49,10 +49,7 @@ void BoundaryElement::getContributionNoPetsc(VectorXd &F, MatrixXd &K)
     for (auto c : conditions)
         if (c.bdType == NEUMANN)
             if (elemDimension == 0)
-            {
                 F(c.dofs[0]->getIndex()) += c.value;
-                numNeumannDOFs++;
-            }
             else
             {
                 double **coords = q->getQuadratureCoordinates();

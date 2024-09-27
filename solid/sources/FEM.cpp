@@ -246,6 +246,11 @@ void FEM::solveLinearSystemNoPetsc()
 
 void FEM::setBoundaryConditionsNoPetsc()
 {
+    std::cout << "K:" << std::endl;
+    std::cout << K << std::endl;
+
+    std::cout << "----------------------------------" << std::endl;
+
     for (auto bd : bdElements)
         bd->getContributionNoPetsc(F, K);
     // // Setting NEUMANN boundary conditions
@@ -282,20 +287,9 @@ void FEM::setBoundaryConditionsNoPetsc()
 
 void FEM::assembleProblemNoPetsc()
 {
-    int dim = 2;
-
     for (auto elem : elements)
     {
         elem->getContribution();
-        MatrixXd Kelem = elem->getElemStiffnessMatrix();
-
-        // std::cout << "Element stiffness matrix: " << std::endl;
-        // std::cout << Kelem << std::endl;
-
         elem->assembleGlobalStiffnessMatrix(K);
     }
-
-    // Print the global stiffness matrix on the terminal
-    // std::cout << "Global stiffness matrix: " << std::endl;
-    // std::cout << K << std::endl;
 }

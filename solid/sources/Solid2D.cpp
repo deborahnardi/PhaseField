@@ -138,12 +138,26 @@ void Solid2D::getContribution()
         double jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
         double wJac = jac * weight;
 
+        double dX_dXsiInv[2][2] = {};
+        dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
+        dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
+        dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
+        dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
+
+        double dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
+        for (int a = 0; a < numElNodes; a++)
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
+
         /*
         For a solid element, four loops are needed to compute the element stiffness matrix.
         The first loop is over the number of nodes in the element.
         The second loop is over the number of degrees of freedom per node.
         The third loop is over the number of nodes in the element.
         The fourth loop is over the number of degrees of freedom per node.
+
+        K_ij ^ {ab} = G * \delta_{ij} * N,k ^ a * N,k ^ b + G * N,i ^ b * N,j ^ a + \lambda * N,i ^ a * N,j ^ b
         */
 
         for (int a = 0; a < numElNodes; a++)
@@ -152,39 +166,50 @@ void Solid2D::getContribution()
             {
                 double contraction = 0.;
                 for (int k = 0; k < 2; k++)
-                    contraction += dN[a][k] * dN[b][k];
+                    contraction += dN_dX[a][k] * dN_dX[b][k];
 
                 for (int i = 0; i < 2; i++)
                 {
                     localStiff(2 * a + i, 2 * b + i) += G * contraction * wJac; // Due to Kroenecker delta
 
                     for (int j = 0; j < 2; j++)
-                        localStiff(2 * a + i, 2 * b + j) += G * dN[a][j] * dN[b][i] + lame * dN[a][i] * dN[b][j] * wJac;
+                        localStiff(2 * a + i, 2 * b + j) += (G * dN_dX[a][j] * dN_dX[b][i] + lame * dN_dX[a][i] * dN_dX[b][j]) * wJac;
                 }
             }
         }
     }
+    std::cout << "Local stiffness matrix: " << " for element " << index << std::endl;
+    std::cout << localStiff << std::endl;
 }
 
 void Solid2D::assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff)
 {
-    int dof1 = getNode(0)->getDOF(0)->getIndex();
-    int dof2 = getNode(1)->getDOF(0)->getIndex();
-    int dof3 = getNode(2)->getDOF(0)->getIndex();
-
-    for (int i = 0; i < 2; i++)
-        for (int j = 0; j < 2; j++)
+    for (int a = 0; a < numElNodes; a++)
+        for (int i = 0; i < 2; i++)
         {
-            GlobalStiff(dof1 + i, dof1 + j) += localStiff(i, j);
-            GlobalStiff(dof1 + i, dof2 + j) += localStiff(i, j + 2);
-            GlobalStiff(dof1 + i, dof3 + j) += localStiff(i, j + 4);
-
-            GlobalStiff(dof2 + i, dof1 + j) += localStiff(i + 2, j);
-            GlobalStiff(dof2 + i, dof2 + j) += localStiff(i + 2, j + 2);
-            GlobalStiff(dof2 + i, dof3 + j) += localStiff(i + 2, j + 4);
-
-            GlobalStiff(dof3 + i, dof1 + j) += localStiff(i + 4, j);
-            GlobalStiff(dof3 + i, dof2 + j) += localStiff(i + 4, j + 2);
-            GlobalStiff(dof3 + i, dof3 + j) += localStiff(i + 4, j + 4);
+            int dof1 = getNode(a)->getDOFs()[i]->getIndex();
+            for (int b = 0; b < numElNodes; b++)
+                for (int j = 0; j < 2; j++)
+                {
+                    int dof2 = getNode(b)->getDOFs()[j]->getIndex();
+                    double value = localStiff(2 * a + i, 2 * b + j);
+                    GlobalStiff(dof1, dof2) += localStiff(2 * a + i, 2 * b + j);
+                }
         }
+
+    // for (int i = 0; i < 2; i++)
+    //     for (int j = 0; j < 2; j++)
+    //     {
+    //         GlobalStiff(dof1 + i, dof1 + j) += localStiff(i, j);
+    //         GlobalStiff(dof1 + i, dof2 + j) += localStiff(i, j + 2);
+    //         GlobalStiff(dof1 + i, dof3 + j) += localStiff(i, j + 4);
+
+    //         GlobalStiff(dof2 + i, dof1 + j) += localStiff(i + 2, j);
+    //         GlobalStiff(dof2 + i, dof2 + j) += localStiff(i + 2, j + 2);
+    //         GlobalStiff(dof2 + i, dof3 + j) += localStiff(i + 2, j + 4);
+
+    //         GlobalStiff(dof3 + i, dof1 + j) += localStiff(i + 4, j);
+    //         GlobalStiff(dof3 + i, dof2 + j) += localStiff(i + 4, j + 2);
+    //         GlobalStiff(dof3 + i, dof3 + j) += localStiff(i + 4, j + 4);
+    //     }
 }

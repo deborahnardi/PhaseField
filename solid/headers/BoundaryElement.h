@@ -10,8 +10,7 @@
 class BoundaryElement
 {
 private:
-    int index, elemDimension, physicalEntity, numQuadraturePoints, numBdNodes, numNeumannDOFs = 0;
-    double *N, **dN;
+    int index, elemDimension, physicalEntity, numQuadraturePoints, numBdNodes;
     std::vector<Node *> elemConnectivity;
     Material *material;
     ShapeFunction *sF;
@@ -41,6 +40,7 @@ public:
 
     void addCondition(BoundaryType _bdType, DOFType _type, double _value);
     void getContributionNoPetsc(VectorXd &F, MatrixXd &K);
+    
     /*
         PETSc Methods
     */
