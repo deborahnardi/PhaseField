@@ -26,6 +26,11 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
 }
 Truss::~Truss() {}
 
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem with PETSc
+----------------------------------------------------------------------------------
+*/
+
 PetscErrorCode Truss::getContribution(Mat &matrix)
 {
     PetscInt numElDOF = 4;
@@ -64,6 +69,11 @@ PetscErrorCode Truss::getContribution(Mat &matrix)
     delete[] indx;
     delete[] localStiff;
 }
+
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem without PETSc
+----------------------------------------------------------------------------------
+*/
 
 void Truss::getContribution()
 {

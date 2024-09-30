@@ -44,6 +44,7 @@ geo1->GenerateMeshAPI(visualizeMesh);
 
 // ********************************** FEM INFORMATION **********************************
 analysis1->readGeometry(projectName + ".mir");
-// analysis1->solveFEMProblem();
-analysis1->solveFEMProblemNoPetsc();
-// ********************************* NUMERICAL INTEGRATION *********************************
+analysis1->setPrintMatrix(true);
+analysis1->solveFEMProblem();
+// analysis1->solveFEMProblemNoPetsc();
+//  ********************************* NUMERICAL INTEGRATION *********************************

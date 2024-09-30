@@ -16,15 +16,28 @@ Solid2D::Solid2D(const int &_index, const int &_elemDimension, const std::vector
 }
 Solid2D::~Solid2D() {}
 
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem with PETSc
+----------------------------------------------------------------------------------
+*/
+
 PetscErrorCode Solid2D::getContribution(Mat &A)
 {
-    const int numElDOF = numElNodes * 2;
+    PetscInt numElDOF = numElNodes * 2;
+    PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
+    PetscInt *idx = new PetscInt[numElDOF]();
+
     double **coords = q->getQuadratureCoordinates();
     double *weights = q->getQuadratureWeights();
-    double localStiffnessMatrix[numElDOF][numElDOF] = {}; // {} initializes all elements to 0
+    PetscReal kroen[2][2] = {{1., 0.}, {0., 1.}};
 
     const double G = material->getShearModulus();
     const double lame = material->getLameConstant();
+
+    PetscInt count = 0;
+    for (auto node : elemConnectivity)
+        for (auto dof : node->getDOFs())
+            idx[count++] = dof->getIndex();
 
     for (int ih = 0; ih < numHammerPoints; ih++)
     {
@@ -34,48 +47,82 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
         double *N = sF->evaluateShapeFunction(xi);
         double **dN = sF->getShapeFunctionDerivative(xi);
 
-        double dX_dXi[2][2] = {};
+        PetscReal dX_dXsi[2][2] = {};
 
-        for (int a = 0; a < 3; a++)
-            for (int i = 0; i < 2; i++)
-                for (int j = 0; j < 2; j++)
-                    dX_dXi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
+        for (PetscInt a = 0; a < 3; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dX_dXsi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
 
-        double jac = dX_dXi[0][0] * dX_dXi[1][1] - dX_dXi[0][1] * dX_dXi[1][0];
-        double wJac = weight * jac;
+        PetscReal jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
+        PetscReal wJac = weight * jac;
 
-        /*
-        For a solid element, four loops are needed to compute the element stiffness matrix.
-        The first loop is over the number of nodes in the element.
-        The second loop is over the number of degrees of freedom per node.
-        The third loop is over the number of nodes in the element.
-        The fourth loop is over the number of degrees of freedom per node.
-        */
+        PetscReal dX_dXsiInv[2][2] = {};
+        dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
+        dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
+        dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
+        dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
 
-        for (int a = 0; a < 3; a++)
-            for (int b = 0; b < 3; b++)
+        PetscReal dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
+
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            for (PetscInt i = 0; i < 2; i++)
             {
-                double aux = 0.;
-
-                for (int k = 0; k < 2; k++)
-                    aux += dN[a][k] * dN[b][k];
-
-                for (int i = 0; i < 2; i++)
+                for (PetscInt b = 0; b < numElNodes; b++)
                 {
-                    localStiffnessMatrix[2 * a + i][2 * b + i] += G * aux * wJac; // Due to Kronnecker delta
+                    PetscReal contraction = 0.;
+                    for (PetscInt k = 0; k < 2; k++)
+                        contraction += dN_dX[a][k] * dN_dX[b][k];
 
-                    for (int j = 0; j < 2; j++)
-                        localStiffnessMatrix[2 * a + i][2 * b + j] += (G * dN[a][j] * dN[b][i] + lame * dN[a][i] * dN[b][j]) * wJac;
+                    for (PetscInt j = 0; j < 2; j++)
+                    {
+                        PetscInt pos = numElDOF * (2 * a + i) + 2 * b + j;
+                        localStiffnessMatrix[pos] += (G * contraction * wJac * kroen[i][j] + G * dN_dX[a][j] * dN_dX[b][i] * wJac + lame * dN_dX[a][i] * dN_dX[b][j] * wJac);
+                    }
                 }
             }
+        }
 
         delete[] N;
         delete[] dN;
     }
 
+    ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
+    CHKERRQ(ierr);
+
     delete[] coords;
     delete[] weights;
+    delete[] idx;
+    delete[] localStiffnessMatrix;
+
+    //     for (int a = 0; a < 3; a++)
+    //         for (int b = 0; b < 3; b++)
+    //         {
+    //             double aux = 0.;
+
+    //             for (int k = 0; k < 2; k++)
+    //                 aux += dN_dX[a][k] * dN_dX[b][k];
+
+    //             for (int i = 0; i < 2; i++)
+    //             {
+    //                 localStiffnessMatrix[2 * a + i][2 * b + i] += G * aux * wJac; // Due to Kronnecker delta
+
+    //                 for (int j = 0; j < 2; j++)
+    //                     localStiffnessMatrix[2 * a + i][2 * b + j] += (G * dN_dX[a][j] * dN_dX[b][i] + lame * dN_dX[a][i] * dN_dX[b][j]) * wJac;
+    //             }
+    //         }
+
+    //     delete[] N;
+    //     delete[] dN;
 }
+
+// delete[] coords;
+// delete[] weights;
 
 void Solid2D::Test(PetscScalar &integral)
 {

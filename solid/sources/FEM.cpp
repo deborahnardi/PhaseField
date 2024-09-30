@@ -34,21 +34,11 @@ PetscErrorCode FEM::assembleProblem()
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
 
-    // for (auto e : partitionedElements)
-    //     e->getContribution(matrix);
-
-    PetscScalar integral = 0.0;
     for (int Ii = Istart; Ii < Iend; Ii++)
-    {
         elements[Ii]->getContribution(matrix);
-        elements[Ii]->Test(integral);
-    }
-    std::cout << "Integral: " << integral << std::endl;
-    // Neumann boundary conditions
-    for (int Ii = IIstart; Ii < IIend; Ii++)
-        bdElements[Ii]->getContribution(rhs);
 
-    // setBoundaryConditions();
+    for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
+        bdElements[Ii]->getContribution(rhs);
 
     // Assemble the matrix and the right-hand side vector
     ierr = VecAssemblyBegin(rhs);
@@ -60,12 +50,10 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
 
-    // Apply Dirichlet boundary conditions
-    ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs);
+    ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
-    // Print the global stiffness matrix on the terminal
-    if (showMatrix)
+    if (showMatrix) // Print the global stiffness matrix on the terminal
     {
         ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
         CHKERRQ(ierr);
@@ -217,7 +205,8 @@ PetscErrorCode FEM::printGlobalMatrix(Mat &A)
         {
             ierr = MatGetValue(A, i, j, &value);
             CHKERRQ(ierr);
-            std::cout << std::setw(width) << std::fixed << std::setprecision(4) << value << " ";
+            // std::cout << std::setw(width) << std::fixed << std::setprecision(0) << value << " ";
+            std::cout << value << " ";
         }
         std::cout << std::endl;
     }
@@ -253,6 +242,7 @@ void FEM::setBoundaryConditionsNoPetsc()
 
     for (auto bd : bdElements)
         bd->getContributionNoPetsc(F, K);
+
     // // Setting NEUMANN boundary conditions
 
     // for (auto bd : bdElements)

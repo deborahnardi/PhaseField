@@ -44,6 +44,67 @@ void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _
     conditions.push_back({_bdType, dofVec, _value}); // Each boundary element has its own conditions
 }
 
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem with PETSc
+----------------------------------------------------------------------------------
+*/
+
+PetscErrorCode BoundaryElement::getContribution(Vec &rhs)
+{
+    for (auto c : conditions)
+        if (c.bdType == NEUMANN)
+            if (elemDimension == 0)
+            {
+                PetscInt dofA = c.dofs[0]->getIndex(); // c.dofs[0] because if elemDimension == 0, it is only a node -> only one DOF
+                PetscScalar value = c.value;
+                VecSetValues(rhs, 1, &dofA, &value, ADD_VALUES);
+            }
+            else
+            {
+                double **coords = q->getQuadratureCoordinates();
+                double *weights = q->getQuadratureWeights();
+
+                PetscInt *idx = new PetscInt[numBdNodes]();
+                PetscScalar *localRhs = new PetscScalar[numBdNodes]();
+
+                for (int a = 0; a < numBdNodes; a++)
+                    idx[a] = c.dofs[a]->getIndex();
+
+                for (int ig = 0; ig < numQuadraturePoints; ig++) // ig stands for gauss points
+                {
+                    double *xi = coords[ig];
+                    double weight = weights[ig];
+
+                    double *N = sF->evaluateShapeFunction(xi);
+                    double **dN = sF->getShapeFunctionDerivative(xi);
+
+                    // jac for 1D element in 2D space is the same as the length of the element
+
+                    double tangent[2] = {};
+                    for (int a = 0; a < numBdNodes; a++)
+                        for (int i = 0; i < 2; i++)
+                            tangent[i] += dN[a][0] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+                    double jac = sqrt(tangent[0] * tangent[0] + tangent[1] * tangent[1]);
+                    double wJac = weight * jac;
+
+                    for (int a = 0; a < numBdNodes; a++)
+                    {
+                        PetscScalar ti = N[a] * c.value * wJac;
+                        localRhs[a] += ti;
+                    }
+                }
+
+                ierr = VecSetValues(rhs, numBdNodes, idx, localRhs, ADD_VALUES);
+                CHKERRQ(ierr);
+            }
+}
+
+/*----------------------------------------------------------------------------------
+                Assembling and solving problem without PETSc
+----------------------------------------------------------------------------------
+*/
+
 void BoundaryElement::getContributionNoPetsc(VectorXd &F, MatrixXd &K)
 {
     for (auto c : conditions)
@@ -88,38 +149,5 @@ void BoundaryElement::getContributionNoPetsc(VectorXd &F, MatrixXd &K)
                 K.col(dof->getIndex()).setZero();
                 K(dof->getIndex(), dof->getIndex()) = 1; // Setting the diagonal to 1
                 F(dof->getIndex()) = c.value;            // If a prescribed displacement value is given
-            }
-}
-
-void BoundaryElement::getContribution(Vec &rhs)
-{
-    for (auto c : conditions)
-        if (c.bdType == NEUMANN)
-            if (elemDimension == 0)
-            {
-                PetscInt dofA = c.dofs[0]->getIndex(); // c.dofs[0] because if elemDimension == 0, it is only a node -> only one DOF
-                PetscScalar value = c.value;
-                VecSetValues(rhs, 1, &dofA, &value, ADD_VALUES);
-            }
-            else
-            {
-                for (auto dof : c.dofs)
-                    if (dof->getIndex() == -1)
-                        return;
-
-                PetscInt *idx = new PetscInt[numBdNodes]();
-                PetscScalar *values = new PetscScalar[numBdNodes]();
-
-                int count = 0;
-                for (auto dof : c.dofs)
-                {
-                    idx[count] = dof->getIndex();
-                    values[count] = c.value;
-                    count++;
-                }
-
-                VecSetValues(rhs, numBdNodes, idx, values, ADD_VALUES);
-                delete[] idx;
-                delete[] values;
             }
 }

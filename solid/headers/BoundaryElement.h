@@ -15,6 +15,7 @@ private:
     Material *material;
     ShapeFunction *sF;
     Quadrature *q;
+    PetscErrorCode ierr;
 
     struct BoundaryCondition
     {
@@ -40,9 +41,9 @@ public:
 
     void addCondition(BoundaryType _bdType, DOFType _type, double _value);
     void getContributionNoPetsc(VectorXd &F, MatrixXd &K);
-    
+
     /*
         PETSc Methods
     */
-    void getContribution(Vec &rhs);
+    PetscErrorCode getContribution(Vec &rhs);
 };
