@@ -57,6 +57,7 @@ public:
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
     void decomposeElements();
     void matrixPreAllocation();
+    void showResults();
 
     /*
                         SOLVE FEM PROBLEM METHODS

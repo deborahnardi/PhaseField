@@ -20,7 +20,6 @@ Solid2D::~Solid2D() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-
 PetscErrorCode Solid2D::getContribution(Mat &A)
 {
     PetscInt numElDOF = numElNodes * 2;
@@ -87,7 +86,6 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
                 }
             }
         }
-
         delete[] N;
         delete[] dN;
     }
@@ -99,30 +97,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
     delete[] weights;
     delete[] idx;
     delete[] localStiffnessMatrix;
-
-    //     for (int a = 0; a < 3; a++)
-    //         for (int b = 0; b < 3; b++)
-    //         {
-    //             double aux = 0.;
-
-    //             for (int k = 0; k < 2; k++)
-    //                 aux += dN_dX[a][k] * dN_dX[b][k];
-
-    //             for (int i = 0; i < 2; i++)
-    //             {
-    //                 localStiffnessMatrix[2 * a + i][2 * b + i] += G * aux * wJac; // Due to Kronnecker delta
-
-    //                 for (int j = 0; j < 2; j++)
-    //                     localStiffnessMatrix[2 * a + i][2 * b + j] += (G * dN_dX[a][j] * dN_dX[b][i] + lame * dN_dX[a][i] * dN_dX[b][j]) * wJac;
-    //             }
-    //         }
-
-    //     delete[] N;
-    //     delete[] dN;
 }
-
-// delete[] coords;
-// delete[] weights;
 
 void Solid2D::Test(PetscScalar &integral)
 {

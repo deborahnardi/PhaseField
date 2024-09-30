@@ -18,6 +18,8 @@ PetscErrorCode FEM::solveFEMProblem()
 {
     assembleProblem();
     solveLinearSystem(matrix, rhs, solution);
+    if (rank == 0)
+        showResults();
 }
 
 PetscErrorCode FEM::assembleProblem()

@@ -64,7 +64,9 @@ void FEM::readGeometry(const std::string &_filename)
         materials.push_back(new Material(index, poisson, youngModulus, planeAnalysis));
     }
 
-    // ********** PHYSICALNAMES **********
+    /*---------------------------------------------------------------------------------------
+                                    PHYSICAL NAMES
+    ----------------------------------------------------------------------------------------*/
 
     while (line != "*PHYSICALNAMES")
         std::getline(file, line);
@@ -99,7 +101,9 @@ void FEM::readGeometry(const std::string &_filename)
         }
     }
 
-    // ********** NODES **********
+    /*---------------------------------------------------------------------------------------
+                                        NODES AND ELEMENTS
+    ----------------------------------------------------------------------------------------*/
 
     while (line != "*NODES")
         std::getline(file, line);
