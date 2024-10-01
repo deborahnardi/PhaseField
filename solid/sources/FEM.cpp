@@ -99,6 +99,18 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
     // ----------------------------------------------------------------
+    // PARTIONING NODES
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, nodes.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &IIIstart, &IIIend);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    // ----------------------------------------------------------------
 
     ierr = MatSetFromOptions(A);
     CHKERRQ(ierr);
@@ -175,6 +187,17 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 
     ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
     CHKERRQ(ierr);
+
+    // Set the solution to the final coordinates of the nodes
+    for (int i = IIIstart; i < IIIend; i++)
+    {
+        Node *node = nodes[i];
+        PetscScalar retrieved[2];
+        PetscInt indices[2] = {node->getDOFs()[0]->getIndex(), node->getDOFs()[1]->getIndex()};
+
+        VecGetValues(x, 2, indices, retrieved);
+        node->setFinalDisplacement({retrieved[0], retrieved[1], 0.});
+    }
 
     /*
          Clean up

@@ -43,7 +43,6 @@ void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _
             }
     conditions.push_back({_bdType, dofVec, _value}); // Each boundary element has its own conditions
 }
-
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------

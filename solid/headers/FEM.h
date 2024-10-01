@@ -16,11 +16,11 @@
 class FEM
 {
 private:
-    int numNodes, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0;
+    int numNodes, nDOFs, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0;
     int rank, size;
-    std::string name, filename;
+    std::string name, filename, resultsPath;
     std::vector<Material *> materials;
-    std::vector<Node *> nodes, partitionedNodes;
+    std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
     std::vector<BoundaryElement *> bdElements;
     std::vector<DOF *> globalDOFs;
@@ -31,7 +31,7 @@ private:
 
     Mat matrix;
     Vec rhs, solution;
-    PetscInt Istart, Iend, IIstart, IIend;
+    PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;
@@ -45,12 +45,14 @@ public:
     std::vector<Node *> getNodes() const { return nodes; }
     std::vector<Element *> getElements() const { return elements; }
     std::vector<DOF *> getGlobalDOFs() const { return globalDOFs; }
+    std::string getResultsPath() const { return resultsPath; }
 
     /*
                         DATA INPUT METHODS
     */
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
+    void setResultsPath() { resultsPath = "../../output/" + name + "/"; }
 
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
@@ -76,5 +78,12 @@ public:
     PetscErrorCode setBoundaryConditions();
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
+
+    /*----------------------------------------------------------------------------------
+                                    OUTPUT METHODS
+    ------------------------------------------------------------------------------------
+    */
     void setPrintMatrix(const bool &_showMatrix) { showMatrix = _showMatrix; }
+    void deleteFromString(std::string &fullStr, std::string removeStr);
+    void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
 };

@@ -150,16 +150,21 @@ void FEM::readGeometry(const std::string &_filename)
 
         Material *material = nullptr;
 
+        for (auto node : connectivity)
+            node->setIsDiscritized();
+
         double value = physicalEntities[physicalEntity].value;
         int elemDim = physicalEntities[physicalEntity].dimension;
 
         switch (physicalEntities[physicalEntity].elementType)
         {
         case TRUSS_ELEMENT:
+            numElNodes = 2;
             material = materials[physicalEntities[physicalEntity].material];
             elements.push_back(new Truss(elements.size(), elemDim, connectivity, material, physicalEntity, value));
             break;
         case SOLID_ELEMENT:
+            numElNodes = 3; // 3-node triangle considered so far
             material = materials[physicalEntities[physicalEntity].material];
             elements.push_back(new Solid2D(elements.size(), elemDim, connectivity, material, physicalEntity));
             break;
@@ -181,6 +186,11 @@ void FEM::readGeometry(const std::string &_filename)
 
     numElements = elements.size();
     nDOFs = globalDOFs.size();
+
+    for (auto n : nodes)
+        if (n->getIsDiscritized())
+            discritizedNodes.push_back(n);
+
     // ********** BOUNDARY CONDITIONS **********
 
     while (line != "*BOUNDARY")

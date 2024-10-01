@@ -18,7 +18,7 @@ class Node
 {
 private:
     int index, physicalEntity;
-    std::vector<double> initialCoordinates;
+    std::vector<double> initialCoordinates, finalDisplacement;
     std::vector<DOF *> dofs; // Degrees of freedom of the node
     bool isDiscritized = false;
 
@@ -30,11 +30,13 @@ public:
     // Setters
     void setIndex(const int &_index) { index = _index; }
     void setInitialCoordinates(const std::vector<double> &_initialCoordinates) { initialCoordinates = _initialCoordinates; }
+    void setFinalDisplacement(const std::vector<double> &_finalDisplacement) { finalDisplacement = _finalDisplacement; }
 
     // Getters
     int getIndex() const { return index; }
     int getPhysicalEntity() const { return physicalEntity; }
     std::vector<double> getInitialCoordinates() const { return initialCoordinates; }
+    std::vector<double> getFinalDisplacement() const { return finalDisplacement; }
     double getX() const { return initialCoordinates[0]; }
     double getY() const { return initialCoordinates[1]; }
     double getZ() const { return initialCoordinates[2]; }
