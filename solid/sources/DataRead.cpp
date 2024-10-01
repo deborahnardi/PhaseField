@@ -108,7 +108,6 @@ void FEM::readGeometry(const std::string &_filename)
     while (line != "*NODES")
         std::getline(file, line);
 
-    int numNodes;
     std::getline(file, line);
     numNodes = std::stoi(line);
 
@@ -128,7 +127,6 @@ void FEM::readGeometry(const std::string &_filename)
     while (line != "*ELEMENTS")
         std::getline(file, line);
 
-    int numElements;
     std::getline(file, line);
     numElements = std::stoi(line);
 

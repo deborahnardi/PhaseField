@@ -40,17 +40,11 @@ void FEM::writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t
 void FEM::showResults()
 {
     PetscPrintf(PETSC_COMM_WORLD, "Exporting data to Paraview...\n");
-    std::cout << "here" << std::endl;
     int numElem = elements.size();
-    std::cout << "here1" << std::endl;
     int *connectivity = new int[numElNodes * numElem](); // () initializes the array with zeros
-    std::cout << "here2" << std::endl;
     double *tensor = new double[9 * numNodes]();
-    std::cout << "here4" << std::endl;
     double *vector = new double[3 * numNodes]();
-    std::cout << "here5" << std::endl;
     double *scalar = new double[numNodes]();
-    std::cout << "here6" << std::endl;
     /*
         .xdmf file is a common file format for visualization and data exchange in scientific computing, xdmf stands for eXtensible Data Model and Format;
         std::stream is a base class for all input/output streams, differently than std::ofstream, that is a base class for output streams only;
@@ -59,13 +53,13 @@ void FEM::showResults()
 
     std::string result;
     std::ostringstream oss;
-    std::string r0 = "results/FEM_" + name + "_" + result + ".xdmf";
+    std::string r0 = resultsPath + "results/FEM_" + name + "_" + result + ".xdmf";
     std::fstream output_v(r0.c_str(), std::ios_base::out);
 
-    std::string r1 = "results/hdf5/FEM_" + name + "_" + result + ".h5";
+    std::string r1 = resultsPath + "results/hdf5/FEM_" + name + "_" + result + ".h5";
     std::fstream output_h5(r1.c_str(), std::ios_base::out);
 
-    std::string r2 = "results/hdf5/FEM_" + name + "_connectivity.h5";
+    std::string r2 = resultsPath + "results/hdf5/FEM_" + name + "_connectivity.h5";
 
     std::string topology = "Triangle";
 

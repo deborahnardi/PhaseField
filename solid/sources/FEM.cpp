@@ -16,6 +16,7 @@ FEM::~FEM() {}
 
 PetscErrorCode FEM::solveFEMProblem()
 {
+    std::cout << "Number of nodes: " << numNodes << std::endl;
     assembleProblem();
     solveLinearSystem(matrix, rhs, solution);
     if (rank == 0)
