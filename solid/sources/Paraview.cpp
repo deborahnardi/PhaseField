@@ -52,16 +52,19 @@ void FEM::showResults()
     */
 
     std::string result;
-    std::ostringstream oss;
-    std::string r0 = resultsPath + "results/FEM_" + name + "_" + result + ".xdmf";
+    std::string r0 = resultsPath + "results/FEM_" + name + ".xdmf";
     std::fstream output_v(r0.c_str(), std::ios_base::out);
 
-    std::string r1 = resultsPath + "results/hdf5/FEM_" + name + "_" + result + ".h5";
+    std::string r1 = resultsPath + "results/hdf5/FEM_" + name + ".h5";
     std::fstream output_h5(r1.c_str(), std::ios_base::out);
 
     std::string r2 = resultsPath + "results/hdf5/FEM_" + name + "_connectivity.h5";
 
-    std::string topology = "Triangle";
+    std::string topology;
+    if (elemDim == 1)
+        topology = "Polyline";
+    else if (elemDim == 2)
+        topology = "Triangle";
 
     /*
         hid_t: it is a type defined in the HDF5 library, it is used to represent an abstract HDF5 object, it is an integer type;
@@ -141,7 +144,7 @@ void FEM::showResults()
              << "</Xdmf>" << std::endl;
 
     delete[] connectivity;
-    // delete[] tensor;
+    delete[] tensor;
     delete[] vector;
     delete[] scalar;
 

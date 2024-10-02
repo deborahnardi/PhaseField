@@ -4,10 +4,41 @@ FEM::FEM() {}
 FEM::FEM(const std::string _name)
     : name(_name)
 {
+    setResultsPath();
+    deleteResults(true);
+    createResultsPath();
     MPI_Comm_size(PETSC_COMM_WORLD, &size);
     MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 };
 FEM::~FEM() {}
+
+/*----------------------------------------------------------------------------------
+                            DATA INPUT METHODS
+------------------------------------------------------------------------------------*/
+
+void FEM::createResultsPath()
+{
+    if (rank == 0)
+    {
+        std::string command = "mkdir -p " + resultsPath + "results/hdf5";
+        command += " && mkdir -p examples/";
+        system(command.c_str());
+    }
+}
+
+void FEM::deleteResults(bool deleteFiles)
+{
+    if (rank == 0)
+    {
+        if (deleteFiles)
+        {
+            std::cout << "Deleting files\n";
+            std::string command = "rm -r " + resultsPath + "*";
+            std::cout << command << "\n";
+            system(command.c_str());
+        }
+    }
+}
 
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem PETSc

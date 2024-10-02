@@ -16,7 +16,7 @@
 class FEM
 {
 private:
-    int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0;
+    int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0;
     int rank, size;
     std::string name, filename, resultsPath;
     std::vector<Material *> materials;
@@ -52,7 +52,7 @@ public:
     */
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
-    void setResultsPath() { resultsPath = "../../output/" + name + "/"; }
+    void setResultsPath() { resultsPath = "./../output/" + name + "/"; }
 
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
@@ -60,6 +60,8 @@ public:
     void decomposeElements();
     void matrixPreAllocation();
     void showResults();
+    void createResultsPath();
+    void deleteResults(bool _deleteResults);
 
     /*
                         SOLVE FEM PROBLEM METHODS

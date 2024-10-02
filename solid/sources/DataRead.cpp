@@ -98,6 +98,8 @@ void FEM::readGeometry(const std::string &_filename)
             physicalEntities[i].material = std::stoi(result[3]) - 1;
             physicalEntities[i].value = std::stod(result[4]);
             physicalEntities[i].elementType = static_cast<ElementType>(std::stoi(result[5]));
+            if (physicalEntities[i].dimension > elemDim)
+                elemDim = physicalEntities[i].dimension;
         }
     }
 
