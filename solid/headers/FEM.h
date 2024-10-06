@@ -3,6 +3,7 @@
 #include <iomanip> // Para std::setw e std::fixed
 #include "hdf5.h"
 #include <petscksp.h>
+#include <petscmat.h>
 #include <metis.h>
 
 #include "Node.h"

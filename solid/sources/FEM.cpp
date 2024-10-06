@@ -106,6 +106,11 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, 1800, NULL, 3000, NULL, &A); // Again, 1800 is the number of non-zero elements per row, 3000 is the number of non-zero elements per row in the off-diagonal portion of the matrix. Both can be improved by pre allocating the matrix
     CHKERRQ(ierr);
 
+    // (size == 1)
+    //     ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 1800, NULL, &A) // 1800 is the number of non-zero elements per row, this can be improved by pre allocating the matrix
+    //     : ierr = MatCreateMPIBAIJ(PETSC_COMM_WORLD, 2, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, PETSC_DECIDE, PETSC_DECIDE, NULL, NULL, &A);
+    // CHKERRQ(ierr);
+
     // ----------------------------------------------------------------
     // PARTIONING DOMAIN ELEMENTS
     ierr = VecCreate(PETSC_COMM_WORLD, &x);

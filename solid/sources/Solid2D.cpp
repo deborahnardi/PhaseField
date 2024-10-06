@@ -91,6 +91,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
     }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
+    // ierr = MatSetValuesBlocked(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
     CHKERRQ(ierr);
 
     delete[] coords;
