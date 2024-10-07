@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <iomanip> // Para std::setw e std::fixed
 #include "hdf5.h"
 #include <petscksp.h>
@@ -18,8 +19,9 @@ class FEM
 {
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0;
-    int rank, size;
+    int rank, size, rankLocalNodes;
     std::string name, filename, resultsPath;
+    std::vector<std::set<int>> nodeNeighbours;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
@@ -33,6 +35,7 @@ private:
     Mat matrix;
     Vec rhs, solution;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend;
+    PetscInt *d_nnz, *o_nnz, *d_nnzLocal, *o_nnzLocal;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;
@@ -58,8 +61,6 @@ public:
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
-    void decomposeElements();
-    void matrixPreAllocation();
     void showResults();
     void createResultsPath();
     void deleteResults(bool _deleteResults);
@@ -67,6 +68,7 @@ public:
     /*
                         SOLVE FEM PROBLEM METHODS
     */
+    void findNeighbours();
     void solveFEMProblemNoPetsc();
     void assembleProblemNoPetsc();
     void setBoundaryConditionsNoPetsc();
@@ -75,6 +77,8 @@ public:
                                     PETSc Methods
     ------------------------------------------------------------------------------------
     */
+    PetscErrorCode decomposeElements(Vec &b, Vec &x);
+    PetscErrorCode matrixPreAllocation();
     PetscErrorCode solveFEMProblem();
     PetscErrorCode assembleProblem();
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
