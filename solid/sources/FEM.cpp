@@ -77,24 +77,13 @@ PetscErrorCode FEM::printGlobalMatrix(Mat &A)
         }
         std::cout << std::endl;
     }
+
+    return ierr;
 }
 
 PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
 {
     PetscLogDouble bytes;
-
-    for (int i = 0; i < size; i++)
-    {
-        if (rank == i)
-        {
-            std::cout << "d_nnzLocal and o_nnzLocal for rank " << rank << std::endl;
-            for (int i = 0; i < 2 * rankLocalNodes; i++)
-                std::cout << "(" << rank << ") " << i << ": " << d_nnzLocal[i] << " " << o_nnzLocal[i] << std::endl;
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    MPI_Barrier(PETSC_COMM_WORLD);
 
     (size == 1)
         ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nnz, &A)
@@ -113,15 +102,17 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     ierr = VecDuplicate(b, &x);
     CHKERRQ(ierr);
 
-    // if (showInfo && rank == 0)
-    // {
-    //     ierr = PetscMemoryGetCurrentUsage(&bytes);
-    //     CHKERRQ(ierr);
-    //     ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
-    //     CHKERRQ(ierr);
-    //     ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
-    //     CHKERRQ(ierr);
-    // }
+    if (showInfo && rank == 0)
+    {
+        ierr = PetscMemoryGetCurrentUsage(&bytes);
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
+        CHKERRQ(ierr);
+    }
+
+    return ierr;
 }
 
 PetscErrorCode FEM::setBoundaryConditions()
@@ -268,19 +259,19 @@ PetscErrorCode FEM::matrixPreAllocation()
         MPI_Bcast(d_nnz, 2 * numNodes, MPI_INT, 0, MPI_COMM_WORLD); // Broadcasts the concatenated array to all processes
         MPI_Bcast(o_nnz, 2 * numNodes, MPI_INT, 0, MPI_COMM_WORLD);
 
-        for (int i = 0; i < size; i++)
-        {
-            if (rank == i)
-            {
-                std::cout << "Starting at " << IIIstart << " and ending at " << IIIend << std::endl;
-                std::cout << "CONCATENATING..." << std::endl;
-                for (int i = 0; i < 2 * numNodes; i++)
-                    std::cout << "(" << rank << ") " << i << ": " << d_nnz[i] << " " << o_nnz[i] << std::endl;
+        //     for (int i = 0; i < size; i++)
+        //     {
+        //         if (rank == i)
+        //         {
+        //             std::cout << "Starting at " << IIIstart << " and ending at " << IIIend << std::endl;
+        //             std::cout << "CONCATENATING..." << std::endl;
+        //             for (int i = 0; i < 2 * numNodes; i++)
+        //                 std::cout << "(" << rank << ") " << i << ": " << d_nnz[i] << " " << o_nnz[i] << std::endl;
 
-                std::cout << "-------------------------------------------------------------------" << std::endl;
-            }
-            MPI_Barrier(MPI_COMM_WORLD);
-        }
+        //             std::cout << "-------------------------------------------------------------------" << std::endl;
+        //         }
+        //         MPI_Barrier(MPI_COMM_WORLD);
+        //     }
     }
 
     return ierr;
@@ -349,11 +340,16 @@ PetscErrorCode FEM::assembleProblem()
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
 
+    std::cout << "Print 1" << std::endl;
     for (int Ii = Istart; Ii < Iend; Ii++)
         elements[Ii]->getContribution(matrix);
 
+    std::cout << "Print 2" << std::endl;
+
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
+
+    std::cout << "Print 3" << std::endl;
 
     // Assemble the matrix and the right-hand side vector
     ierr = VecAssemblyBegin(rhs);
@@ -377,6 +373,7 @@ PetscErrorCode FEM::assembleProblem()
         printGlobalMatrix(matrix);
     }
 
+    std::cout << "Print 4" << std::endl;
     return ierr;
 }
 
@@ -384,9 +381,11 @@ PetscErrorCode FEM::solveFEMProblem()
 {
     findNeighbours();
     assembleProblem();
+    PetscPrintf(PETSC_COMM_WORLD, "AQUI ESTAMOS IRMAOS...\n");
     solveLinearSystem(matrix, rhs, solution);
-    if (rank == 0)
-        showResults();
+    PetscPrintf(PETSC_COMM_WORLD, "AQUI ESTAMOS IRMAOS 2 ...\n");
+    // if (rank == 0)
+    //     showResults();
 }
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem without PETSc

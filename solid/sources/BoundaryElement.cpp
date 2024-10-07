@@ -97,6 +97,7 @@ PetscErrorCode BoundaryElement::getContribution(Vec &rhs)
                 ierr = VecSetValues(rhs, numBdNodes, idx, localRhs, ADD_VALUES);
                 CHKERRQ(ierr);
             }
+    return ierr;
 }
 
 /*----------------------------------------------------------------------------------
