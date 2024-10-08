@@ -51,6 +51,13 @@ void FEM::showResults()
         std::ios_base::out is a flag that specifies output mode, it is used to open a file for writing;
     */
 
+    for (int iElem = 0; iElem < numElem; iElem++)
+    {
+        std::vector<Node *> con = elements[iElem]->getElemConnectivity();
+        for (int i = 0; i < numElNodes; ++i)
+            connectivity[numElNodes * iElem + i] = con[i]->getIndex();
+    }
+
     std::string result;
     std::string r0 = resultsPath + "results/FEM_" + name + ".xdmf";
     std::fstream output_v(r0.c_str(), std::ios_base::out);
@@ -73,9 +80,9 @@ void FEM::showResults()
     */
     hid_t file, file2, dataset, dataspace;
     herr_t error;
-    hsize_t tensorDims[2] = {numNodes, 9};               // Dimensions of the tensor dataset is 2D, numNodes x 9
-    hsize_t vectorDims[2] = {numNodes, 3};               // Dimensions of the vector dataset is 2D, numNodes x 3
-    hsize_t scalarDims[1] = {numNodes};                  // Dimensions of the scalar dataset is 1D, numNodes
+    hsize_t tensorDims[2] = {numNodes, 9}; // Dimensions of the tensor dataset is 2D, numNodes x 9
+    hsize_t vectorDims[2] = {numNodes, 3}; // Dimensions of the vector dataset is 2D, numNodes x 3
+    // hsize_t scalarDims[1] = {numNodes};                  // Dimensions of the scalar dataset is 1D, numNodes
     hsize_t connectivityDims[2] = {numElem, numElNodes}; // Dimensions of the connectivity dataset is 2D, numElem x numElNodes
 
     file = H5Fcreate(r1.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -100,7 +107,7 @@ void FEM::showResults()
     output_v << "        hdf5/FEM_" + name + "_connectivity.h5:/connec" << std::endl;
     dataspace = H5Screate_simple(2, connectivityDims, NULL);
     dataset = H5Dcreate2(file2, "/connec", H5T_IEEE_F32LE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    error = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &connectivity);
+    error = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &connectivity[0]);
     error = H5Dclose(dataset);
     error = H5Sclose(dataspace);
     error = H5Fclose(file2);
@@ -114,17 +121,19 @@ void FEM::showResults()
         Writing coordinates dataset
     */
 
-    output_v << "        hdf5/FEM_" + name + "_coordinates.h5:/coord" << std::endl;
+    output_v << "        hdf5/FEM_" << name << ".h5:/coords" << std::endl;
+    // output_v << "        hdf5/FEM_" + name + "_coordinates.h5:/coord" << std::endl;
 
     for (auto n : discritizedNodes)
     {
         int index = n->getIndex();
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++)
             vector[3 * index + i] = n->getInitialCoordinates()[i];
+        vector[3 * index + 2] = 0.;
     }
     dataspace = H5Screate_simple(2, vectorDims, NULL);
     dataset = H5Dcreate2(file, "/coords", H5T_IEEE_F64LE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    error = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vector); // &vector[0] would also be correct
+    error = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vector[0]); // &vector[0] would also be correct
     error = H5Dclose(dataset);
     error = H5Sclose(dataspace);
 
@@ -134,8 +143,9 @@ void FEM::showResults()
     for (auto n : discritizedNodes)
     {
         int index = n->getIndex();
-        for (int i = 0; i < 3; i++)
-            vector[3 * index + i] = n->getInitialCoordinates()[i] - n->getFinalDisplacement()[i];
+        for (int i = 0; i < 2; i++)
+            vector[3 * index + i] = n->getFinalDisplacement()[i];
+        vector[3 * index + 2] = 0.;
     }
     writeInHDF5(file, output_v, error, dataset, dataspace, "Displacement", "Vector", vector, vectorDims, r1);
 

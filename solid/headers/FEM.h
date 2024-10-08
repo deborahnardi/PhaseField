@@ -18,7 +18,7 @@
 class FEM
 {
 private:
-    int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0;
+    int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size;
     std::string name, filename, resultsPath;
     double *finalDisplacements;
@@ -37,7 +37,8 @@ private:
     Vec rhs, solution;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend;
     PetscInt *d_nnz, *o_nnz;
-    PetscInt *dirichletBC;
+    PetscInt *dirichletBC, *prescribedDispDOFs;
+    PetscScalar *prescribedDispValues;
     PetscErrorCode ierr;
     bool showMatrix = false;
 

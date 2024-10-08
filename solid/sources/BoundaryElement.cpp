@@ -47,9 +47,9 @@ void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-
 PetscErrorCode BoundaryElement::getContribution(Vec &rhs)
 {
+    // Neumann is applied in weak form
     for (auto c : conditions)
         if (c.bdType == NEUMANN)
             if (elemDimension == 0)

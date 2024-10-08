@@ -31,7 +31,7 @@ Truss::~Truss() {}
 ----------------------------------------------------------------------------------
 */
 
-PetscErrorCode Truss::getContribution(Mat &matrix)
+PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs)
 {
     PetscInt numElDOF = 4;
     PetscInt *indx = new PetscInt[4]();

@@ -65,8 +65,8 @@ PetscErrorCode FEM::solveFEMProblem()
     findNeighbours();
     assembleProblem();
     solveLinearSystem(matrix, rhs, solution);
-    // if (rank == 0)
-    //     showResults();
+    if (rank == 0)
+        showResults();
 
     return 0;
 }
@@ -88,7 +88,7 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
 
     for (int Ii = Istart; Ii < Iend; Ii++)
-        elements[Ii]->getContribution(matrix);
+        elements[Ii]->getContribution(matrix, rhs);
 
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
@@ -103,9 +103,13 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
 
+    ierr = VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
+
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
+    ierr = VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
+    MPI_Abort(PETSC_COMM_WORLD, 1);
     // if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
     // {
     //     ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
@@ -277,6 +281,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     CHKERRQ(ierr);
 
     ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
+    CHKERRQ(ierr);
 
     ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
     CHKERRQ(ierr);
@@ -303,6 +308,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 
     // Transfering data between processes
     int *numEachProcess = new int[size];
+    // Collecting the number of local DOFs from all processes
     MPI_Allgather(&rankLocalDOFs, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
 
     int *globalBuffer = new int[size];
@@ -310,7 +316,9 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     for (int i = 1; i < size; i++)
         globalBuffer[i] = globalBuffer[i - 1] + numEachProcess[i - 1];
 
+    // Collecting the displacements from all processes to the root process
     MPI_Gatherv(localDisplacements, rankLocalDOFs, MPI_DOUBLE, finalDisplacements, numEachProcess, globalBuffer, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+    // Broadcasting the final displacements to all processes
     MPI_Bcast(finalDisplacements, nDOFs, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
 
     for (auto node : nodes)

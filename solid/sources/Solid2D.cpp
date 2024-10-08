@@ -20,7 +20,7 @@ Solid2D::~Solid2D() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-PetscErrorCode Solid2D::getContribution(Mat &A)
+PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
 {
     PetscInt numElDOF = numElNodes * 2;
     PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
@@ -82,6 +82,26 @@ PetscErrorCode Solid2D::getContribution(Mat &A)
                     {
                         PetscInt pos = numElDOF * (2 * a + i) + 2 * b + j;
                         localStiffnessMatrix[pos] += (G * contraction * wJac * kroen[i][j] + G * dN_dX[a][j] * dN_dX[b][i] * wJac + lame * dN_dX[a][i] * dN_dX[b][j] * wJac);
+                    }
+                }
+
+                /*
+                    Checking if a has a prescribed displacement different from zero;
+                    If it does, KijUj = Fi - KijUj -> So we need to subtract the contribution of the prescribed displacement in the rhs
+                */
+                for (PetscInt j = 0; j < 2; j++)
+                {
+                    PetscInt pos = numElDOF * (2 * a + i) + 2 * a + j;
+                    if (elemConnectivity[a]->getDOF(j)->isDirichlet())
+                    {
+                        PetscReal value = elemConnectivity[a]->getDOF(j)->getDirichletValue();
+                        if (value != 0)
+                        {
+                            PetscReal ti = localStiffnessMatrix[pos] * value;
+                            PetscInt dof = elemConnectivity[a]->getDOF(j)->getIndex();
+                            ierr = VecSetValue(rhs, dof, -ti, ADD_VALUES);
+                            CHKERRQ(ierr);
+                        }
                     }
                 }
             }

@@ -39,7 +39,7 @@ public:
     virtual void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) {};
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
 
-    virtual PetscErrorCode getContribution(Mat &matrix) {};
+    virtual PetscErrorCode getContribution(Mat &matrix, Vec &rhs) {};
     virtual void getContribution() {};
     virtual void Test(PetscScalar &integral) {};
 };
@@ -71,7 +71,7 @@ public:
     void setTheta(const double &_theta) { theta = _theta; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
-    PetscErrorCode getContribution(Mat &matrix) override;
+    PetscErrorCode getContribution(Mat &matrix, Vec &rhs) override;
     void getContribution() override;
 };
 
@@ -95,7 +95,7 @@ public:
     void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) override;
 
     MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
-    PetscErrorCode getContribution(Mat &matrix) override;
+    PetscErrorCode getContribution(Mat &matrix, Vec &rhs) override;
     void getContribution() override;
     void Test(PetscScalar &integral) override;
 };
