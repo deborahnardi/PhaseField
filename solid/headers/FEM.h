@@ -21,6 +21,7 @@ private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0;
     int rank, size;
     std::string name, filename, resultsPath;
+    std::vector<double> finalDisplacements;
     std::vector<std::set<int>> nodeNeighbours;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
@@ -35,7 +36,7 @@ private:
     Mat matrix;
     Vec rhs, solution;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend;
-    PetscInt *d_nnz, *o_nnz, *d_nnzLocal, *o_nnzLocal;
+    PetscInt *d_nnz, *o_nnz;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;
@@ -51,8 +52,9 @@ public:
     std::vector<DOF *> getGlobalDOFs() const { return globalDOFs; }
     std::string getResultsPath() const { return resultsPath; }
 
-    /*
-                        DATA INPUT METHODS
+    /*----------------------------------------------------------------------------------
+                                    DATA INPUT METHODS
+    ------------------------------------------------------------------------------------
     */
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
@@ -65,8 +67,9 @@ public:
     void createResultsPath();
     void deleteResults(bool _deleteResults);
 
-    /*
-                        SOLVE FEM PROBLEM METHODS
+    /*----------------------------------------------------------------------------------
+                            SOLVE FEM PROBLEM METHODS
+    ------------------------------------------------------------------------------------
     */
     void findNeighbours();
     void solveFEMProblemNoPetsc();
@@ -82,10 +85,8 @@ public:
     PetscErrorCode solveFEMProblem();
     PetscErrorCode assembleProblem();
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
-    PetscErrorCode setBoundaryConditions();
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
-
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------
