@@ -108,8 +108,6 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
-    ierr = VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
-    MPI_Abort(PETSC_COMM_WORLD, 1);
     // if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
     // {
     //     ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
@@ -323,8 +321,8 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 
     for (auto node : nodes)
     {
-        double valueX = finalDisplacements[node->getDOF(0)->getIndex()];
-        double valueY = finalDisplacements[node->getDOF(1)->getIndex()];
+        double valueX = (!node->getDOF(0)->isDirichlet()) ? finalDisplacements[node->getDOF(0)->getIndex()] : node->getDOF(0)->getDirichletValue();
+        double valueY = (!node->getDOF(1)->isDirichlet()) ? finalDisplacements[node->getDOF(1)->getIndex()] : node->getDOF(1)->getDirichletValue();
 
         node->setFinalDisplacement({valueX, valueY, 0.});
     }

@@ -24,6 +24,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
 {
     PetscInt numElDOF = numElNodes * 2;
     PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
+    PetscReal *localRHS = new PetscScalar[numElDOF]();
     PetscInt *idx = new PetscInt[numElDOF]();
 
     double **coords = q->getQuadratureCoordinates();
@@ -69,9 +70,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
 
         for (PetscInt a = 0; a < numElNodes; a++)
-        {
             for (PetscInt i = 0; i < 2; i++)
-            {
                 for (PetscInt b = 0; b < numElNodes; b++)
                 {
                     PetscReal contraction = 0.;
@@ -84,30 +83,36 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
                         localStiffnessMatrix[pos] += (G * contraction * wJac * kroen[i][j] + G * dN_dX[a][j] * dN_dX[b][i] * wJac + lame * dN_dX[a][i] * dN_dX[b][j] * wJac);
                     }
                 }
+        delete[] N;
+        delete[] dN;
+    }
 
-                /*
-                    Checking if a has a prescribed displacement different from zero;
-                    If it does, KijUj = Fi - KijUj -> So we need to subtract the contribution of the prescribed displacement in the rhs
-                */
+    /*
+        Applying prescribed Dirichlet boundary conditions
+    */
+
+    for (PetscInt a = 0; a < numElNodes; a++)
+    {
+        for (PetscInt i = 0; i < 2; i++)
+        {
+            for (PetscInt b = 0; b < numElNodes; b++)
+            {
                 for (PetscInt j = 0; j < 2; j++)
                 {
-                    PetscInt pos = numElDOF * (2 * a + i) + 2 * a + j;
-                    if (elemConnectivity[a]->getDOF(j)->isDirichlet())
+                    DOF *dof = elemConnectivity[b]->getDOFs()[j];
+                    if (dof->isDirichlet())
                     {
-                        PetscReal value = elemConnectivity[a]->getDOF(j)->getDirichletValue();
+                        double value = dof->getDirichletValue();
                         if (value != 0)
                         {
-                            PetscReal ti = localStiffnessMatrix[pos] * value;
-                            PetscInt dof = elemConnectivity[a]->getDOF(j)->getIndex();
-                            ierr = VecSetValue(rhs, dof, -ti, ADD_VALUES);
+                            double fi = -localStiffnessMatrix[numElDOF * (2 * a + i) + 2 * b + j] * value;
+                            ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
                             CHKERRQ(ierr);
                         }
                     }
                 }
             }
         }
-        delete[] N;
-        delete[] dN;
     }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
