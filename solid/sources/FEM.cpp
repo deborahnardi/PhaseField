@@ -87,7 +87,7 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
 
     (size == 1)
         ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nnz, &A)
-        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nnz, NULL, o_nnz, &A);
+        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nnzLocal, NULL, o_nnzLocal, &A);
     CHKERRQ(ierr);
 
     ierr = MatSetFromOptions(A);
@@ -197,82 +197,95 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 
 PetscErrorCode FEM::matrixPreAllocation()
 {
-    MPI_Barrier(PETSC_COMM_WORLD);      // Synchronizes all processes with PETSc communicator
-    rankLocalNodes = IIIend - IIIstart; // Number of nodes in the local partition
+    MPI_Barrier(PETSC_COMM_WORLD);         // Synchronizes all processes with PETSc communicator
+    int rankLocalDOFs = IIIend - IIIstart; // Number of nodes in the local partition
 
-    d_nnzLocal = new PetscInt[2 * rankLocalNodes]();
+    d_nnzLocal = new PetscInt[rankLocalDOFs]();
 
-    int numOfNonZeroOffDiagonal = numNodes - rankLocalNodes;
+    int numOfNonZeroOffDiagonal = nDOFs - rankLocalDOFs;
 
-    o_nnzLocal = new PetscInt[rankLocalNodes * 2]();
+    o_nnzLocal = new PetscInt[rankLocalDOFs]();
 
     // Concatenate d_nnz and o_nnz between processes
     d_nnz = new PetscInt[numNodes * 2]();
     o_nnz = new PetscInt[numNodes * 2]();
 
     // Counting diagonal and off-diagonal non-zero elements
-    for (int i = 0; i < rankLocalNodes; i++)
-    {
-        for (auto node : nodeNeighbours[i + IIIstart])
+    // for (int i = 0; i < rankLocalDOFs; i++)
+    // {
+    //     for (auto node : nodeNeighbours[i + IIIstart])
+    //     {
+    //         for (auto dof : nodes[node]->getDOFs())
+    //         {
+    //             if (dof->getIndex() >= IIIstart && dof->getIndex() < IIIend)
+    //                 d_nnzLocal[i]++;
+    //             else
+    //                 o_nnzLocal[i]++;
+    //         }
+    //     }
+    // }
+
+    for (auto node1 : nodes)
+        for (auto dof1 : node1->getDOFs()) // Rows of the matrix
         {
-            if (node >= IIIstart && node < IIIend)
+            if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
             {
-                d_nnzLocal[2 * i] += elemDim;     // Diagonal non-zero elements
-                d_nnzLocal[2 * i + 1] += elemDim; // Diagonal non-zero elements
-            }
-            else
-            {
-                o_nnzLocal[2 * i] += elemDim;     // Off-diagonal non-zero elements
-                o_nnzLocal[2 * i + 1] += elemDim; // Off-diagonal non-zero elements
+                for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
+                    for (auto dof2 : nodes[node2]->getDOFs())
+                    {
+                        if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
+                            d_nnzLocal[dof1->getIndex() - IIIstart]++;
+                        else
+                            o_nnzLocal[dof1->getIndex() - IIIstart]++;
+                    }
             }
         }
-    }
 
-    for (int rankIt = 0; rankIt < size; rankIt++)
-    {
-        if (rank == rankIt)
-        {
-            std::cout << "PROCESS " << rank << " has " << rankLocalNodes << " nodes" << std::endl;
-            std::cout << "Starting at " << IIIstart << " and ending at " << IIIend << std::endl;
-            std::cout << "Diagonal and off-diagonal non-zero elements per row are equal to: " << std::endl;
-            for (int i = 0; i < 2 * rankLocalNodes; i++)
-                std::cout << "(" << rank << ") " << i << ": " << d_nnzLocal[i] << " " << o_nnzLocal[i] << std::endl;
+    // for (int rankIt = 0; rankIt < size; rankIt++)
+    // {
+    //     if (rank == rankIt)
+    //     {
+    //         std::cout << "PROCESS " << rank << " has " << rankLocalDOFs << " nodes" << std::endl;
+    //         std::cout << "Starting at " << IIIstart << " and ending at " << IIIend << std::endl;
+    //         std::cout << "Diagonal and off-diagonal non-zero elements per row are equal to: " << std::endl;
+    //         for (int i = 0; i < 2 * rankLocalDOFs; i++)
+    //             std::cout << "(" << rank << ") " << i << ": " << d_nnzLocal[i] << " " << o_nnzLocal[i] << std::endl;
 
-            std::cout << "-------------------------------------------------------------------" << std::endl;
-        }
+    //         std::cout << "-------------------------------------------------------------------" << std::endl;
+    //     }
 
-        // Concatenate d_nnz and o_nnz between processes
-        MPI_Barrier(MPI_COMM_WORLD);
-        int numEachProcess[size];
-        numEachProcess[rank] = 2 * rankLocalNodes;
+    //     // Concatenate d_nnz and o_nnz between processes
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    //     int numEachProcess[size];
+    //     numEachProcess[rank] = rankLocalDOFs;
 
-        int idxGlobalBuffer[size]{};
-        idxGlobalBuffer[0] = 0;
-        for (int i = 1; i < size; i++)
-            idxGlobalBuffer[i] = idxGlobalBuffer[i - 1] + numEachProcess[i - 1];
+    //     int idxGlobalBuffer[size]{};
+    //     idxGlobalBuffer[0] = 0;
+    //     for (int i = 1; i < size; i++)
+    //         idxGlobalBuffer[i] = idxGlobalBuffer[i - 1] + numEachProcess[i - 1];
 
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Gatherv(d_nnzLocal, 2 * rankLocalNodes, MPI_INT, d_nnz, numEachProcess, idxGlobalBuffer, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(o_nnzLocal, 2 * rankLocalNodes, MPI_INT, o_nnz, numEachProcess, idxGlobalBuffer, MPI_INT, 0, MPI_COMM_WORLD);
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    //     MPI_Gatherv(d_nnzLocal, rankLocalDOFs, MPI_INT, d_nnz, numEachProcess, idxGlobalBuffer, MPI_INT, 0, MPI_COMM_WORLD);
+    //     MPI_Gatherv(o_nnzLocal, rankLocalDOFs, MPI_INT, o_nnz, numEachProcess, idxGlobalBuffer, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Bcast(d_nnz, 2 * numNodes, MPI_INT, 0, MPI_COMM_WORLD); // Broadcasts the concatenated array to all processes
-        MPI_Bcast(o_nnz, 2 * numNodes, MPI_INT, 0, MPI_COMM_WORLD);
+    //     MPI_Barrier(MPI_COMM_WORLD);
+    //     MPI_Bcast(d_nnz, nDOFs, MPI_INT, 0, MPI_COMM_WORLD); // Broadcasts the concatenated array to all processes
+    //     MPI_Bcast(o_nnz, nDOFs, MPI_INT, 0, MPI_COMM_WORLD);
 
-        //     for (int i = 0; i < size; i++)
-        //     {
-        //         if (rank == i)
-        //         {
-        //             std::cout << "Starting at " << IIIstart << " and ending at " << IIIend << std::endl;
-        //             std::cout << "CONCATENATING..." << std::endl;
-        //             for (int i = 0; i < 2 * numNodes; i++)
-        //                 std::cout << "(" << rank << ") " << i << ": " << d_nnz[i] << " " << o_nnz[i] << std::endl;
+    //     // for (int i = 0; i < size; i++)
+    //     // {
+    //     //     if (rank == i)
+    //     //     {
+    //     //         std::cout << "Starting at " << IIIstart << " and ending at " << IIIend << std::endl;
+    //     //         std::cout << "CONCATENATING..." << std::endl;
+    //     //         for (int i = 0; i < nDOFs; i++)
+    //     //             std::cout << "(" << rank << ") " << i << ": " << d_nnz[i] << " " << o_nnz[i] << std::endl;
 
-        //             std::cout << "-------------------------------------------------------------------" << std::endl;
-        //         }
-        //         MPI_Barrier(MPI_COMM_WORLD);
-        //     }
-    }
+    //     //         std::cout << "-------------------------------------------------------------------" << std::endl;
+    //     //     }
+    //     //     MPI_Barrier(MPI_COMM_WORLD);
+    //     // }
+    //}
 
     return ierr;
 }
@@ -308,10 +321,10 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
     // ----------------------------------------------------------------
-    // PARTIONING NODES
+    // PARTIONING GLOBAL DOFs
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
     CHKERRQ(ierr);
-    ierr = VecSetSizes(x, PETSC_DECIDE, nodes.size());
+    ierr = VecSetSizes(x, PETSC_DECIDE, globalDOFs.size());
     CHKERRQ(ierr);
     ierr = VecSetFromOptions(x);
     CHKERRQ(ierr);
@@ -340,16 +353,11 @@ PetscErrorCode FEM::assembleProblem()
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
 
-    std::cout << "Print 1" << std::endl;
     for (int Ii = Istart; Ii < Iend; Ii++)
         elements[Ii]->getContribution(matrix);
 
-    std::cout << "Print 2" << std::endl;
-
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
-
-    std::cout << "Print 3" << std::endl;
 
     // Assemble the matrix and the right-hand side vector
     ierr = VecAssemblyBegin(rhs);
@@ -364,16 +372,15 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
-    if (showMatrix) // Print the global stiffness matrix on the terminal
-    {
-        ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
-        CHKERRQ(ierr);
-        ierr = MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-        CHKERRQ(ierr);
-        printGlobalMatrix(matrix);
-    }
+    // if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
+    // {
+    //     ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
+    //     CHKERRQ(ierr);
+    //     ierr = MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
+    //     CHKERRQ(ierr);
+    //     // printGlobalMatrix(matrix);
+    // }
 
-    std::cout << "Print 4" << std::endl;
     return ierr;
 }
 
@@ -381,9 +388,7 @@ PetscErrorCode FEM::solveFEMProblem()
 {
     findNeighbours();
     assembleProblem();
-    PetscPrintf(PETSC_COMM_WORLD, "AQUI ESTAMOS IRMAOS...\n");
     solveLinearSystem(matrix, rhs, solution);
-    PetscPrintf(PETSC_COMM_WORLD, "AQUI ESTAMOS IRMAOS 2 ...\n");
     // if (rank == 0)
     //     showResults();
 }

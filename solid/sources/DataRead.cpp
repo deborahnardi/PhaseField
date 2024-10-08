@@ -231,5 +231,5 @@ void FEM::readGeometry(const std::string &_filename)
     PetscPrintf(PETSC_COMM_WORLD, "Number of elements: %d\n", numElements);
     PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", bdElements.size());
     PetscPrintf(PETSC_COMM_WORLD, "Number of Dirichlet DOFs: %d\n", numDirichletDOFs);
-    PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", globalDOFs.size());
+    PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", nDOFs);
 }
