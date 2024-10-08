@@ -286,8 +286,11 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     ------------------------------------------------------------------------------------
     */
     // Set the solution to the final coordinates of the nodes
-    finalDisplacements.resize(globalDOFs.size());
-    double localDisplacements[IIIend - IIIstart];
+    finalDisplacements = new double[globalDOFs.size()];
+    int rankLocalDOFs = IIIend - IIIstart;
+    double *localDisplacements;
+    localDisplacements = new double[rankLocalDOFs];
+
     for (int i = IIIstart; i < IIIend; i++)
     {
         DOF *dof = globalDOFs[i];
@@ -299,23 +302,37 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     }
 
     // Transfering data between processes
-    int numEachProcess[size];
-    numEachProcess[rank] = IIIend - IIIstart;
-    int idxGlobalBuffer[size]{};
-    idxGlobalBuffer[0] = 0;
+    int *numEachProcess = new int[size];
+    MPI_Allgather(&rankLocalDOFs, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
 
+    int *globalBuffer = new int[size];
+    globalBuffer[0] = 0;
     for (int i = 1; i < size; i++)
-        idxGlobalBuffer[i] = idxGlobalBuffer[i - 1] + numEachProcess[i - 1];
+        globalBuffer[i] = globalBuffer[i - 1] + numEachProcess[i - 1];
 
-    MPI_Gatherv(localDisplacements, IIIend - IIIstart, MPI_DOUBLE, &finalDisplacements[0], numEachProcess, idxGlobalBuffer, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
-    MPI_Bcast(&finalDisplacements[0], finalDisplacements.size(), MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+    MPI_Gatherv(localDisplacements, rankLocalDOFs, MPI_DOUBLE, finalDisplacements, numEachProcess, globalBuffer, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(finalDisplacements, nDOFs, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
 
     for (auto node : nodes)
     {
         double valueX = finalDisplacements[node->getDOF(0)->getIndex()];
         double valueY = finalDisplacements[node->getDOF(1)->getIndex()];
 
-        node->setFinalDisplacement({valueX, valueY});
+        node->setFinalDisplacement({valueX, valueY, 0.});
+    }
+
+    for (int i = 0; i < size; i++)
+    {
+        if (i == rank)
+        {
+            std::cout << "Final displacements: " << std::endl;
+            for (auto node : nodes)
+            {
+                std::cout << node->getFinalDisplacement()[0] << std::endl;
+                std::cout << node->getFinalDisplacement()[1] << std::endl;
+            }
+        }
+        MPI_Barrier(PETSC_COMM_WORLD);
     }
     /*----------------------------------------------------------------------------------
                                         CLEANING UP
@@ -332,77 +349,4 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     CHKERRQ(ierr);
 
     return ierr;
-}
-
-/*----------------------------------------------------------------------------------
-                Assembling and solving problem without PETSc
-------------------------------------------------------------------------------------
-*/
-void FEM::solveFEMProblemNoPetsc()
-{
-    K = MatrixXd::Zero(nDOFs, nDOFs);
-    F = VectorXd::Zero(nDOFs);
-    U = VectorXd::Zero(nDOFs);
-
-    assembleProblemNoPetsc();
-    setBoundaryConditionsNoPetsc();
-    solveLinearSystemNoPetsc();
-}
-
-void FEM::solveLinearSystemNoPetsc()
-{
-    U = K.fullPivLu().solve(F);
-    std::cout << "Displacement vector: " << std::endl;
-    std::cout << U << std::endl;
-}
-
-void FEM::setBoundaryConditionsNoPetsc()
-{
-    std::cout << "K:" << std::endl;
-    std::cout << K << std::endl;
-
-    std::cout << "----------------------------------" << std::endl;
-
-    for (auto bd : bdElements)
-        bd->getContributionNoPetsc(F, K);
-
-    // // Setting NEUMANN boundary conditions
-
-    // for (auto bd : bdElements)
-    //     for (auto node : bd->getElemConnectivity())
-    //         for (auto dof : node->getDOFs())
-    //             if (dof->isNeumann())
-    //             {
-    //                 F(dof->getIndex()) += dof->getNeumannValue();
-    //                 numNeumannDOFs++;
-    //             }
-
-    // // Setting DIRICHLET boundary conditions -> Adding 0 to the stiffness matrix and to the force vector: column and row of the DOF
-
-    // for (auto elem : bdElements)
-    //     for (auto node : elem->getElemConnectivity())
-    //         for (auto dof : node->getDOFs())
-    //             if (dof->isDirichlet())
-    //             {
-    //                 K.row(dof->getIndex()).setZero();
-    //                 K.col(dof->getIndex()).setZero();
-    //                 K(dof->getIndex(), dof->getIndex()) = 1;       // Setting the diagonal to 1
-    //                 F(dof->getIndex()) = dof->getDirichletValue(); // If a prescribed displacement value is given
-    //                 numDirichletDOFs++;
-    //             }
-
-    std::cout << "K:" << std::endl;
-    std::cout << K << std::endl;
-
-    std::cout << "F:" << std::endl;
-    std::cout << F << std::endl;
-}
-
-void FEM::assembleProblemNoPetsc()
-{
-    for (auto elem : elements)
-    {
-        elem->getContribution();
-        elem->assembleGlobalStiffnessMatrix(K);
-    }
 }

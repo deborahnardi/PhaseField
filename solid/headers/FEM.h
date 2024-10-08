@@ -21,7 +21,7 @@ private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0;
     int rank, size;
     std::string name, filename, resultsPath;
-    std::vector<double> finalDisplacements;
+    double *finalDisplacements;
     std::vector<std::set<int>> nodeNeighbours;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
