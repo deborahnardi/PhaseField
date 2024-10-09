@@ -244,8 +244,10 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: \
  /usr/include/c++/11/tr1/riemann_zeta.tcc /usr/include/c++/11/sstream \
  /usr/include/c++/11/bits/sstream.tcc \
  /home/deborah/petsc-2/petsc-3.22.0/include/petsccxxcomplexfix.h \
- /home/deborah/mpich/include/mpi.h /home/deborah/mpich/include/mpio.h \
- /home/deborah/mpich/include/mpi.h \
+ /home/deborah/mpich-install/include/mpi.h \
+ /home/deborah/mpich-install/include/mpi_proto.h \
+ /home/deborah/mpich-install/include/mpio.h \
+ /home/deborah/mpich-install/include/mpi.h \
  /home/deborah/petsc-2/petsc-3.22.0/include/petscmath.h \
  /usr/include/c++/11/math.h \
  /home/deborah/petsc-2/petsc-3.22.0/include/petscerror.h \

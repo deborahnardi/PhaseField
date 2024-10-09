@@ -288,6 +288,27 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
                                         POST-PROCESSING
     ------------------------------------------------------------------------------------
     */
+
+    postProcessing(x);
+    /*----------------------------------------------------------------------------------
+                                        CLEANING UP
+    ------------------------------------------------------------------------------------
+    */
+
+    ierr = KSPDestroy(&ksp);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&b);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    ierr = MatDestroy(&A);
+    CHKERRQ(ierr);
+
+    return ierr;
+}
+
+void FEM::postProcessing(Vec &x)
+{
     // Set the solution to the final coordinates of the nodes
     finalDisplacements = new double[globalDOFs.size()];
     int rankLocalDOFs = IIIend - IIIstart;
@@ -340,19 +361,4 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
         }
         MPI_Barrier(PETSC_COMM_WORLD);
     }
-    /*----------------------------------------------------------------------------------
-                                        CLEANING UP
-    ------------------------------------------------------------------------------------
-    */
-
-    ierr = KSPDestroy(&ksp);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&b);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&x);
-    CHKERRQ(ierr);
-    ierr = MatDestroy(&A);
-    CHKERRQ(ierr);
-
-    return ierr;
 }

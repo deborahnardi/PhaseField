@@ -93,6 +93,7 @@ public:
     ------------------------------------------------------------------------------------
     */
     void setPrintMatrix(const bool &_showMatrix) { showMatrix = _showMatrix; }
+    void postProcessing(Vec &x);
     void deleteFromString(std::string &fullStr, std::string removeStr);
     void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
 };

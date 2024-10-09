@@ -92,28 +92,19 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
     */
 
     for (PetscInt a = 0; a < numElNodes; a++)
-    {
         for (PetscInt i = 0; i < 2; i++)
-        {
             for (PetscInt b = 0; b < numElNodes; b++)
-            {
                 for (PetscInt j = 0; j < 2; j++)
                 {
                     DOF *dof = elemConnectivity[b]->getDOFs()[j];
-                    if (dof->isDirichlet())
+                    double value = dof->getDirichletValue();
+                    if (value != 0)
                     {
-                        double value = dof->getDirichletValue();
-                        if (value != 0)
-                        {
-                            double fi = -localStiffnessMatrix[numElDOF * (2 * a + i) + 2 * b + j] * value;
-                            ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
-                            CHKERRQ(ierr);
-                        }
+                        double fi = -localStiffnessMatrix[numElDOF * (2 * a + i) + 2 * b + j] * value;
+                        ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
+                        CHKERRQ(ierr);
                     }
                 }
-            }
-        }
-    }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
     CHKERRQ(ierr);

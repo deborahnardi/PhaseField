@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
-<Xdmf Version="2.0" xmlns:xi="http://www.w3.org/2001/XInclude" >
+<Xdmf Version="2.0" >
 <Domain>
   <Grid>
-    <Topology TopologyType="Triangle" NumberOfElements="244" >
-      <DataItem Format=    "HDF" NumberType="int" Dimensions="244 3" >
+    <Topology TopologyType="Triangle" NumberOfElements="16" >
+      <DataItem Format=    "HDF" NumberType="int" Dimensions="16 3" >
         hdf5/FEM_square_connectivity.h5:/connec
       </DataItem>
     </Topology>
     <Geometry GeometryType="XYZ">
-      <DataItem Format="HDF" NumberType="double" Dimensions="143 3">
+      <DataItem Format="HDF" NumberType="double" Dimensions="13 3">
         hdf5/FEM_square.h5:/coords
       </DataItem>
     </Geometry>
     <Attribute Name="Displacement" Center="Node" AttributeType="Vector" >
-      <DataItem Format="HDF" NumberType="double" Dimensions="143 3">
+      <DataItem Format="HDF" NumberType="double" Dimensions="13 3">
         hdf5/FEM_square.h5:/displacement
       </DataItem>
     </Attribute>

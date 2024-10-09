@@ -104,8 +104,8 @@ s : /usr/lib/x86_64-linux-gnu/libz.so
 s : /usr/lib/x86_64-linux-gnu/libdl.a
 s : /usr/lib/x86_64-linux-gnu/libm.so
 s : /usr/lib/x86_64-linux-gnu/libmetis.so
-s : /home/deborah/mpich/lib/libmpicxx.so
-s : /home/deborah/mpich/lib/libmpi.so
+s : /home/deborah/mpich-install/lib/libmpicxx.so
+s : /home/deborah/mpich-install/lib/libmpi.so
 s : CMakeFiles/s.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable s"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/s.dir/link.txt --verbose=$(VERBOSE)

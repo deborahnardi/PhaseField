@@ -17,12 +17,12 @@ void FEM::writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t
     else if (AttributeType == "Scalar")
         output_v << "      <DataItem Format=\"HDF\" NumberType=\"double\" Dimensions=\"" << numNodes << " 1\">" << std::endl;
 
-    deleteFromString(AttributeName, " ");
+    deleteFromString(AttributeName, " "); // remove spaces from the attribute name
     std::transform(AttributeName.begin(), AttributeName.end(), AttributeName.begin(),
                    [](unsigned char c)
-                   { return std::tolower(c); });
+                   { return std::tolower(c); }); // let the attribute name be lowercase
 
-    deleteFromString(s1, resultsPath + "results/");
+    deleteFromString(s1, resultsPath + "results/"); // remove the path from the string
     output_v << "        " << s1 << ":/" << AttributeName << std::endl;
 
     char name[AttributeName.size() + 2];
@@ -58,15 +58,21 @@ void FEM::showResults()
             connectivity[numElNodes * iElem + i] = con[i]->getIndex();
     }
 
+    /*
+        Opening the files to write the results
+    */
     std::string result;
     std::string r0 = resultsPath + "results/FEM_" + name + ".xdmf";
-    std::fstream output_v(r0.c_str(), std::ios_base::out);
+    std::fstream output_v(r0.c_str(), std::ios_base::out); // output_v is the name of the file, the path is r0, the flag is out
 
     std::string r1 = resultsPath + "results/hdf5/FEM_" + name + ".h5";
     std::fstream output_h5(r1.c_str(), std::ios_base::out);
 
     std::string r2 = resultsPath + "results/hdf5/FEM_" + name + "_connectivity.h5";
 
+    /*
+        DEFINING THE TOPOLOGY FOR THE XDMF FILE
+    */
     std::string topology;
     if (elemDim == 1)
         topology = "Polyline";
@@ -89,24 +95,41 @@ void FEM::showResults()
     file2 = H5Fcreate(r2.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     /*
-        Writing the xdmf file
+        Writing the xdmf file header
+        For more information about the xdmf file format, visit: https://www.xdmf.org/index.php/XDMF_Model_and_Format
     */
 
     output_v << "<?xml version=\"1.0\"?>" << std::endl
              << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>" << std::endl
-             << "<Xdmf Version=\"2.0\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" >" << std::endl
+             << "<Xdmf Version=\"2.0\" >" << std::endl
              << "<Domain>" << std::endl
              << "  <Grid>" << std::endl
              << "    <Topology TopologyType=\"" << topology << "\" NumberOfElements=\"" << numElem << "\" >" << std::endl
              << "      <DataItem Format=    \"HDF\" NumberType=\"int\" Dimensions=\"" << numElem << " " << numElNodes << "\" >" << std::endl;
 
     /*
-        Writing the connectivity dataset
+        Writing the connectivity dataset to the xdmf file
     */
 
+    /*
+        Path to the connectivity dataset, Paraview will look for this dataset in the hdf5 file.
+        Dataset defines the size and the shape of the data, while the dataspace is where the data is stored.
+    */
     output_v << "        hdf5/FEM_" + name + "_connectivity.h5:/connec" << std::endl;
+
+    /*
+        Creates a new simple dataspace, defines the dimensions of the dataset: 2D, numElem x numElNodes, NULL is used to set the maximum dimensions to the current dimensions, in this case, it is not necessary, so it is set to NULL.
+    */
     dataspace = H5Screate_simple(2, connectivityDims, NULL);
+
+    /*
+        H5DFcreate2 is a function that creates a new dataset, it is used to create a new dataset named "/connec" in the hdf5 file. The dataset is created in the file file2. The dataset is of type H5T_IEEE_F32LE, the dataspace is dataspace, the dataset is created with default properties.
+    */
     dataset = H5Dcreate2(file2, "/connec", H5T_IEEE_F32LE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+    /*
+        H5Dwrite is a function that writes data to a dataset, it is used to write the connectivity array to the dataset.
+    */
     error = H5Dwrite(dataset, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &connectivity[0]);
     error = H5Dclose(dataset);
     error = H5Sclose(dataspace);
@@ -116,12 +139,11 @@ void FEM::showResults()
              << "    </Topology>" << std::endl
              << "    <Geometry GeometryType=\"XYZ\">" << std::endl
              << "      <DataItem Format=\"HDF\" NumberType=\"double\" Dimensions=\"" << numNodes << " 3\">" << std::endl;
-
+    output_v << "        hdf5/FEM_" << name << ".h5:/coords" << std::endl;
     /*
         Writing coordinates dataset
     */
 
-    output_v << "        hdf5/FEM_" << name << ".h5:/coords" << std::endl;
     // output_v << "        hdf5/FEM_" + name + "_coordinates.h5:/coord" << std::endl;
 
     for (auto n : discritizedNodes)
@@ -133,7 +155,7 @@ void FEM::showResults()
     }
     dataspace = H5Screate_simple(2, vectorDims, NULL);
     dataset = H5Dcreate2(file, "/coords", H5T_IEEE_F64LE, dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    error = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vector[0]); // &vector[0] would also be correct
+    error = H5Dwrite(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &vector[0]);
     error = H5Dclose(dataset);
     error = H5Sclose(dataspace);
 

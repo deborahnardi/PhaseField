@@ -220,29 +220,9 @@ void FEM::readGeometry(const std::string &_filename)
             numDirichletDOFs++;
 
     dirichletBC = new PetscInt[numDirichletDOFs](); // Array that holds the dofs that have Dirichlet boundary conditions
-    
     for (int i = 0, j = 0; i < nDOFs; i++)
         if (globalDOFs[i]->isDirichlet())
-        {
             dirichletBC[j++] = i;
-            if (globalDOFs[i]->getDirichletValue() != 0)
-                numOfPrescribedDisp++;
-        }
-
-    prescribedDispDOFs = new PetscInt[numOfPrescribedDisp]();
-    prescribedDispValues = new PetscScalar[numOfPrescribedDisp]();
-    int count = 0;
-    for (int i = 0; i < nDOFs; i++)
-        if (globalDOFs[i]->isDirichlet())
-        {
-            double value = globalDOFs[i]->getDirichletValue();
-            if (value != 0)
-            {
-                prescribedDispDOFs[count] = i;
-                prescribedDispValues[count] = value;
-                count++;
-            }
-        }
 
     file.close();
 
