@@ -43,6 +43,14 @@ void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _
             }
     conditions.push_back({_bdType, dofVec, _value}); // Each boundary element has its own conditions
 }
+
+void BoundaryElement::setControlledDOF(BoundaryType _bdType, DOFType _type, double _value)
+{
+    for (auto n : elemConnectivity)
+        for (auto dof : n->getDOFs())
+            if (dof->getDOFType() == _type)
+                dof->setControlledDOF(_value);
+}
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------

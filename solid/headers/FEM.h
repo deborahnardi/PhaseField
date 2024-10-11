@@ -24,11 +24,13 @@ private:
     std::string name, filename, resultsPath;
     double *finalDisplacements;
     std::vector<std::set<int>> nodeNeighbours;
+    std::vector<double> dispByStep;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
     std::vector<BoundaryElement *> bdElements;
     std::vector<DOF *> globalDOFs;
+    AnalysisParameters *params;
 
     MatrixXd K;
     VectorXd F;
@@ -61,6 +63,7 @@ public:
     void setName(const std::string _name) { name = _name; }
     void setNodes(const std::vector<Node *> &_nodes) { nodes = _nodes; }
     void setResultsPath() { resultsPath = "./../output/" + name + "/"; }
+    void setAnalysisParameters(AnalysisParameters *_params) { params = _params; }
 
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
@@ -82,9 +85,10 @@ public:
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
     */
+    void setReversibleDisp();
     void solvePhaseFieldProblem();
-    void assemblePhaseFieldProblem(){};
-    void staggeredAlgorithm(){};
+    void assemblePhaseFieldProblem() {};
+    void staggeredAlgorithm() {};
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------

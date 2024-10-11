@@ -213,6 +213,14 @@ void FEM::readGeometry(const std::string &_filename)
             if (b->getPhysicalEntity() == physicalEntity)
                 for (int j = 0; j < numAppliedBCs; j++)
                     b->addCondition(bdType, static_cast<DOFType>(std::stoi(result[2 * j + 3])), std::stod(result[2 * j + 4]));
+
+        if (result.size() > (numAppliedBCs + 4))
+        {
+            int controlledDOF = std::stoi(result.back());
+            for (auto b : bdElements)
+                if (b->getPhysicalEntity() == physicalEntity)
+                    b->setControlledDOF(bdType, static_cast<DOFType>(std::stoi(result[3])), std::stod(result[4]));
+        }
     }
 
     for (auto dof : globalDOFs)

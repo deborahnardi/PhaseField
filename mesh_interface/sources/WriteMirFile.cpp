@@ -100,7 +100,11 @@ void Geometry::writeMeshInfo()
     {
         file << bc->getIndex() + 1 << " " << bc->getBType() << " " << physicalEntities[bc->getEntityName()] << " ";
         for (auto dofValues : bc->getDOFValues())
+        {
             file << dofValues.first << " " << dofValues.second << " ";
+            if (bc->isControledDOF())
+                file << "1";
+        }
         file << std::endl;
     }
 }

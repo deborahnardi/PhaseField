@@ -111,18 +111,16 @@ void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &
     }
 }
 
-BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
+BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues, const bool &_controledDOF)
 {
-    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), point->getEntityName(), _dofValues, _bType);
+    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), point->getEntityName(), _dofValues, _bType, _controledDOF);
     boundaryConditions.push_back(bCondition);
     return bCondition;
 }
 
-BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
+BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues, const bool &_controledDOF)
 {
-    std::cout << "Pointer: " << line << " points to the line: " << line->getEntityName() << std::endl;
-    std::cout << "Memory address: " << &_bType << " that holds the info/value: " << _bType << std::endl;
-    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType);
+    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType, _controledDOF);
     boundaryConditions.push_back(bCondition);
     return bCondition;
 }

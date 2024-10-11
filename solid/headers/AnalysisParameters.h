@@ -24,6 +24,4 @@ public:
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxItNum(const int &_maxItNum) { maxItNum = _maxItNum; }
     void setTol(const double &_tol) { tol = _tol; }
-    void setReversibleDisp(const double &_ubar, const Point *point);
-    void setReversibleDisp(const double &_ubar, const Line *line) {};
 };
