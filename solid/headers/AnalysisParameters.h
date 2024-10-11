@@ -1,10 +1,17 @@
 #pragma once
 
+#include <iostream>
+
+#include "Point.h"
+#include "Line.h"
+
 class AnalysisParameters
 {
 private:
     int nSteps, maxItNum = 1000;
     double tol = 1.e-8;
+    double ubar;
+    std::vector<double> dispByStep;
 
 public:
     AnalysisParameters();
@@ -17,4 +24,6 @@ public:
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxItNum(const int &_maxItNum) { maxItNum = _maxItNum; }
     void setTol(const double &_tol) { tol = _tol; }
+    void setReversibleDisp(const double &_ubar, const Point *point);
+    void setReversibleDisp(const double &_ubar, const Line *line) {};
 };

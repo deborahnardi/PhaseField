@@ -12,6 +12,7 @@
 #include "DOF.h"
 #include "Material.h"
 #include "BoundaryElement.h"
+#include "AnalysisParameters.h"
 
 #include "../../enumclass.hpp"
 
@@ -77,6 +78,13 @@ public:
     void assembleProblemNoPetsc();
     void setBoundaryConditionsNoPetsc();
     void solveLinearSystemNoPetsc();
+    /*----------------------------------------------------------------------------------
+                                    Phase Field Methods
+    ------------------------------------------------------------------------------------
+    */
+    void solvePhaseFieldProblem();
+    void assemblePhaseFieldProblem(){};
+    void staggeredAlgorithm(){};
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------

@@ -7,7 +7,7 @@ class Material
 {
 private:
     int index;
-    double poisson, young, shearModulus, lameConstant;
+    double poisson, young, shearModulus, lameConstant, griffithCriterion, l0;
     PlaneAnalysis planeAnalysis;
 
 public:
@@ -29,4 +29,6 @@ public:
     void setShearModulus(double _shearModulus) { shearModulus = _shearModulus; }
     void setPlaneAnalysis(PlaneAnalysis _planeAnalysis) { planeAnalysis = _planeAnalysis; }
     void setLameConstant(double _lameConstant) { lameConstant = _lameConstant; }
+    void setGriffithCriterion(double _griff) { griffithCriterion = _griff; }
+    void setL0(double _l0) { l0 = _l0; }
 };
