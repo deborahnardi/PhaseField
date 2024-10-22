@@ -25,6 +25,7 @@ Solid2D::~Solid2D() {}
 */
 PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
 {
+    const PetscInt numNodeDOF = 2;
     PetscInt numElDOF = numElNodes * 2;
     PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
     PetscReal *localRHS = new PetscScalar[numElDOF]();
@@ -48,6 +49,16 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
 
         double *N = sF->evaluateShapeFunction(xi);
         double **dN = sF->getShapeFunctionDerivative(xi);
+        double DOFi[numNodeDOF] = {};
+        double dDOFi[numNodeDOF][2] = {};
+
+        for (int a = 0; a < numElNodes; a++)
+            for (int i = 0; i < numNodeDOF; i++)
+            {
+                DOFi[i] += N[a] * elemConnectivity[a]->getDOFs()[i]->getValue();
+                for (int j = 0; j < 2; j++)
+                    dDOFi[i][j] += dN[a][j] * elemConnectivity[a]->getDOFs()[i]->getValue();
+            }
 
         PetscReal dX_dXsi[2][2] = {};
 
