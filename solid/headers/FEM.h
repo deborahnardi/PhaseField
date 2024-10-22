@@ -36,9 +36,9 @@ private:
     VectorXd F;
     VectorXd U;
 
-    Mat matrix;
-    Vec rhs, solution;
-    PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend;
+    Mat matrix, matrixPF;
+    Vec rhs, solution, rhsPF, solutionPF;
+    PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz;
     PetscInt *dirichletBC, *prescribedDispDOFs;
     PetscScalar *prescribedDispValues;
@@ -86,15 +86,16 @@ public:
     ------------------------------------------------------------------------------------
     */
     void setReversibleDisp();
+    void solvePhaseField();
+    PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
-    void assemblePhaseFieldProblem() {};
-    void staggeredAlgorithm() {};
+    void staggeredAlgorithm();
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------
     */
     PetscErrorCode decomposeElements(Vec &b, Vec &x);
-    PetscErrorCode matrixPreAllocation();
+    PetscErrorCode matrixPreAllocation(PetscInt start, PetscInt end);
     PetscErrorCode solveFEMProblem();
     PetscErrorCode assembleProblem();
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);

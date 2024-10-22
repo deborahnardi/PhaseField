@@ -15,7 +15,8 @@ protected:
     Material *material;
     BoundaryType bdType;
     DOFType type;
-    double value;
+    double value, damageValue = 0.;
+    double **coords, *weights;
     MatrixXd K, localStiff;
     PetscErrorCode ierr;
 
@@ -39,16 +40,21 @@ public:
     virtual void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) {};
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
 
-    virtual PetscErrorCode getContribution(Mat &matrix, Vec &rhs) {};
+    virtual PetscErrorCode getContribution(Mat &A, Vec &rhs) {};
+    virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs) {};
     virtual void getContribution() {};
+    virtual double getDamageValue() {};
     virtual void Test(PetscScalar &integral) {};
 };
 
 class Truss : public Element
 {
 private:
+    int numHammerPoints = 2, numElNodes = 2;
     double length, area, theta;
     MatrixXd localStiffnessMatrix, rotationMatrix;
+    ShapeFunction *sF;
+    Quadrature *q;
 
 public:
     Truss();
@@ -72,7 +78,9 @@ public:
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs) override;
+    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override {};
     void getContribution() override;
+    double getDamageValue() override;
 };
 
 class Solid2D : public Element
@@ -96,6 +104,7 @@ public:
 
     MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs) override;
+    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override;
     void getContribution() override;
     void Test(PetscScalar &integral) override;
 };

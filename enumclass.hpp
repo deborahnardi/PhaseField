@@ -28,7 +28,8 @@ enum DOFType
 {
     X = 0,
     Y = 1,
-    Z = 2
+    Z = 2,
+    D = 3
 };
 
 enum PlaneAnalysis

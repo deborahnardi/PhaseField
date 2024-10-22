@@ -23,6 +23,11 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
         else if (_node2->getY() - _node1->getY() < 0) // If the element is pointing downwards
             theta = -M_PI / 2;
     }
+
+    sF = new S2ShapeFunction();
+    q = new LineQuadrature(numHammerPoints);
+    coords = q->getQuadratureCoordinates();
+    weights = q->getQuadratureWeights();
 }
 Truss::~Truss() {}
 
@@ -30,6 +35,28 @@ Truss::~Truss() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
+double Truss::getDamageValue()
+{
+    double d1 = elemConnectivity[0]->getDOFs()[2]->getValue();
+    double d2 = elemConnectivity[1]->getDOFs()[2]->getValue();
+
+    damageValue = 1 / 3. * (d1 * d1 + (d2 - 3) * d1 + d2 * d2 - 3 * d2 + 3);
+
+    // double d = 0.;
+    // for (int ih = 0; ih < numHammerPoints; ih++)
+    // {
+    //     double *xi = coords[ih];
+    //     double weight = weights[ih];
+
+    //     double *N = sF->evaluateShapeFunction(xi);
+    //     double **dN = sF->getShapeFunctionDerivative(xi);
+
+    //     for (int a = 0; a < numElNodes; a++)
+    //         d += N[a] * elemConnectivity[a]->getDOFs()[2]->getValue(); // DOF 2 is the damage value
+    // }
+    // damageValue += pow(1 - d, 2);
+    return damageValue;
+}
 
 PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs)
 {
@@ -37,7 +64,9 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs)
     PetscInt *indx = new PetscInt[4]();
     PetscScalar *localStiff = new PetscScalar[16]();
     PetscInt count = 0;
-    PetscScalar k = material->getYoungModulus() * area / length;
+
+    getDamageValue();
+    PetscScalar k = damageValue * material->getYoungModulus() * area / length;
 
     localStiff[0] = k * cos(theta) * cos(theta);
     localStiff[1] = k * cos(theta) * sin(theta);

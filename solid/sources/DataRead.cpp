@@ -180,13 +180,15 @@ void FEM::readGeometry(const std::string &_filename)
     for (auto n : nodes)
         for (auto dof : n->getDOFs())
         {
-            dof->setIndex(globalDOFs.size());
-            globalDOFs.push_back(dof);
+            if (dof->getDOFType() != D)
+            {
+                dof->setIndex(globalDOFs.size());
+                globalDOFs.push_back(dof);
+            }
         }
 
     numElements = elements.size();
-    nDOFs = globalDOFs.size();
-
+    nDOFs = globalDOFs.size(); // Only displacement DOFs are considered
     for (auto n : nodes)
         if (n->getIsDiscritized())
             discritizedNodes.push_back(n);
@@ -240,4 +242,124 @@ void FEM::readGeometry(const std::string &_filename)
     PetscPrintf(PETSC_COMM_WORLD, "Number of boundary elements: %d\n", bdElements.size());
     PetscPrintf(PETSC_COMM_WORLD, "Number of Dirichlet DOFs: %d\n", numDirichletDOFs);
     PetscPrintf(PETSC_COMM_WORLD, "Number of DOFs: %d\n", nDOFs);
+
+    findNeighbours();
+    decomposeElements(rhs, solution);
+    matrixPreAllocation(IIIstart, IIIend);
+    createPETScVariables(matrix, rhs, solution, nDOFs, true);
+}
+
+void FEM::findNeighbours()
+{
+    nodeNeighbours.resize(numNodes);
+
+    /*
+        std::vector<std::set<int>> nodeNeighbours declared in the private section of the class FEM;
+        set is a data structure in c++ that is used to store unique elements;
+        Insert the node itself and its neighbours, the insert method does not allow repeated elements.
+    */
+
+    for (auto elem : elements)
+        for (auto node : elem->getElemConnectivity())
+            for (auto node2 : elem->getElemConnectivity())
+                nodeNeighbours[node->getIndex()].insert(node2->getIndex());
+}
+
+PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
+{
+    MPI_Barrier(PETSC_COMM_WORLD); // Synchronizes all processes with PETSc communicator
+    PetscPrintf(PETSC_COMM_WORLD, "Decomposing elements...\n");
+
+    // ----------------------------------------------------------------
+    // PARTIONING DOMAIN ELEMENTS
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, elements.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &Istart, &Iend);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    // ----------------------------------------------------------------
+    // PARTIONING BOUNDARY ELEMENTS (FOR NEUMANN CONDITIONS)
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, bdElements.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &IIstart, &IIend);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    // ----------------------------------------------------------------
+    // PARTIONING GLOBAL DOFs
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, nDOFs);
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &IIIstart, &IIIend);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    // ----------------------------------------------------------------
+    return ierr;
+}
+
+PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
+{
+    int rankLocalDOFs = end - start; // Number of nodes in the local partition
+
+    d_nnz = new PetscInt[rankLocalDOFs]();
+    o_nnz = new PetscInt[rankLocalDOFs]();
+
+    for (auto node1 : nodes)
+        for (auto dof1 : node1->getDOFs()) // Rows of the matrix
+            if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
+                for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
+                    for (auto dof2 : nodes[node2]->getDOFs())
+                        if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
+                            d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
+                        else
+                            o_nnz[dof1->getIndex() - IIIstart]++;
+
+    return ierr;
+}
+
+PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
+{
+    PetscLogDouble bytes;
+
+    (size == 1)
+        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nnz, &A)
+        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nnz, NULL, o_nnz, &A);
+    CHKERRQ(ierr);
+
+    ierr = MatSetFromOptions(A);
+    CHKERRQ(ierr);
+
+    ierr = VecCreate(PETSC_COMM_WORLD, &b);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(b, PETSC_DECIDE, mSize);
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(b);
+    CHKERRQ(ierr);
+    ierr = VecDuplicate(b, &x);
+    CHKERRQ(ierr);
+
+    if (showInfo && rank == 0)
+    {
+        ierr = PetscMemoryGetCurrentUsage(&bytes);
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
+        CHKERRQ(ierr);
+    }
+
+    return ierr;
 }

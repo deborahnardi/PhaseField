@@ -38,6 +38,7 @@ void FEM::setReversibleDisp()
     for (int i = 0; i < nSteps; i++)
         dispByStep.push_back(-(ubar + disp) + disp * (i + 1)); // Loading in the opposite direction
 }
+
 void FEM::solvePhaseFieldProblem()
 {
     DOF *controlledDOF;
@@ -45,8 +46,54 @@ void FEM::solvePhaseFieldProblem()
         if (dof->isControlledDOF())
             controlledDOF = dof;
 
+    createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
+
     for (int iStep = 0; iStep < dispByStep.size(); iStep++)
     {
         controlledDOF->setDirichletValue(dispByStep[iStep]);
+        staggeredAlgorithm();
     }
+}
+
+void FEM::staggeredAlgorithm()
+{
+    // Staggered algorithm
+    // 1. Solve the displacement problem
+    // 2. Solve the phase field problem
+    // 3. Repeat until convergence
+
+    int it = 0;
+    double resStag = 0.0;
+
+    do
+    {
+        it++;
+        solveFEMProblem();
+        solvePhaseField();
+
+    } while (resStag > params->getResidStaggered() && it < params->getMaxItStaggered());
+}
+
+void FEM::solvePhaseField()
+{
+    assemblePhaseFieldProblem();
+    solveLinearSystem(matrixPF, rhsPF, solutionPF);
+}
+
+PetscErrorCode FEM::assemblePhaseFieldProblem()
+{
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscPrintf(PETSC_COMM_WORLD, "Assembling Phase Field problem...\n");
+
+    ierr = MatZeroEntries(matrixPF);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(rhsPF);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(solutionPF);
+    CHKERRQ(ierr);
+
+    for (int Ii = Istart; Ii < Iend; Ii++)
+        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+
+    return ierr;
 }

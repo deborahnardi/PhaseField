@@ -1,7 +1,7 @@
 std::string projectName = "phaseField1D";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = false;
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -35,6 +35,16 @@ materials[0]->setL0(0.1); // Internal lenght of Phase Field model, in mm;
 
 for (int i = 0; i < userNodes - 1; i++)
     lines[i]->setAttributes(materials[0], 1.0, TRUSS_ELEMENT);
+
+materials.push_back(geo1->addMaterial(21000., 0.));
+materials[1]->setGriffithCriterion(0.35 * 0.5);
+materials[1]->setL0(0.1);
+
+int flaw1 = ((userNodes - 1) / 2) - 1;
+int flaw2 = (userNodes - 1) / 2;
+
+lines[flaw1]->setAttributes(materials[1], 1.0, TRUSS_ELEMENT);
+lines[flaw2]->setAttributes(materials[1], 1.0, TRUSS_ELEMENT);
 
 param->setNSteps(200);
 
