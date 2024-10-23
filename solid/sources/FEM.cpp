@@ -46,12 +46,44 @@ void FEM::deleteResults(bool deleteFiles)
 */
 PetscErrorCode FEM::solveFEMProblem()
 {
-    assembleProblem();
-    solveLinearSystem(matrix, rhs, solution);
-    if (rank == 0)
-        showResults();
+    for (int iStep = 0; iStep < params->getNSteps(); iStep++)
+    {
+        double lambda = (1. + double(iStep)) / double(params->getNSteps());
+        updateBoundaryValues(lambda);
 
+        if (boundaryFunction) // 0 is false, any non zero value is true;
+            updateBoundaryFunction(double(iStep) * params->getDeltaTime());
+
+        assembleProblem();
+        solveLinearSystem(matrix, rhs, solution);
+        updateVariables(solution);
+
+        if (rank == 0)
+            showResults(iStep);
+    }
+
+    ierr = VecDestroy(&rhs);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&solution);
+    CHKERRQ(ierr);
+    ierr = MatDestroy(&matrix);
+    CHKERRQ(ierr);
     return 0;
+}
+
+void FEM::updateBoundaryValues(double _lambda)
+{
+    for (auto bdElem : bdElements)
+        bdElem->updateBoundaryValues(_lambda);
+}
+
+void FEM::updateBoundaryFunction(double _time)
+{
+    for (auto node : nodes)
+        for (auto dof : node->getDOFs())
+        {
+            boundaryFunction(node->getInitialCoordinates(), _time, dof);
+        }
 }
 
 PetscErrorCode FEM::assembleProblem()
@@ -82,7 +114,7 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
 
-    ierr = VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
+    // ierr = VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
 
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
@@ -155,38 +187,22 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     ierr = KSPGetIterationNumber(ksp, &its); // Gets the number of iterations
     CHKERRQ(ierr);
 
-    ierr = KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD); // Prints the Krylov subspace method information
-    CHKERRQ(ierr);
+    // ierr = KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD); // Prints the Krylov subspace method information
+    // CHKERRQ(ierr);
 
-    ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
-    CHKERRQ(ierr);
+    // ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
+    // CHKERRQ(ierr);
 
-    ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
-    CHKERRQ(ierr);
-
-    /*----------------------------------------------------------------------------------
-                                        POST-PROCESSING
-    ------------------------------------------------------------------------------------
-    */
-    postProcessing(x);
-    /*----------------------------------------------------------------------------------
-                                        CLEANING UP
-    ------------------------------------------------------------------------------------
-    */
+    // ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
+    // CHKERRQ(ierr);
 
     ierr = KSPDestroy(&ksp);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&b);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&x);
-    CHKERRQ(ierr);
-    ierr = MatDestroy(&A);
     CHKERRQ(ierr);
 
     return ierr;
 }
 
-void FEM::postProcessing(Vec &x)
+void FEM::updateVariables(Vec &x)
 {
     // Set the solution to the final coordinates of the nodes
     finalDisplacements = new double[globalDOFs.size()];
@@ -220,26 +236,24 @@ void FEM::postProcessing(Vec &x)
     MPI_Bcast(finalDisplacements, nDOFs, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
 
     for (auto node : nodes)
-    {
-        double valueX = (!node->getDOF(0)->isDirichlet()) ? finalDisplacements[node->getDOF(0)->getIndex()] : node->getDOF(0)->getDirichletValue();
-        double valueY = (!node->getDOF(1)->isDirichlet()) ? finalDisplacements[node->getDOF(1)->getIndex()] : node->getDOF(1)->getDirichletValue();
-
-        node->setFinalDisplacement({valueX, valueY, 0.});
-        node->getDOF(0)->setValue(valueX);
-        node->getDOF(1)->setValue(valueY);
-    }
-
-    for (int i = 0; i < size; i++)
-    {
-        if (i == rank)
-        {
-            std::cout << "Final displacements: " << std::endl;
-            for (auto node : nodes)
+        for (auto dof : node->getDOFs())
+            if (dof->getDOFType() != D)
             {
-                std::cout << node->getFinalDisplacement()[0] << std::endl;
-                std::cout << node->getFinalDisplacement()[1] << std::endl;
+                double value = finalDisplacements[dof->getIndex()];
+                dof->incrementValue(value);
             }
-        }
-        MPI_Barrier(PETSC_COMM_WORLD);
-    }
+
+    // for (int i = 0; i < size; i++)
+    // {
+    //     if (i == rank)
+    //     {
+    //         std::cout << "Final displacements: " << std::endl;
+    //         for (auto node : nodes)
+    //         {
+    //             std::cout << node->getDOF(0)->getValue() << std::endl;
+    //             std::cout << node->getDOF(1)->getValue() << std::endl;
+    //         }
+    //     }
+    //     MPI_Barrier(PETSC_COMM_WORLD);
+    // }
 }

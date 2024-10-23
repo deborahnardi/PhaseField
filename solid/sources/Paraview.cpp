@@ -37,7 +37,7 @@ void FEM::writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t
              << "    </Attribute>" << std::endl;
 }
 
-void FEM::showResults()
+void FEM::showResults(int _nStep)
 {
     PetscPrintf(PETSC_COMM_WORLD, "Exporting data to Paraview...\n");
     int numElem = elements.size();
@@ -62,10 +62,14 @@ void FEM::showResults()
         Opening the files to write the results
     */
     std::string result;
-    std::string r0 = resultsPath + "results/FEM_" + name + ".xdmf";
+    std::ostringstream convert;
+    convert << _nStep + 100000;
+    result = convert.str();
+
+    std::string r0 = resultsPath + "results/FEM_" + name + "_" + result + ".xdmf";
     std::fstream output_v(r0.c_str(), std::ios_base::out); // output_v is the name of the file, the path is r0, the flag is out
 
-    std::string r1 = resultsPath + "results/hdf5/FEM_" + name + ".h5";
+    std::string r1 = resultsPath + "results/hdf5/FEM_" + name + "_" + result + ".h5";
     std::fstream output_h5(r1.c_str(), std::ios_base::out);
 
     std::string r2 = resultsPath + "results/hdf5/FEM_" + name + "_connectivity.h5";
@@ -139,7 +143,7 @@ void FEM::showResults()
              << "    </Topology>" << std::endl
              << "    <Geometry GeometryType=\"XYZ\">" << std::endl
              << "      <DataItem Format=\"HDF\" NumberType=\"double\" Dimensions=\"" << numNodes << " 3\">" << std::endl;
-    output_v << "        hdf5/FEM_" << name << ".h5:/coords" << std::endl;
+    output_v << "        hdf5/FEM_" << name << "_" << result << ".h5:/coords" << std::endl;
     /*
         Writing coordinates dataset
     */
@@ -166,7 +170,7 @@ void FEM::showResults()
     {
         int index = n->getIndex();
         for (int i = 0; i < 2; i++)
-            vector[3 * index + i] = n->getFinalDisplacement()[i];
+            vector[3 * index + i] = n->getDOF(i)->getValue();
         vector[3 * index + 2] = 0.;
     }
     writeInHDF5(file, output_v, error, dataset, dataspace, "Displacement", "Vector", vector, vectorDims, r1);

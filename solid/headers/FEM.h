@@ -6,6 +6,7 @@
 #include <petscksp.h>
 #include <petscmat.h>
 #include <metis.h>
+#include <functional>
 
 #include "Node.h"
 #include "Element.h"
@@ -68,7 +69,6 @@ public:
     void readGeometry(const std::string &_filename);
     void removeNonDiscritizedNodes(std::vector<Node *> &_nodes);
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
-    void showResults();
     void createResultsPath();
     void deleteResults(bool _deleteResults);
 
@@ -77,6 +77,7 @@ public:
     ------------------------------------------------------------------------------------
     */
     void findNeighbours();
+    void updateBoundaryValues(double _lambda);
     void solveFEMProblemNoPetsc();
     void assembleProblemNoPetsc();
     void setBoundaryConditionsNoPetsc();
@@ -87,6 +88,7 @@ public:
     */
     void setReversibleDisp();
     void solvePhaseField();
+    void solveNewtonRaphson();
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
     void staggeredAlgorithm();
@@ -105,8 +107,22 @@ public:
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------
     */
+    void showResults(int _nStep);
     void setPrintMatrix(const bool &_showMatrix) { showMatrix = _showMatrix; }
-    void postProcessing(Vec &x);
+    void updateVariables(Vec &x);
     void deleteFromString(std::string &fullStr, std::string removeStr);
     void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
+
+    /*----------------------------------------------------------------------------------
+                                        FUNCTIONS
+    ------------------------------------------------------------------------------------
+    */
+public:
+    void setBoundaryFunction(std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> bFunc) { boundaryFunction = bFunc; }
+    std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> &getBoundaryFunction() { return boundaryFunction; }
+
+    void updateBoundaryFunction(double _time);
+
+private:
+    std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> boundaryFunction = 0;
 };

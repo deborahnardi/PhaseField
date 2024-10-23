@@ -41,16 +41,10 @@ void FEM::setReversibleDisp()
 
 void FEM::solvePhaseFieldProblem()
 {
-    DOF *controlledDOF;
-    for (auto dof : globalDOFs)
-        if (dof->isControlledDOF())
-            controlledDOF = dof;
-
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
 
     for (int iStep = 0; iStep < dispByStep.size(); iStep++)
     {
-        controlledDOF->setDirichletValue(dispByStep[iStep]);
         staggeredAlgorithm();
     }
 }
@@ -68,10 +62,33 @@ void FEM::staggeredAlgorithm()
     do
     {
         it++;
-        solveFEMProblem();
+        solveNewtonRaphson();
         solvePhaseField();
 
     } while (resStag > params->getResidStaggered() && it < params->getMaxItStaggered());
+}
+
+void FEM::solveNewtonRaphson()
+{
+    for (int iNR = 0; iNR < params->getNSteps(); iNR++)
+    {
+        // double lambda = dispByStep[iNR];
+        double lambda = (iNR + 1) / params->getNSteps();
+        for (auto bE : bdElements)
+            for (auto n : bE->getElemConnectivity())
+                for (auto dof : n->getDOFs())
+                    if (dof->isDirichlet())
+                        dof->setValue(dof->getDirichletValue() * lambda);
+                    else if (dof->isNeumann())
+                        dof->setValue(dof->getNeumannValue() * lambda);
+        
+        // for (int a = 0; a < numNodes; a++)
+        //     for (auto dof : nodes[a]->getDOFs())
+        //         if (dof->isDirichlet())
+        //             dof->setValue(dof->getDirichletValue() * lambda);
+        //         else if (dof->isNeumann())
+        //             dof->setValue(dof->getNeumannValue() * lambda);
+    }
 }
 
 void FEM::solvePhaseField()

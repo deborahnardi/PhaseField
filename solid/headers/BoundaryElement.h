@@ -42,6 +42,7 @@ public:
     void addCondition(BoundaryType _bdType, DOFType _type, double _value);
     void setControlledDOF(BoundaryType _bdType, DOFType _type, double _value);
     void getContributionNoPetsc(VectorXd &F, MatrixXd &K);
+    void updateBoundaryValues(double _lambda);
 
     /*
         PETSc Methods

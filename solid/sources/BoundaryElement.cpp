@@ -52,11 +52,19 @@ void BoundaryElement::setControlledDOF(BoundaryType _bdType, DOFType _type, doub
             if (dof->getDOFType() == _type)
                 dof->setControlledDOF(_value);
 }
+
+void BoundaryElement::updateBoundaryValues(double _lambda)
+{
+    for (auto c : conditions)
+        if (c.bdType == DIRICHLET)
+            for (auto dof : c.dofs)
+                dof->setValue(_lambda * dof->getDirichletValue());
+}
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-PetscErrorCode BoundaryElement::getContribution(Vec &rhs)
+PetscErrorCode BoundaryElement::getContribution(Vec &rhs) // entra com lambda aq
 {
     // Neumann is applied in weak form
     for (auto c : conditions)
@@ -64,7 +72,7 @@ PetscErrorCode BoundaryElement::getContribution(Vec &rhs)
             if (elemDimension == 0)
             {
                 PetscInt dofA = c.dofs[0]->getIndex(); // c.dofs[0] because if elemDimension == 0, it is only a node -> only one DOF
-                PetscScalar value = c.value;
+                PetscScalar value = c.value;           // entra com lambda aqui
                 VecSetValues(rhs, 1, &dofA, &value, ADD_VALUES);
             }
             else
@@ -98,7 +106,7 @@ PetscErrorCode BoundaryElement::getContribution(Vec &rhs)
 
                     for (int a = 0; a < numBdNodes; a++)
                     {
-                        PetscScalar ti = N[a] * c.value * wJac;
+                        PetscScalar ti = N[a] * c.value * wJac; // entra com lambda aqui
                         localRhs[a] += ti;
                     }
                 }

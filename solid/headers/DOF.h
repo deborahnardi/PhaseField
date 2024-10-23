@@ -5,9 +5,9 @@
 class DOF
 {
 private:
-    int index;
+    int index = -1.;
     DOFType type;
-    double value = 0.;
+    double value = 0.; // Value is the current value of the DOF
     double vDirichlet = 0., vNeumann = 0., vDamage = 0.;
     bool bDirichlet = false, bNeumann = false, isControlled = false;
 
@@ -21,6 +21,7 @@ public:
     double getDamageValue() const { return vDamage; }
     void setIndex(const int &_index) { index = _index; }
     void setValue(const double &_value) { value = _value; }
+    void incrementValue(const double &_increment) { value += _increment; }
 
     DOFType getDOFType() const { return type; }
     void setDOFType(const DOFType &_type) { type = _type; }
@@ -31,14 +32,14 @@ public:
     }
 
     void setDirichlet() { bDirichlet = true; }
-    void setDirichletValue(const double &_value) { vDirichlet = _value; }
-    void setDamageValue(const double &_value) { vDamage = _value; }
+    void setDirichletValue(const double &_value) { vDirichlet = _value, value = _value; }
+    void setDamageValue(const double &_value) { vDamage = _value, value = _value; }
     bool isDirichlet() const { return bDirichlet; }
     bool isControlledDOF() const { return isControlled; }
     double getDirichletValue() const { return vDirichlet; }
 
     void setNeumann() { bNeumann = true; }
-    void setNeumannValue(const double &_value) { vNeumann = _value; }
+    void setNeumannValue(const double &_value) { vNeumann = _value, value = _value; }
     bool isNeumann() const { return bNeumann; }
     double getNeumannValue() const { return vNeumann; }
 };
