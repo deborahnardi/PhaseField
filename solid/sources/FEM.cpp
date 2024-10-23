@@ -46,6 +46,13 @@ void FEM::deleteResults(bool deleteFiles)
 */
 PetscErrorCode FEM::solveFEMProblem()
 {
+    int it = 0;
+    double norm = 0.;
+    for (auto n : nodes)
+        norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
+
+    norm = sqrt(norm);
+
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
     {
         double lambda = (1. + double(iStep)) / double(params->getNSteps());
@@ -54,21 +61,36 @@ PetscErrorCode FEM::solveFEMProblem()
         if (boundaryFunction) // 0 is false, any non zero value is true;
             updateBoundaryFunction(double(iStep) * params->getDeltaTime());
 
-        assembleProblem();
-        solveLinearSystem(matrix, rhs, solution);
-        updateVariables(solution);
+        it = 0;
+        res = 1.;
+
+        do
+        {
+            it++;
+            assembleProblem();
+            solveLinearSystem(matrix, rhs, solution);
+            updateVariables(solution);
+            res = res / norm;
+
+        } while (res > params->getTol() && it < params->getMaxNewtonRaphsonIt());
 
         if (rank == 0)
             showResults(iStep);
     }
 
-    ierr = VecDestroy(&rhs);
+    cleanSolution(rhs, solution, matrix);
+}
+
+PetscErrorCode FEM::cleanSolution(Vec &x, Vec &b, Mat &A)
+{
+    ierr = VecDestroy(&x);
     CHKERRQ(ierr);
-    ierr = VecDestroy(&solution);
+    ierr = VecDestroy(&b);
     CHKERRQ(ierr);
-    ierr = MatDestroy(&matrix);
+    ierr = MatDestroy(&A);
     CHKERRQ(ierr);
-    return 0;
+
+    return ierr;
 }
 
 void FEM::updateBoundaryValues(double _lambda)
@@ -81,9 +103,7 @@ void FEM::updateBoundaryFunction(double _time)
 {
     for (auto node : nodes)
         for (auto dof : node->getDOFs())
-        {
             boundaryFunction(node->getInitialCoordinates(), _time, dof);
-        }
 }
 
 PetscErrorCode FEM::assembleProblem()
@@ -235,12 +255,14 @@ void FEM::updateVariables(Vec &x)
     // Broadcasting the final displacements to all processes
     MPI_Bcast(finalDisplacements, nDOFs, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
 
+    res = 0.;
     for (auto node : nodes)
         for (auto dof : node->getDOFs())
             if (dof->getDOFType() != D)
             {
                 double value = finalDisplacements[dof->getIndex()];
                 dof->incrementValue(value);
+                res += value * value;
             }
 
     // for (int i = 0; i < size; i++)

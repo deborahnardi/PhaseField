@@ -23,9 +23,8 @@ private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size;
     std::string name, filename, resultsPath;
-    double *finalDisplacements;
+    double *finalDisplacements, res = 0., norm = 0.;
     std::vector<std::set<int>> nodeNeighbours;
-    std::vector<double> dispByStep;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
@@ -41,8 +40,7 @@ private:
     Vec rhs, solution, rhsPF, solutionPF;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz;
-    PetscInt *dirichletBC, *prescribedDispDOFs;
-    PetscScalar *prescribedDispValues;
+    PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;
 
@@ -86,12 +84,11 @@ public:
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
     */
-    void setReversibleDisp();
+    void solveDisplacementField(int _iStep);
     void solvePhaseField();
-    void solveNewtonRaphson();
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
-    void staggeredAlgorithm();
+    void staggeredAlgorithm(int _iStep);
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------
@@ -103,6 +100,7 @@ public:
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
+    PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------
@@ -116,6 +114,11 @@ public:
     /*----------------------------------------------------------------------------------
                                         FUNCTIONS
     ------------------------------------------------------------------------------------
+    */
+
+    /*
+         In setBoundaryFunction, the function is passed as a parameter.
+         In updateBoundaryFunction, the function is called, and the arguments are passed to the function.
     */
 public:
     void setBoundaryFunction(std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> bFunc) { boundaryFunction = bFunc; }
