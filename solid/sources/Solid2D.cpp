@@ -157,17 +157,6 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
         double *N = sF->evaluateShapeFunction(xi);
         double **dN = sF->getShapeFunctionDerivative(xi);
 
-        // double DOFi[numNodeDOF] = {};
-        // double dDOFi[numNodeDOF][2] = {};
-
-        // for (int a = 0; a < numElNodes; a++)
-        //     for (int i = 0; i < numNodeDOF; i++)
-        //     {
-        //         DOFi[i] += N[a] * elemConnectivity[a]->getDOFs()[i]->getValue();
-        //         for (int j = 0; j < 2; j++)
-        //             dDOFi[i][j] += dN[a][j] * elemConnectivity[a]->getDOFs()[i]->getValue();
-        //     }
-
         /*
             COMPUTING THE JACOBIAN AND ITS INVERSE
         */
@@ -193,26 +182,23 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
 
         // Computing uk,l and ul,k
-        PetscScalar uk_l = 0., ul_k = 0., uk_k = 0., ul_l = 0.;
-        for (PetscInt a = 0; a < numElNodes; a++)
+        PetscScalar gradU[2][2] = {};
+        for (PetscInt c = 0; c < numElNodes; c++)
             for (PetscInt k = 0; k < 2; k++)
-            {
-                uk_k += elemConnectivity[a]->getDOFs()[k]->getValue() * dN_dX[a][k];
                 for (PetscInt l = 0; l < 2; l++)
-                {
-                    uk_l += elemConnectivity[a]->getDOFs()[k]->getValue() * dN_dX[a][l];
-                    ul_k += elemConnectivity[a]->getDOFs()[l]->getValue() * dN_dX[a][k];
-                    ul_l += elemConnectivity[a]->getDOFs()[l]->getValue() * dN_dX[a][l];
-                }
-            }
+                    gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+
+        PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
 
         for (PetscInt a = 0; a < numElNodes; a++)
             for (PetscInt b = 0; b < numElNodes; b++)
-            {
-                PetscInt pos = numElDOF * a + b;
-                double value = (N[a] * N[b] * G / 2. * (uk_l + ul_k) * (uk_l + ul_k) + lame * ul_l * uk_k) * wJac;
-                localStiffnessMatrix[pos] += (N[a] * N[b] * G / 2. * (uk_l + ul_k) * (uk_l + ul_k) + lame * ul_l * uk_k) * wJac; // Integral 1
-            }
+                for (PetscInt k = 0; k < 2; k++)
+                    for (PetscInt l = 0; l < 2; l++)
+                    {
+                        PetscInt pos = numElDOF * a + b;
+                        PetscScalar value = N[a] * N[b] * (G * 0.5 * (gradU[k][l] + gradU[l][k]) * (gradU[k][l] + gradU[l][k]) + lame * divU * divU) * wJac;
+                        localStiffnessMatrix[pos] += value; // Integral 1
+                    }
 
         for (PetscInt a = 0; a < numElNodes; a++)
             for (PetscInt b = 0; b < numElNodes; b++)

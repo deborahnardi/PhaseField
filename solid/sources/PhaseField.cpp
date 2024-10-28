@@ -53,13 +53,14 @@ void FEM::solveDisplacementField(int _iStep)
     } while (res > params->getTol() && itNR < params->getMaxNewtonRaphsonIt());
 
     if (rank == 0)
-        showResults(_iStep);
+        showResults(_iStep); // Paraview
 }
 
 void FEM::solvePhaseField()
 {
     assemblePhaseFieldProblem();
-    solveLinearSystem(matrixPF, rhsPF, solutionPF);
+    solveSystemByPSORPetsc(matrixPF, rhsPF, solutionPF);
+    updateFieldVariables(solutionPF);
 }
 
 PetscErrorCode FEM::assemblePhaseFieldProblem()
@@ -77,5 +78,92 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     for (int Ii = Istart; Ii < Iend; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
 
+    ierr = VecAssemblyBegin(rhsPF);
+    CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(rhsPF);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+
     return ierr;
+}
+
+PetscErrorCode FEM::solveSystemByPSORPetsc(Mat &A, Vec &b, Vec &x)
+{
+    /*
+        PSOR (Projected Successive Over-Relaxation) algorithm;
+        The PSOR method is a modification of the Gauss-Seidel method that allows for a relaxation factor;
+        The value of Delta_d is calculated in this algorithm;
+    */
+
+    KSP ksp;
+    PC pc;
+    PetscInt its;
+
+    ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
+    CHKERRQ(ierr);
+    ierr = KSPSetOperators(ksp, A, A);
+    CHKERRQ(ierr);
+    ierr = KSPSetType(ksp, KSPRICHARDSON); // KSPRICHARDSON is offer used with SOR and PSOR methods
+    CHKERRQ(ierr);
+    ierr = KSPSetFromOptions(ksp);
+    CHKERRQ(ierr);
+    ierr = KSPSetTolerances(ksp, 1.e-6, PETSC_DEFAULT, PETSC_DEFAULT, 1000);
+    CHKERRQ(ierr);
+
+    ierr = KSPGetPC(ksp, &pc);
+    CHKERRQ(ierr);
+    ierr = PCSetType(pc, PCSOR);
+    CHKERRQ(ierr);
+    ierr = PCSetFromOptions(pc);
+    CHKERRQ(ierr);
+
+    ierr = KSPSolve(ksp, b, x);
+    CHKERRQ(ierr);
+
+    // Calculated values must be > 0.
+    for (PetscInt i = 0; i < numNodes; i++)
+    {
+        PetscScalar value;
+        VecGetValues(x, 1, &i, &value);
+        if (value < 0)
+            value = 0;
+        VecSetValues(x, 1, &i, &value, INSERT_VALUES);
+    }
+
+    ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD);
+    CHKERRQ(ierr);
+
+    ierr = KSPGetIterationNumber(ksp, &its);
+    CHKERRQ(ierr);
+    ierr = KSPGetResidualNorm(ksp, &res);
+    CHKERRQ(ierr);
+
+    ierr = KSPDestroy(&ksp);
+    CHKERRQ(ierr);
+
+    return ierr;
+}
+
+void FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
+{
+    getPSORVecs(A, b);
+}
+
+double FEM::getPSORVecs(Mat &A, Vec &b)
+{
+    /*
+        Here the PA, IR and JC arrays are used to store the matrix A in compressed column format;
+        PA stores the non-zero values of the matrix A;
+        IR stores the row indices of the non-zero values of the matrix A;
+        JC stores the pointers to the entries of the IR array;
+    */
+
+    double JC[numNodes + 1] = {};
+    
+
+
+
 }

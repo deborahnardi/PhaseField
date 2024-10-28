@@ -88,7 +88,11 @@ public:
     void solvePhaseField();
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
+    PetscErrorCode solveSystemByPSORPetsc(Mat &A, Vec &b, Vec &x);
+    void solveSystemByPSOR(Mat &A, Vec &b, Vec &x);
+    double getPSORVecs(Mat &A, Vec &b);
     void staggeredAlgorithm(int _iStep);
+    void updateFieldVariables(Vec &x) {};
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------
