@@ -71,7 +71,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
                 for (PetscInt j = 0; j < 2; j++)
                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
 
-        damageValue = 0.;
+        double damageValue = 0.;
         for (PetscInt a = 0; a < numElNodes; a++)
             damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getValue();
 

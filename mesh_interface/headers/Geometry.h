@@ -61,8 +61,8 @@ public:
     LineLoop *addLineLoop(const std::vector<Line *> &_lines);
     PlaneSurface *addPlaneSurface(std::vector<Wire *> _wire);
     Ellipse *addEllipse(double _a, double _b, const double _alpha, std::vector<double> center);
-    BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues, const bool &_controledDOF = false);
-    BoundaryCondition *addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues, const bool &_controledDOF = false);
+    BoundaryCondition *addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
+    BoundaryCondition *addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues);
     Material *addMaterial(const double &_E, const double &_nu, const PlaneAnalysis &_plane = PLANE_STRESS);
     void addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression = 1.0);
 

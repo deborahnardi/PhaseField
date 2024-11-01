@@ -1,15 +1,41 @@
 #include "../headers/FEM.h"
+
 void FEM::solvePhaseFieldProblem()
 {
     for (auto n : nodes)
         norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
     norm = sqrt(norm);
 
+    matrixPreAllocationPF(IstartPF, IendPF);
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
 
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
     {
         staggeredAlgorithm(iStep);
+    }
+}
+
+void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
+{
+    int rankLocalDOFs = end - start; // Number of nodes in the local partition
+
+    d_nnz = new PetscInt[rankLocalDOFs]();
+    o_nnz = new PetscInt[rankLocalDOFs]();
+
+    // In the phase-field problem, there is only one DOF
+
+    for (auto node : nodes)
+    {
+        DOF *damageDOF0 = node->getDOFs()[2];
+        if (damageDOF0->getIndex() >= IstartPF && damageDOF0->getIndex() < IendPF)
+            for (auto node2 : nodeNeighbours[node->getIndex()])
+            {
+                DOF *damageDOF1 = nodes[node2]->getDOFs()[2];
+                if (damageDOF1->getIndex() >= IstartPF && damageDOF1->getIndex() < IendPF)
+                    d_nnz[damageDOF0->getIndex() - IstartPF]++;
+                else
+                    o_nnz[damageDOF0->getIndex() - IstartPF]++;
+            }
     }
 }
 
@@ -37,7 +63,7 @@ void FEM::solveDisplacementField(int _iStep)
     updateBoundaryValues(lambda);
 
     if (boundaryFunction) // 0 is false, any non zero value is true;
-        updateBoundaryFunction(double(_iStep) * params->getDeltaTime());
+        updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); // 
 
     int itNR = 0;
     res = 1.;
@@ -159,11 +185,21 @@ double FEM::getPSORVecs(Mat &A, Vec &b)
         PA stores the non-zero values of the matrix A;
         IR stores the row indices of the non-zero values of the matrix A;
         JC stores the pointers to the entries of the IR array;
+
+        CCS and CRS are the same if the matrix is symmetric;
     */
+    PetscInt nRows; // Number of rows in the matrix A
+    PetscBool done;
 
-    double JC[numNodes + 1] = {};
-    
+    // Get the matrix A in compressed column format
+    MatGetRowIJ(A, 0, PETSC_TRUE, PETSC_FALSE, &nRows, &JC, &IR, &done);
+    // Print IR and JC arrays
+    int jcSize = nRows + 1;
+    int irSize = nRows;
 
+    for (int i = 0; i < jcSize; i++)
+        std::cout << JC[i] << " ";
 
-
+    for (int i = 0; i < irSize; i++)
+        std::cout << IR[i] << " ";
 }

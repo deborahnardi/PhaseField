@@ -15,7 +15,7 @@ void Geometry::writeMeshInfo()
     file << materials.size() << std::endl;
 
     for (auto m : materials)
-        file << m->getIndex() + 1 << " " << m->getPoisson() << " " << m->getYoungModulus() << " " << m->getPlaneAnalysis() << std::endl;
+        file << m->getIndex() + 1 << " " << m->getPoisson() << " " << m->getYoungModulus() << " " << m->getPlaneAnalysis() << " " << m->getGriffithCriterion() << " " << m->getL0() << std::endl;
 
     gmsh::vectorpair physicalGroups;
     gmsh::model::getPhysicalGroups(physicalGroups);
@@ -100,11 +100,8 @@ void Geometry::writeMeshInfo()
     {
         file << bc->getIndex() + 1 << " " << bc->getBType() << " " << physicalEntities[bc->getEntityName()] << " ";
         for (auto dofValues : bc->getDOFValues())
-        {
             file << dofValues.first << " " << dofValues.second << " ";
-            if (bc->isControledDOF())
-                file << "1";
-        }
+
         file << std::endl;
     }
 }

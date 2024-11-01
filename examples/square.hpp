@@ -18,7 +18,7 @@ double L = 1.0;
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
 
-double elSize = 0.1 * L;
+double elSize = 0.5 * L;
 
 points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, elSize)); // Those are lists (dynamic arrays) of pointers to the objects
 points.push_back(geo1->addPoint({L, 0.0, 0.0}, elSize));

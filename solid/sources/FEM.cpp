@@ -15,6 +15,26 @@ FEM::~FEM() {}
 /*----------------------------------------------------------------------------------
                             DATA INPUT METHODS
 ------------------------------------------------------------------------------------*/
+void FEM::setLoadingVector(double ubar, int nSteps)
+{
+    double stepSize = ubar / nSteps;
+
+    // Load ramp
+    for (int i = 1; i <= nSteps; ++i)
+        load.push_back(stepSize * i);
+
+    // Load unloading
+    for (int i = nSteps; i >= 1; --i)
+        load.push_back(stepSize * i);
+
+    // Negative load ramp
+    for (int i = 1; i <= nSteps; ++i)
+        load.push_back(-stepSize * i);
+
+    // Negative load unloading
+    for (int i = nSteps; i >= 1; --i)
+        load.push_back(-stepSize * i);
+}
 
 void FEM::createResultsPath()
 {
@@ -103,7 +123,8 @@ void FEM::updateBoundaryFunction(double _time)
 {
     for (auto node : nodes)
         for (auto dof : node->getDOFs())
-            boundaryFunction(node->getInitialCoordinates(), _time, dof);
+            if (dof->getDOFType() != D)
+                boundaryFunction(node->getInitialCoordinates(), _time, dof, load);
 }
 
 PetscErrorCode FEM::assembleProblem()
@@ -139,14 +160,14 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
-    // if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
-    // {
-    //     ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
-    //     CHKERRQ(ierr);
-    //     ierr = MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-    //     CHKERRQ(ierr);
-    //     // printGlobalMatrix(matrix);
-    // }
+    if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
+    {
+        ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
+        CHKERRQ(ierr);
+        ierr = MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
+        CHKERRQ(ierr);
+        printGlobalMatrix(matrix);
+    }
 
     return ierr;
 }
@@ -265,17 +286,11 @@ void FEM::updateVariables(Vec &x)
                 res += value * value;
             }
 
-    // for (int i = 0; i < size; i++)
-    // {
-    //     if (i == rank)
-    //     {
-    //         std::cout << "Final displacements: " << std::endl;
-    //         for (auto node : nodes)
-    //         {
-    //             std::cout << node->getDOF(0)->getValue() << std::endl;
-    //             std::cout << node->getDOF(1)->getValue() << std::endl;
-    //         }
-    //     }
-    //     MPI_Barrier(PETSC_COMM_WORLD);
-    // }
+    // Print Update dof values
+    for (auto node : nodes)
+        for (auto dof : node->getDOFs())
+            if (dof->getDOFType() != D)
+                std::cout << dof->getValue() << std::endl;
+
+    std::cout << "Values have been updated" << std::endl;
 }

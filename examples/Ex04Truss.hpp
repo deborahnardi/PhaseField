@@ -1,7 +1,7 @@
 std::string projectName = "truss";
 Geometry *geo1 = new Geometry(projectName);
 FEM *truss = new FEM(projectName);
-bool visualizeMesh = false;
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -9,6 +9,7 @@ std::vector<Point *> points;
 std::vector<Line *> lines;
 std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
+AnalysisParameters *params = new AnalysisParameters();
 
 double h = 1., b = 1., E = 1000., A0 = 1.;
 
@@ -41,7 +42,7 @@ lines[3]->setAttributes(materials[0], A0, TRUSS_ELEMENT);
 lines[4]->setAttributes(materials[0], A0, TRUSS_ELEMENT);
 
 geo1->GenerateMeshAPI(visualizeMesh);
-
+truss->setAnalysisParameters(params);
 truss->readGeometry(projectName + ".mir");
 truss->setPrintMatrix(true);
 truss->solveFEMProblem();

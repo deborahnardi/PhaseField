@@ -9,7 +9,7 @@ private:
     DOFType type;
     double value = 0.; // Value is the current value of the DOF
     double vDirichlet = 0., vNeumann = 0., vDamage = 0.;
-    bool bDirichlet = false, bNeumann = false, isControlled = false;
+    bool bDirichlet = false, bNeumann = false;
 
 public:
     DOF();
@@ -25,17 +25,11 @@ public:
 
     DOFType getDOFType() const { return type; }
     void setDOFType(const DOFType &_type) { type = _type; }
-    void setControlledDOF(double _value)
-    {
-        isControlled = true;
-        vDirichlet = _value;
-    }
 
     void setDirichlet() { bDirichlet = true; }
     void setDirichletValue(const double &_value) { vDirichlet = _value, value = _value; }
     void setDamageValue(const double &_value) { vDamage = _value, value = _value; }
     bool isDirichlet() const { return bDirichlet; }
-    bool isControlledDOF() const { return isControlled; }
     double getDirichletValue() const { return vDirichlet; }
 
     void setNeumann() { bNeumann = true; }

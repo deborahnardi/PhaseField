@@ -62,6 +62,14 @@ void FEM::readGeometry(const std::string &_filename)
         double youngModulus = std::stod(result[2]);
         PlaneAnalysis planeAnalysis = static_cast<PlaneAnalysis>(std::stoi(result[3]));
         materials.push_back(new Material(index, poisson, youngModulus, planeAnalysis));
+
+        if (result.size() > 4)
+        {
+            double gC = std::stod(result[4]);
+            materials[i]->setGriffithCriterion(gC);
+            double l0PF = std::stod(result[5]);
+            materials[i]->setL0(l0PF);
+        }
     }
 
     /*---------------------------------------------------------------------------------------
@@ -193,6 +201,19 @@ void FEM::readGeometry(const std::string &_filename)
         if (n->getIsDiscritized())
             discritizedNodes.push_back(n);
 
+    for (auto n : nodes)
+    {
+        DOF *damageDOF = n->getDOFs()[2];
+        damageDOF->setIndex(n->getIndex());
+    }
+
+    // Print damage DOFs
+    for (auto n : nodes)
+    {
+        DOF *damageDOF = n->getDOFs()[2];
+        std::cout << damageDOF->getIndex() << std::endl;
+    }
+
     // ********** BOUNDARY CONDITIONS **********
 
     while (line != "*BOUNDARY")
@@ -215,14 +236,6 @@ void FEM::readGeometry(const std::string &_filename)
             if (b->getPhysicalEntity() == physicalEntity)
                 for (int j = 0; j < numAppliedBCs; j++)
                     b->addCondition(bdType, static_cast<DOFType>(std::stoi(result[2 * j + 3])), std::stod(result[2 * j + 4]));
-
-        if (result.size() > (numAppliedBCs + 4))
-        {
-            int controlledDOF = std::stoi(result.back());
-            for (auto b : bdElements)
-                if (b->getPhysicalEntity() == physicalEntity)
-                    b->setControlledDOF(bdType, static_cast<DOFType>(std::stoi(result[3])), std::stod(result[4]));
-        }
     }
 
     for (auto dof : globalDOFs)
@@ -307,6 +320,18 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
     // ----------------------------------------------------------------
+    // PARTIONING PHASE FIELD DOFs
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, numNodes);
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &IstartPF, &IendPF);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+
     return ierr;
 }
 
@@ -319,13 +344,15 @@ PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
 
     for (auto node1 : nodes)
         for (auto dof1 : node1->getDOFs()) // Rows of the matrix
-            if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
-                for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
-                    for (auto dof2 : nodes[node2]->getDOFs())
-                        if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
-                            d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
-                        else
-                            o_nnz[dof1->getIndex() - IIIstart]++;
+            if (dof1->getDOFType() != D)
+                if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
+                    for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
+                        for (auto dof2 : nodes[node2]->getDOFs())
+                            if (dof2->getDOFType() != D)
+                                if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
+                                    d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
+                                else
+                                    o_nnz[dof1->getIndex() - IIIstart]++;
 
     return ierr;
 }
@@ -360,6 +387,9 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
         CHKERRQ(ierr);
     }
+
+    delete[] d_nnz;
+    delete[] o_nnz;
 
     return ierr;
 }

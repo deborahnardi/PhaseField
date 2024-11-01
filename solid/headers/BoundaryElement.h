@@ -40,7 +40,6 @@ public:
     std::vector<DOF *> getDOFs(const int &_index) const { return conditions[_index].dofs; }
 
     void addCondition(BoundaryType _bdType, DOFType _type, double _value);
-    void setControlledDOF(BoundaryType _bdType, DOFType _type, double _value);
     void getContributionNoPetsc(VectorXd &F, MatrixXd &K);
     void updateBoundaryValues(double _lambda);
 

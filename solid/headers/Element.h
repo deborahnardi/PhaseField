@@ -15,7 +15,7 @@ protected:
     Material *material;
     BoundaryType bdType;
     DOFType type;
-    double value, damageValue = 0.;
+    double value, epsilon = 0.;
     double **coords, *weights;
     MatrixXd K, localStiff;
     PetscErrorCode ierr;
@@ -28,6 +28,7 @@ public:
     int getIndex() const { return index; }
     int getElemDimension() const { return elemDimension; }
     int getPhysicalEntity() const { return physicalEntity; }
+    double getDeformation() { return epsilon; }
     std::vector<Node *> getElemConnectivity() const { return elemConnectivity; }
     Node *getNode(const int &_index) const { return elemConnectivity[_index]; }
 
@@ -35,6 +36,7 @@ public:
     void setPhysicalEntity(const int &_elemDimension) { elemDimension = _elemDimension; }
     void setElemConnectivity(const std::vector<Node *> &_elemConnectivity) { elemConnectivity = _elemConnectivity; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
+    void setDeformation(const double &_epsilon) { epsilon = _epsilon; }
 
     virtual MatrixXd getElemStiffnessMatrix() const = 0; // const 0 means that the function has no implementation in the base class
     virtual void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) {};
@@ -43,8 +45,8 @@ public:
     virtual PetscErrorCode getContribution(Mat &A, Vec &rhs) {};
     virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs) {};
     virtual void getContribution() {};
-    virtual double getDamageValue() {};
     virtual void Test(PetscScalar &integral) {};
+    virtual void computeDeformation() {};
 };
 
 class Truss : public Element
@@ -78,9 +80,9 @@ public:
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs) override;
-    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override {};
+    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override;
     void getContribution() override;
-    double getDamageValue() override;
+    void computeDeformation() override;
 };
 
 class Solid2D : public Element

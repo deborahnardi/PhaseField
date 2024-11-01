@@ -7,7 +7,7 @@ class Material
 {
 private:
     int index;
-    double poisson, young, shearModulus, lameConstant, griffithCriterion, l0;
+    double poisson, young, shearModulus, lameConstant, griffithCriterion, l0 = 0.;
     PlaneAnalysis planeAnalysis;
 
 public:
@@ -21,7 +21,7 @@ public:
     double getYoungModulus() { return young; }
     double getShearModulus() { return shearModulus; }
     double getLameConstant() { return lameConstant; }
-    double getL0() { return l0; }
+    double getL0() const { return l0; }
     double getGriffithCriterion() { return griffithCriterion; }
     PlaneAnalysis getPlaneAnalysis() { return planeAnalysis; }
 

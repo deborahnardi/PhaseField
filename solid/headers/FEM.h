@@ -37,12 +37,15 @@ private:
     VectorXd U;
 
     Mat matrix, matrixPF;
+    const PetscInt *JC, *IR; // ia contais the row pointer (equivalent to JC), ja contais the column index (equivalent to IR)
     Vec rhs, solution, rhsPF, solutionPF;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz;
     PetscInt *dirichletBC;
     PetscErrorCode ierr;
     bool showMatrix = false;
+
+    std::vector<double> load;
 
 public:
     FEM();
@@ -69,9 +72,11 @@ public:
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
     void createResultsPath();
     void deleteResults(bool _deleteResults);
+    void setLoadingVector(double ubar, int nSteps);
 
+    std::vector<double> getLoadingVector() { return load; }
     /*----------------------------------------------------------------------------------
-                            SOLVE FEM PROBLEM METHODS
+                                 FEM PROBLEM METHODS
     ------------------------------------------------------------------------------------
     */
     void findNeighbours();
@@ -84,6 +89,7 @@ public:
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
     */
+    void matrixPreAllocationPF(PetscInt start, PetscInt end);
     void solveDisplacementField(int _iStep);
     void solvePhaseField();
     PetscErrorCode assemblePhaseFieldProblem();
@@ -125,11 +131,11 @@ public:
          In updateBoundaryFunction, the function is called, and the arguments are passed to the function.
     */
 public:
-    void setBoundaryFunction(std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> bFunc) { boundaryFunction = bFunc; }
-    std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> &getBoundaryFunction() { return boundaryFunction; }
+    void setBoundaryFunction(std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)> bFunc) { boundaryFunction = bFunc; }
+    std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)> &getBoundaryFunction() { return boundaryFunction; }
 
     void updateBoundaryFunction(double _time);
 
 private:
-    std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof)> boundaryFunction = 0;
+    std::function<void(const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)> boundaryFunction = 0;
 };

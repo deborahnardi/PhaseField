@@ -111,16 +111,16 @@ void Geometry::addTransfiniteLine(const std::vector<Line *> &_lines, const int &
     }
 }
 
-BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues, const bool &_controledDOF)
+BoundaryCondition *Geometry::addBoundaryCondition(Point *point, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
 {
-    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), point->getEntityName(), _dofValues, _bType, _controledDOF);
+    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), point->getEntityName(), _dofValues, _bType);
     boundaryConditions.push_back(bCondition);
     return bCondition;
 }
 
-BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues, const bool &_controledDOF)
+BoundaryCondition *Geometry::addBoundaryCondition(Line *line, const BoundaryType &_bType, const std::vector<std::pair<DOFType, double>> &_dofValues)
 {
-    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType, _controledDOF);
+    BoundaryCondition *bCondition = new BoundaryCondition(boundaryConditions.size(), line->getEntityName(), _dofValues, _bType);
     boundaryConditions.push_back(bCondition);
     return bCondition;
 }
