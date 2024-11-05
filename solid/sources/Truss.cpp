@@ -78,12 +78,10 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs)
                 for (PetscInt j = 0; j < 2; j++)
                 {
                     DOF *dof = elemConnectivity[b]->getDOFs()[j];
-                    double value = dof->getDirichletValue();
+                    double value = dof->getValue();
 
                     if (value != 0)
                     {
-                        int pos = numElDOF * (2 * a + i) + 2 * b + j;
-                        int ps2 = 2 * a + i;
                         double fi = -localStiff[numElDOF * (2 * a + i) + 2 * b + j] * value;
                         ierr = VecSetValues(rhs, 1, &indx[2 * a + i], &fi, ADD_VALUES);
                         CHKERRQ(ierr);
@@ -156,14 +154,6 @@ PetscErrorCode Truss::getPhaseFieldContribution(Mat &A, Vec &rhs)
     ierr = VecSetValues(rhs, numElDOF, idx, localRHS, ADD_VALUES);
     CHKERRQ(ierr);
 
-    // Print idx
-    for (int i = 0; i < 2; i++)
-        std::cout << idx[i] << " ";
-
-    // Print localStiff
-    for (int i = 0; i < 4; i++)
-        std::cout << localStiff[i] << " ";
-
     delete[] idx;
     delete[] localStiff;
 
@@ -174,8 +164,13 @@ void Truss::computeDeformation()
 {
     Node *_node0 = elemConnectivity[0];
     Node *_node1 = elemConnectivity[1];
+    double val0x = _node0->getDOF(0)->getValue() + _node0->getX();
+    double val1x = _node1->getDOF(0)->getValue() + _node1->getX();
 
-    double currentLenght = pow((_node1->getDOF(0)->getValue() - _node0->getDOF(0)->getValue()) * (_node1->getDOF(0)->getValue() - _node0->getDOF(0)->getValue()) + (_node1->getDOF(1)->getValue() - _node0->getDOF(1)->getValue()) * (_node1->getDOF(1)->getValue() - _node0->getDOF(1)->getValue()),
+    double val0y = _node0->getDOF(1)->getValue() + _node0->getY();
+    double val1y = _node1->getDOF(1)->getValue() + _node1->getY();
+
+    double currentLenght = pow((val1x - val0x) * (val1x - val0x) + (val1y - val0y) * (val1y - val0y),
                                0.5);
 
     epsilon = (currentLenght - length) / length;

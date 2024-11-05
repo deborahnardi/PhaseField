@@ -8,10 +8,10 @@
 class AnalysisParameters
 {
 private:
-    int nSteps = 1., maxItNR = 1000.;
-    double tol = 1.e-6;
+    int nSteps = 1., maxItNR = 1000., maxIterPSOR = 1000.;
+    double tol = 1.e-6, tolPSOR = 1.e-6;
     double ubar, deltaTime;
-    double residStaggered = 1.e30;
+    double residStaggered = 1.e30, residPSOR = 1e20;
     int maxItStaggered = 1000;
     std::vector<double> dispByStep;
 
@@ -25,6 +25,9 @@ public:
     double getTol() const { return tol; }
     double getResidStaggered() const { return residStaggered; }
     int getMaxItStaggered() const { return maxItStaggered; }
+    int getResPSOR() const { return residPSOR; }
+    int getMaxItPSOR() const { return maxIterPSOR; }
+    double getTolPSOR() const { return tolPSOR; }
 
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxNewtonRaphsonIt(const int &_maxItNR) { maxItNR = _maxItNR; }

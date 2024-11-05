@@ -64,6 +64,15 @@ void FEM::deleteResults(bool deleteFiles)
                 Assembling and solving problem PETSc
 ----------------------------------------------------------------------------------
 */
+double FEM::computeNorm(const double *vec1, const double *vec2, const int &size)
+{
+    double norm = 0.0;
+    for (int i = 0; i < size; i++)
+        norm += (vec1[i] - vec2[i]) * (vec1[i] - vec2[i]);
+
+    return std::sqrt(norm);
+}
+
 PetscErrorCode FEM::solveFEMProblem()
 {
     int it = 0;

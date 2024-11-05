@@ -38,6 +38,8 @@ private:
 
     Mat matrix, matrixPF;
     const PetscInt *JC, *IR; // ia contais the row pointer (equivalent to JC), ja contais the column index (equivalent to IR)
+    PetscScalar *PA;
+    double *DdkMinus1, *Ddk;
     Vec rhs, solution, rhsPF, solutionPF;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz;
@@ -85,6 +87,7 @@ public:
     void assembleProblemNoPetsc();
     void setBoundaryConditionsNoPetsc();
     void solveLinearSystemNoPetsc();
+    double computeNorm(const double *vec1, const double *vec2, const int &size);
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
@@ -94,11 +97,10 @@ public:
     void solvePhaseField();
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
-    PetscErrorCode solveSystemByPSORPetsc(Mat &A, Vec &b, Vec &x);
-    void solveSystemByPSOR(Mat &A, Vec &b, Vec &x);
-    double getPSORVecs(Mat &A, Vec &b);
+    PetscErrorCode solveSystemByPSOR(Mat &A, Vec &b, Vec &x);
+    PetscErrorCode getPSORVecs(Mat &A, Vec &b);
     void staggeredAlgorithm(int _iStep);
-    void updateFieldVariables(Vec &x) {};
+    PetscErrorCode updateFieldVariables(Vec &x);
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------

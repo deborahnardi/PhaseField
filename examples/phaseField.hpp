@@ -74,7 +74,7 @@ geo1->GenerateMeshAPI(visualizeMesh);
 // ********************************** FEM INFORMATION **********************************************
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setAnalysisParameters(param);
-analysis1->setPrintMatrix(false);
+analysis1->setPrintMatrix(true);
 // analysis1->solveFEMProblem();
 //   analysis1->solveFEMProblemNoPetsc();
 //  ********************************** PHASE FIELD INFORMATION **************************************
