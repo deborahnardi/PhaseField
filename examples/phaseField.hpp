@@ -52,7 +52,7 @@ lines[flaw2]->setAttributes(materials[1], 1.0, TRUSS_ELEMENT);
                             LOADING FUNCTION
 */
 param->setDeltaTime(1);
-param->setNSteps(200);
+param->setNSteps(800);
 
 // Generating the loading vector
 
@@ -65,7 +65,6 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
         {
             double val = load[pseudoTime];
             dof->setValue(val);
-            std::cout << "Load: " << val << "has been applied to DOF " << dof->getIndex() << std::endl;
         }
 };
 analysis1->setBoundaryFunction(boundaryFunction);
@@ -76,6 +75,6 @@ analysis1->readGeometry(projectName + ".mir");
 analysis1->setAnalysisParameters(param);
 analysis1->setPrintMatrix(true);
 // analysis1->solveFEMProblem();
-//   analysis1->solveFEMProblemNoPetsc();
-//  ********************************** PHASE FIELD INFORMATION **************************************
+//    analysis1->solveFEMProblemNoPetsc();
+//   ********************************** PHASE FIELD INFORMATION **************************************
 analysis1->solvePhaseFieldProblem();

@@ -101,7 +101,7 @@ PetscErrorCode FEM::solveFEMProblem()
             updateVariables(solution);
             res = res / norm;
 
-        } while (res > params->getTol() && it < params->getMaxNewtonRaphsonIt());
+        } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
         if (rank == 0)
             showResults(iStep);
@@ -139,7 +139,6 @@ void FEM::updateBoundaryFunction(double _time)
 PetscErrorCode FEM::assembleProblem()
 {
     MPI_Barrier(PETSC_COMM_WORLD);
-    PetscPrintf(PETSC_COMM_WORLD, "Assembling FEM problem...\n");
 
     ierr = MatZeroEntries(matrix);
     CHKERRQ(ierr);
@@ -169,14 +168,11 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
+    std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "After applying BCs: " << std::endl;
     if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
-    {
-        ierr = PetscPrintf(PETSC_COMM_WORLD, " --- GLOBAL STIFFNESS MATRIX: ----\n");
-        CHKERRQ(ierr);
-        ierr = MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-        CHKERRQ(ierr);
         printGlobalMatrix(matrix);
-    }
+    std::cout << "--------------------------------------------" << std::endl;
 
     return ierr;
 }
@@ -237,14 +233,8 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     ierr = KSPGetIterationNumber(ksp, &its); // Gets the number of iterations
     CHKERRQ(ierr);
 
-    // ierr = KSPView(ksp, PETSC_VIEWER_STDOUT_WORLD); // Prints the Krylov subspace method information
-    // CHKERRQ(ierr);
-
-    // ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
-    // CHKERRQ(ierr);
-
-    // ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
-    // CHKERRQ(ierr);
+    ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
+    CHKERRQ(ierr);
 
     ierr = KSPDestroy(&ksp);
     CHKERRQ(ierr);
@@ -252,7 +242,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     return ierr;
 }
 
-void FEM::updateVariables(Vec &x)
+void FEM::updateVariables(Vec &x, bool _hasConverged)
 {
     // Set the solution to the final coordinates of the nodes
     finalDisplacements = new double[globalDOFs.size()];
@@ -296,10 +286,12 @@ void FEM::updateVariables(Vec &x)
             }
 
     // Print Update dof values
+    std::cout << "--------------------------------------------" << std::endl;
     for (auto node : nodes)
         for (auto dof : node->getDOFs())
             if (dof->getDOFType() != D)
                 std::cout << dof->getValue() << std::endl;
 
-    std::cout << "Values have been updated" << std::endl;
+    std::cout << "Displacement values have been updated" << std::endl;
+    std::cout << "--------------------------------------------" << std::endl;
 }

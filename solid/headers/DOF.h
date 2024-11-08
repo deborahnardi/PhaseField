@@ -28,7 +28,7 @@ public:
 
     void setDirichlet() { bDirichlet = true; }
     void setDirichletValue(const double &_value) { vDirichlet = _value, value = _value; }
-    void setDamageValue(const double &_value) { vDamage = _value, value = _value; }
+    void setDamageValue(const double &_value) { vDamage = _value; }
     bool isDirichlet() const { return bDirichlet; }
     double getDirichletValue() const { return vDirichlet; }
 

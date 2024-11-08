@@ -94,13 +94,13 @@ public:
     */
     void matrixPreAllocationPF(PetscInt start, PetscInt end);
     void solveDisplacementField(int _iStep);
-    void solvePhaseField();
+    PetscErrorCode solvePhaseField();
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
     PetscErrorCode solveSystemByPSOR(Mat &A, Vec &b, Vec &x);
     PetscErrorCode getPSORVecs(Mat &A, Vec &b);
     void staggeredAlgorithm(int _iStep);
-    PetscErrorCode updateFieldVariables(Vec &x);
+    PetscErrorCode updateFieldVariables(Vec &x, bool _hasConverged = true);
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ public:
     */
     void showResults(int _nStep);
     void setPrintMatrix(const bool &_showMatrix) { showMatrix = _showMatrix; }
-    void updateVariables(Vec &x);
+    void updateVariables(Vec &x, bool _hasConverged = true);
     void deleteFromString(std::string &fullStr, std::string removeStr);
     void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
 
