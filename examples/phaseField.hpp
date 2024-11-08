@@ -12,7 +12,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
-double userNodes = 4;
+double userNodes = 201;
 
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
@@ -73,7 +73,7 @@ geo1->GenerateMeshAPI(visualizeMesh);
 // ********************************** FEM INFORMATION **********************************************
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setAnalysisParameters(param);
-analysis1->setPrintMatrix(true);
+analysis1->setPrintMatrix(false);
 // analysis1->solveFEMProblem();
 //    analysis1->solveFEMProblemNoPetsc();
 //   ********************************** PHASE FIELD INFORMATION **************************************

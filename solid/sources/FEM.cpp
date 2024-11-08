@@ -168,11 +168,11 @@ PetscErrorCode FEM::assembleProblem()
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
 
-    std::cout << "--------------------------------------------" << std::endl;
-    std::cout << "After applying BCs: " << std::endl;
+    // std::cout << "--------------------------------------------" << std::endl;
+    // std::cout << "After applying BCs: " << std::endl;
     if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
         printGlobalMatrix(matrix);
-    std::cout << "--------------------------------------------" << std::endl;
+    // std::cout << "--------------------------------------------" << std::endl;
 
     return ierr;
 }
@@ -209,6 +209,13 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     PC pc;
     PetscInt its;
 
+    PetscReal norm1;
+
+    ierr = VecNorm(b, NORM_2, &norm1);
+    CHKERRQ(ierr);
+    std::cout << "Norm of rhs DISPLACEMENT:" << norm1 << std::endl;
+    std::cout << "--------------------" << std::endl;
+
     ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
     CHKERRQ(ierr);
     ierr = KSPSetOperators(ksp, A, A);
@@ -233,8 +240,8 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     ierr = KSPGetIterationNumber(ksp, &its); // Gets the number of iterations
     CHKERRQ(ierr);
 
-    ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
-    CHKERRQ(ierr);
+    // ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
+    // CHKERRQ(ierr);
 
     ierr = KSPDestroy(&ksp);
     CHKERRQ(ierr);
@@ -285,13 +292,13 @@ void FEM::updateVariables(Vec &x, bool _hasConverged)
                 res += value * value;
             }
 
-    // Print Update dof values
-    std::cout << "--------------------------------------------" << std::endl;
-    for (auto node : nodes)
-        for (auto dof : node->getDOFs())
-            if (dof->getDOFType() != D)
-                std::cout << dof->getValue() << std::endl;
+    // // Print Update dof values
+    // std::cout << "--------------------------------------------" << std::endl;
+    // for (auto node : nodes)
+    //     for (auto dof : node->getDOFs())
+    //         if (dof->getDOFType() != D)
+    //             std::cout << dof->getValue() << std::endl;
 
-    std::cout << "Displacement values have been updated" << std::endl;
-    std::cout << "--------------------------------------------" << std::endl;
+    // std::cout << "Displacement values have been updated" << std::endl;
+    // std::cout << "--------------------------------------------" << std::endl;
 }

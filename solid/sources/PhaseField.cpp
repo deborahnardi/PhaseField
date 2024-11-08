@@ -76,6 +76,9 @@ void FEM::staggeredAlgorithm(int _iStep)
         resStag = sqrt(normU);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
+
+    std::cout << "Number of iterations: " << it << std::endl;
+    std::cout << "-------------------------" << std::endl;
 }
 
 void FEM::solveDisplacementField(int _iStep)
@@ -106,7 +109,6 @@ PetscErrorCode FEM::solvePhaseField()
 PetscErrorCode FEM::assemblePhaseFieldProblem()
 {
     MPI_Barrier(PETSC_COMM_WORLD);
-    PetscPrintf(PETSC_COMM_WORLD, "Assembling Phase Field problem...\n");
 
     ierr = MatZeroEntries(matrixPF);
     CHKERRQ(ierr);
@@ -129,34 +131,39 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
 
     // Adding the potential energy evaluated at the previous load step into the rhs
     // Performing the multiplication of matrixPF by dn and adding to rhsPF - solutionPF is equal Ddk
-    Vec QDotDd, Dd;
+    Vec QDotDd, Dn;
     ierr = VecDuplicate(rhsPF, &QDotDd);
     CHKERRQ(ierr);
-    ierr = VecDuplicate(rhsPF, &Dd);
+    ierr = VecDuplicate(rhsPF, &Dn);
     CHKERRQ(ierr);
     ierr = VecZeroEntries(QDotDd);
     CHKERRQ(ierr);
-    ierr = VecZeroEntries(Dd);
+    ierr = VecZeroEntries(Dn);
     CHKERRQ(ierr);
 
     for (int i = 0; i < numNodes; i++)
     {
         DOF *damageDOF = nodes[i]->getDOFs()[2];
         PetscScalar value = damageDOF->getValue();
-        ierr = VecSetValues(Dd, 1, &i, &value, INSERT_VALUES);
+        ierr = VecSetValues(Dn, 1, &i, &value, INSERT_VALUES);
         CHKERRQ(ierr);
     }
 
-    ierr = MatMult(matrixPF, Dd, QDotDd); // QDotDd = matrixPF * Dd
+    ierr = MatMult(matrixPF, Dn, QDotDd); // QDotDd = matrixPF * Dd
     CHKERRQ(ierr);
 
     ierr = VecAXPY(rhsPF, 1.0, QDotDd); // rhsPF = rhsPF + QDotDd
     CHKERRQ(ierr);
 
-    std::cout << " q: " << std::endl;
-    ierr = VecView(rhsPF, PETSC_VIEWER_STDOUT_WORLD);
+    // std::cout << " q: " << std::endl;
+    // ierr = VecView(rhsPF, PETSC_VIEWER_STDOUT_WORLD);
+    // CHKERRQ(ierr);
+    // std::cout << "-----------------------------------------------" << std::endl;
+
+    ierr = VecDestroy(&QDotDd);
     CHKERRQ(ierr);
-    std::cout << "-----------------------------------------------" << std::endl;
+    ierr = VecDestroy(&Dn);
+    CHKERRQ(ierr);
 
     return ierr;
 }
@@ -164,6 +171,15 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
 PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 {
     getPSORVecs(A, b);
+
+    ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
+    CHKERRQ(ierr);
+
+    PetscReal norm2;
+    ierr = VecNorm(b, NORM_2, &norm2);
+    CHKERRQ(ierr);
+    std::cout << "Norm of rhs Phase Field:" << norm2 << std::endl;
+    std::cout << "--------------------" << std::endl;
 
     double resPSOR = params->getResPSOR();
     int maxPSORIt = params->getMaxItPSOR();
@@ -218,20 +234,20 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 
     } while (resPSOR > tolPSOR && itPSOR < maxPSORIt);
 
-    // print PA
-    std::cout << "PA array:" << std::endl;
-    for (int i = 0; i < JC[numNodes]; i++)
-        std::cout << PA[i] << " ";
+    // // print PA
+    // std::cout << "PA array:" << std::endl;
+    // for (int i = 0; i < JC[numNodes]; i++)
+    //     std::cout << PA[i] << " ";
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
 
-    // print Ddk
-    std::cout << "Ddk: " << std::endl;
-    for (int i = 0; i < numNodes; i++)
-        std::cout << Ddk[i] << " ";
+    // // print Ddk
+    // std::cout << "Ddk: " << std::endl;
+    // for (int i = 0; i < numNodes; i++)
+    //     std::cout << Ddk[i] << " ";
 
-    std::cout << std::endl;
-    std::cout << "-----------------------------------------------" << std::endl;
+    // std::cout << std::endl;
+    // std::cout << "-----------------------------------------------" << std::endl;
 
     // Update the solution vector (solution vector is Delta_d)
     for (int i = 0; i < numNodes; i++)
@@ -326,7 +342,8 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         for (auto node : nodes)
         {
             DOF *damageDOF = node->getDOFs()[2];
-            std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
+            // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
+            std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
         }
     }
 
