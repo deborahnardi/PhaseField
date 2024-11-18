@@ -23,7 +23,7 @@ private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size;
     std::string name, filename, resultsPath;
-    double *finalDisplacements, res = 0., norm = 0.;
+    double *finalDisplacements, norm = 0., res = 0.;
     std::vector<std::set<int>> nodeNeighbours;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
@@ -31,6 +31,7 @@ private:
     std::vector<BoundaryElement *> bdElements;
     std::vector<DOF *> globalDOFs;
     AnalysisParameters *params;
+    bool negativeLoad = false;
 
     MatrixXd K;
     VectorXd F;

@@ -8,6 +8,7 @@ class Point
 {
 private:
     int index;
+    double defectValue = 0.;
     std::vector<double> coordinates;
     std::string entityName;
     double lc; // characteristic length

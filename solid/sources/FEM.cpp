@@ -148,7 +148,7 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
 
     for (int Ii = Istart; Ii < Iend; Ii++)
-        elements[Ii]->getContribution(matrix, rhs);
+        elements[Ii]->getContribution(matrix, rhs, negativeLoad);
 
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
@@ -213,8 +213,8 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 
     ierr = VecNorm(b, NORM_2, &norm1);
     CHKERRQ(ierr);
-    std::cout << "Norm of rhs DISPLACEMENT:" << norm1 << std::endl;
-    std::cout << "--------------------" << std::endl;
+    // std::cout << "Norm of rhs DISPLACEMENT:" << norm1 << std::endl;
+    // std::cout << "--------------------" << std::endl;
 
     ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
     CHKERRQ(ierr);
@@ -282,23 +282,21 @@ void FEM::updateVariables(Vec &x, bool _hasConverged)
     // Broadcasting the final displacements to all processes
     MPI_Bcast(finalDisplacements, nDOFs, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
 
-    res = 0.;
     for (auto node : nodes)
         for (auto dof : node->getDOFs())
             if (dof->getDOFType() != D)
             {
                 double value = finalDisplacements[dof->getIndex()];
                 dof->incrementValue(value);
-                res += value * value;
             }
 
     // // Print Update dof values
-    // std::cout << "--------------------------------------------" << std::endl;
-    // for (auto node : nodes)
-    //     for (auto dof : node->getDOFs())
-    //         if (dof->getDOFType() != D)
-    //             std::cout << dof->getValue() << std::endl;
+    std::cout << "--------------------------------------------" << std::endl;
+    for (auto node : nodes)
+        for (auto dof : node->getDOFs())
+            if (dof->getDOFType() != D)
+                std::cout << dof->getValue() << std::endl;
 
     // std::cout << "Displacement values have been updated" << std::endl;
-    // std::cout << "--------------------------------------------" << std::endl;
+    std::cout << "--------------------------------------------" << std::endl;
 }

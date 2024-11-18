@@ -23,7 +23,7 @@ Solid2D::~Solid2D() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs)
+PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
 {
     PetscInt numElDOF = numElNodes * 2;
     PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();

@@ -30,7 +30,7 @@ Truss::~Truss() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs)
+PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
 {
     PetscInt numElDOF = 4;
     PetscInt *indx = new PetscInt[4]();
@@ -42,7 +42,12 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs)
     d0 = elemConnectivity[0]->getDOF(2)->getDamageValue();
     d1 = elemConnectivity[1]->getDOF(2)->getDamageValue();
 
-    PetscScalar damageValue = 1 / 3. * (d0 * d0 + (d1 - 3.) * d0 + d1 * d1 - 3. * d1 + 3.);
+    PetscScalar damageValue = 0.;
+
+    if (negativeLoad)
+        damageValue = 1.;
+    else
+        damageValue = 1 / 3. * (d0 * d0 + (d1 - 3.) * d0 + d1 * d1 - 3. * d1 + 3.);
 
     PetscScalar k = damageValue * material->getYoungModulus() * area / length;
 
