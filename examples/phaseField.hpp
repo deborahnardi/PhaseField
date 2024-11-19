@@ -12,7 +12,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
-double userNodes = 4; // 51;
+double userNodes = 4; // 4; // 51;
 
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
@@ -52,7 +52,8 @@ lines[flaw2]->setAttributes(materials[1], 1.0, TRUSS_ELEMENT);
                             LOADING FUNCTION
 */
 param->setDeltaTime(1);
-param->setNSteps(5);
+param->setNSteps(1);
+param->setSolverType(EIterative);
 
 // Generating the loading vector
 

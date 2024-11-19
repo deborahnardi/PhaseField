@@ -106,6 +106,8 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
 
     delete[] indx;
     delete[] localStiff;
+
+    return ierr;
 }
 
 PetscErrorCode Truss::getPhaseFieldContribution(Mat &A, Vec &rhs)

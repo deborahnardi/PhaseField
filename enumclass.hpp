@@ -2,8 +2,9 @@
 
 enum SolverType
 {
-    SEQ = 0,
-    PARALLEL = 1
+    EMumps,
+    ESuiteSparse,
+    EIterative
 };
 
 enum BoundaryType

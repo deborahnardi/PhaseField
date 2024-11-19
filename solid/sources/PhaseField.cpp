@@ -27,6 +27,8 @@ void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
 // --------------------------------------------------------------------------------------------------
 void FEM::solvePhaseFieldProblem() // Called by the main program
 {
+    auto start_timer = std::chrono::high_resolution_clock::now();
+
     for (auto n : nodes)
         norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
     norm = sqrt(norm);
@@ -39,22 +41,24 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
     int nSteps = params->getNSteps();
 
-    std::cout << "BEGINNING OF PHASE FIELD PROBLEM..." << std::endl;
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscPrintf(PETSC_COMM_WORLD, "================ BEGINNING PHASE FIELD PROBLEM ================\n");
+
     for (int iStep = 0; iStep < nSteps; iStep++)
     {
-        std::cout << "STEP " << iStep << std::endl;
+        PetscPrintf(PETSC_COMM_WORLD, "\n================ STEP %d ================\n", iStep);
+
         staggeredAlgorithm(iStep); // Returns converged uStag and dStag
         updateFieldVariables(solutionPF);
-        std::cout << "-----------------------------------------------" << std::endl;
 
-        for (auto node : nodes)
-            for (auto dof : node->getDOFs())
-                if (dof->getDOFType() != D)
-                    std::cout << dof->getValue() << std::endl;
-
-        // std::cout << "Displacement values have been updated" << std::endl;
-        std::cout << "--------------------------------------------" << std::endl;
+        if (rank == 0)
+            showResults(iStep); // Paraview
     }
+
+    cleanSolution(rhs, solution, matrix);
+    auto end_timer = std::chrono::high_resolution_clock::now();
+    PetscPrintf(PETSC_COMM_WORLD, "Total elapsed time: %f\n", elapsedTime(start_timer, end_timer));
+    PetscPrintf(PETSC_COMM_WORLD, "================ END OF PHASE FIELD PROBLEM ================\n");
 }
 
 void FEM::staggeredAlgorithm(int _iStep)
@@ -66,8 +70,9 @@ void FEM::staggeredAlgorithm(int _iStep)
     do
     {
         it++;
-        solveDisplacementField(_iStep); // Obtains u^{n+1}
-        solvePhaseField();              // Obtains D^{n+1} (d^n)
+        PetscPrintf(PETSC_COMM_WORLD, "\n------- Stag Iteration %d -------\n", it);
+        solveDisplacementField(_iStep); // Obtains ustag
+        solvePhaseField();              // Obtains dstag
 
         // Compute the norm of the difference between the previous and current displacement fields
         double normU = 0.0;
@@ -77,17 +82,15 @@ void FEM::staggeredAlgorithm(int _iStep)
             if (dof->getDOFType() != D)
             {
                 double value = dof->getValue();
-                // std::cout << value << " " << previousU[i] << std::endl;
                 normU += (value - previousU[i]) * (value - previousU[i]);
                 previousU[i] = value;
             }
         }
+
         resStag = sqrt(normU);
+        PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
-
-    std::cout << "Number of iterations: " << it << std::endl;
-    std::cout << "-------------------------" << std::endl;
 }
 
 void FEM::solveDisplacementField(int _iStep)
@@ -99,17 +102,20 @@ void FEM::solveDisplacementField(int _iStep)
         updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); //
 
     for (auto node : nodes)
+    {
         for (auto dof : node->getDOFs())
-            if (dof->isControlledDOF())
-                if (dof->getValue() < 0.)
-                    negativeLoad = true;
+            if (dof->isControlledDOF() && dof->getValue() < 0.)
+            {
+                negativeLoad = true;
+                break; // Get out of first loop
+            }
+        if (negativeLoad)
+            break; // Get out of second loop
+    }
 
     assembleProblem();
     solveLinearSystem(matrix, rhs, solution);
     updateVariables(solution);
-
-    // if (rank == 0)
-    //     showResults(_iStep); // Paraview
 }
 
 PetscErrorCode FEM::solvePhaseField()
@@ -144,76 +150,72 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     ierr = MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
 
-    // Performing the multiplication of matrixPF by dn and adding to rhsPF - solutionPF is equal Ddk
-    Vec QDotDd, Dn;
-    ierr = VecDuplicate(rhsPF, &QDotDd);
-    CHKERRQ(ierr);
-    ierr = VecDuplicate(rhsPF, &Dn);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(QDotDd);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(Dn);
-    CHKERRQ(ierr);
-
-    for (int i = 0; i < numNodes; i++)
+    if (elemDim == 1)
     {
-        DOF *damageDOF = nodes[i]->getDOFs()[2];
-        PetscScalar value = damageDOF->getValue();
-        // PetscScalar value = damageDOF->getDamageValue();
-        ierr = VecSetValues(Dn, 1, &i, &value, INSERT_VALUES);
+        // Performing the multiplication of matrixPF by dn and adding to rhsPF - solutionPF is equal Ddk
+        Vec QDotDd, Dn;
+        ierr = VecDuplicate(rhsPF, &QDotDd);
+        CHKERRQ(ierr);
+        ierr = VecDuplicate(rhsPF, &Dn);
+        CHKERRQ(ierr);
+        ierr = VecZeroEntries(QDotDd);
+        CHKERRQ(ierr);
+        ierr = VecZeroEntries(Dn);
+        CHKERRQ(ierr);
+
+        for (int i = 0; i < numNodes; i++)
+        {
+            DOF *damageDOF = nodes[i]->getDOFs()[2];
+            PetscScalar value = damageDOF->getValue();
+            // PetscScalar value = damageDOF->getDamageValue();
+            ierr = VecSetValues(Dn, 1, &i, &value, INSERT_VALUES);
+            CHKERRQ(ierr);
+        }
+
+        ierr = VecAssemblyBegin(QDotDd);
+        CHKERRQ(ierr);
+        ierr = VecAssemblyEnd(QDotDd);
+        CHKERRQ(ierr);
+
+        ierr = VecAssemblyBegin(Dn);
+        CHKERRQ(ierr);
+        ierr = VecAssemblyEnd(Dn);
+        CHKERRQ(ierr);
+
+        ierr = MatMult(matrixPF, Dn, QDotDd); // QDotDd = matrixPF * Dn
+        CHKERRQ(ierr);
+
+        ierr = VecAXPY(rhsPF, 1.0, QDotDd); // rhsPF = rhsPF + QDotDd
+        CHKERRQ(ierr);
+
+        ierr = VecDestroy(&QDotDd);
+        CHKERRQ(ierr);
+        ierr = VecDestroy(&Dn);
         CHKERRQ(ierr);
     }
-
-    // std::cout << " Q: " << std::endl;
-
-    // // Print matrix matrixPF
-    // ierr = MatView(matrixPF, PETSC_VIEWER_STDOUT_WORLD);
-    // CHKERRQ(ierr);
-
-    // std::cout << "-----------------------------------------------" << std::endl;
-
-    ierr = MatMult(matrixPF, Dn, QDotDd); // QDotDd = matrixPF * Dn
-    CHKERRQ(ierr);
-
-    ierr = VecAXPY(rhsPF, 1.0, QDotDd); // rhsPF = rhsPF + QDotDd
-    CHKERRQ(ierr);
-
-    // std::cout << " q: " << std::endl;
-    // ierr = VecView(rhsPF, PETSC_VIEWER_STDOUT_WORLD);
-    // CHKERRQ(ierr);
-    // // std::cout << "-----------------------------------------------" << std::endl;
-
-    ierr = VecDestroy(&QDotDd);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&Dn);
-    CHKERRQ(ierr);
 
     return ierr;
 }
 
 PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 {
-    getPSORVecs(A, b);
-
-    // ierr = VecView(b, PETSC_VIEWER_STDOUT_WORLD);
-    // CHKERRQ(ierr);
-
-    PetscReal norm2;
-    ierr = VecNorm(b, NORM_2, &norm2);
-    CHKERRQ(ierr);
-    // std::cout << "Norm of rhs Phase Field:" << norm2 << std::endl;
-    // std::cout << "--------------------" << std::endl;
+    assembleBetweenProcesses(A, b);
+    getPSORVecs(A);
 
     double resPSOR = params->getResPSOR();
     int maxPSORIt = params->getMaxItPSOR();
     double tolPSOR = params->getTolPSOR();
     int itPSOR = 0;
 
+    MPI_Barrier(PETSC_COMM_WORLD);
+
     for (int i = 0; i < numNodes; i++)
     {
         DdkMinus1[i] = 0.0;
         Ddk[i] = 0.0;
     }
+
+    // Print PA, IR and JC
 
     do
     {
@@ -245,34 +247,21 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
             }
 
             double q = 0.0;
-            ierr = VecGetValues(b, 1, &jCol, &q);
+            ierr = VecGetValues(totalVecq, 1, &jCol, &q);
             CHKERRQ(ierr);
             Ddk[jCol] = DdkMinus1[jCol] - Dinv * (dotQDd + q + dotLDd);
 
             if (Ddk[jCol] < 0.0)
                 Ddk[jCol] = 0.0; // Damage field must be positive
+            // PetscPrintf(PETSC_COMM_WORLD, "=========== OVER HERE 1 ===========\n");
         }
-
+        // PetscPrintf(PETSC_COMM_WORLD, "=========== OVER HERE 2 ===========\n");
         resPSOR = computeNorm(Ddk, DdkMinus1, numNodes);
 
     } while (resPSOR > tolPSOR && itPSOR < maxPSORIt);
 
-    // // print PA
-    // std::cout << "PA array:" << std::endl;
-    // for (int i = 0; i < JC[numNodes]; i++)
-    //     std::cout << PA[i] << " ";
-
-    // std::cout << std::endl;
-
-    // // print Ddk
-    // std::cout << "Ddk: " << std::endl;
-    // for (int i = 0; i < numNodes; i++)
-    //     std::cout << Ddk[i] << " ";
-
-    // std::cout << std::endl;
-    // std::cout << "-----------------------------------------------" << std::endl;
-
     // Update the solution vector (solution vector is Delta_d)
+
     for (int i = 0; i < numNodes; i++)
     {
         ierr = VecSetValues(x, 1, &i, &Ddk[i], INSERT_VALUES);
@@ -282,7 +271,63 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
     return ierr;
 }
 
-PetscErrorCode FEM::getPSORVecs(Mat &A, Vec &b)
+PetscErrorCode FEM::assembleBetweenProcesses(Mat &A, Vec &b)
+{
+    VecScatter ctx;
+
+    ierr = VecScatterCreateToAll(b, &ctx, &totalVecq);
+    CHKERRQ(ierr);
+
+    ierr = VecScatterBegin(ctx, b, totalVecq, INSERT_VALUES, SCATTER_FORWARD);
+    CHKERRQ(ierr);
+    ierr = VecScatterEnd(ctx, b, totalVecq, INSERT_VALUES, SCATTER_FORWARD);
+    CHKERRQ(ierr);
+    ierr = VecScatterDestroy(&ctx);
+    CHKERRQ(ierr);
+
+    ierr = MatView(A, PETSC_VIEWER_STDOUT_WORLD);
+    CHKERRQ(ierr);
+
+    // Get values from the matrix A and store them in the totalQMatrix
+
+    // PetscInt startRow, endRow;
+    // ierr = MatGetOwnershipRange(A, &startRow, &endRow);
+    // CHKERRQ(ierr);
+
+    // for (PetscInt i = startRow; i < endRow; i++)
+    // {
+    //     PetscInt ncols;
+    //     const PetscInt *cols;
+    //     const PetscScalar *vals;
+    //     ierr = MatGetRow(A, i, &ncols, &cols, &vals);
+    //     CHKERRQ(ierr);
+
+    //     for (PetscInt j = 0; j < ncols; j++)
+    //     {
+    //         ierr = MatSetValue(totalQMatrix, i, cols[j], vals[j], INSERT_VALUES);
+    //         CHKERRQ(ierr);
+    //     }
+
+    //     ierr = MatRestoreRow(A, i, &ncols, &cols, &vals);
+    //     CHKERRQ(ierr);
+    // }
+
+    // ierr = MatAssemblyBegin(totalQMatrix, MAT_FINAL_ASSEMBLY);
+    // CHKERRQ(ierr);
+    // ierr = MatAssemblyEnd(totalQMatrix, MAT_FINAL_ASSEMBLY);
+    // CHKERRQ(ierr);
+
+    // // Print the totalQMatrix
+
+    // ierr = MatView(totalQMatrix, PETSC_VIEWER_STDOUT_WORLD);
+    // CHKERRQ(ierr);
+
+    // PetscPrintf(PETSC_COMM_WORLD, "=========== OVER HERE 3 ===========\n");
+
+    return ierr;
+}
+
+PetscErrorCode FEM::getPSORVecs(Mat &A)
 {
     /*
         Here the PA, IR and JC arrays are used to store the matrix A in compressed column format;
@@ -294,13 +339,16 @@ PetscErrorCode FEM::getPSORVecs(Mat &A, Vec &b)
     */
     PetscInt nRows; // Number of rows in the matrix A
     PetscBool done; // Flag to indicate if the matrix A has been completely processed
+    const PetscInt *localJC;
+    const PetscInt *localIR;
+    PetscScalar *localPA;
 
     // Get the matrix A in compressed column format
+
     ierr = MatGetRowIJ(A, 0, PETSC_TRUE, PETSC_FALSE, &nRows, &JC, &IR, &done);
     CHKERRQ(ierr);
-
-    PA = new PetscScalar[JC[nRows]]; // Non-zero values of the matrix A
-
+    localPA = new PetscScalar[JC[nRows]]; // Non-zero values of the matrix A
+    PA = new PetscScalar[JC[nRows]];      // Non-zero values of the matrix A
     // Get the non-zero values of the matrix A
     for (int i = 0; i < nRows; i++)
     {
@@ -312,11 +360,38 @@ PetscErrorCode FEM::getPSORVecs(Mat &A, Vec &b)
         }
     }
 
+    MPI_Barrier(PETSC_COMM_WORLD);
+
+    // print PA
+    PetscPrintf(PETSC_COMM_WORLD, "PA array:\n");
+    for (int i = 0; i < JC[numNodes]; i++)
+        PetscPrintf(PETSC_COMM_WORLD, "%f ", PA[i]);
+
+    // std::cout << std::endl;
+
+    // // print IR
+    // std::cout << "IR array:" << std::endl;
+    // for (int i = 0; i < JC[numNodes]; i++)
+    //     std::cout << IR[i] << " ";
+
+    // std::cout << std::endl;
+
+    // // print JC
+    // std::cout << "JC array:" << std::endl;
+    // for (int i = 0; i < numNodes + 1; i++)
+    //     std::cout << JC[i] << " ";
+
     return ierr;
 }
 
 PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 {
+
+    /*
+        getValue() returns the value of the DOF at the previous STEP; dn
+        getDamageValue() returns the value of the DOF at the current iteration; delta_d^i (i-th iteration)
+    */
+
     if (_hasConverged)
     {
         for (int i = 0; i < numNodes; i++)
@@ -364,16 +439,16 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
     }
 
     // Print the damage field
-    if (_hasConverged)
-    {
-        for (auto node : nodes)
-        {
-            DOF *damageDOF = node->getDOFs()[2];
-            // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
-            std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
-        }
-        std::cout << std::endl;
-    }
+    // if (_hasConverged)
+    // {
+    //     for (auto node : nodes)
+    //     {
+    //         DOF *damageDOF = node->getDOFs()[2];
+    //         // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
+    //         std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     return ierr;
 }

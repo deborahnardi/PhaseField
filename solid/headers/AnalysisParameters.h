@@ -12,7 +12,10 @@ private:
     double tolNR = 1.e-6, tolPSOR = 1.e-6, tolStaggered = 1.e-5;
     double ubar, deltaTime;
     double residStaggered = 1.e30, residPSOR = 1e20;
+    int maxIterEIterative = 1000;
+    double tolEIterative = 1.e-8;
     std::vector<double> dispByStep;
+    SolverType solverType = EMumps;
 
 public:
     AnalysisParameters();
@@ -28,6 +31,9 @@ public:
     int getMaxItPSOR() const { return maxIterPSOR; }
     double getTolPSOR() const { return tolPSOR; }
     double getTolStaggered() const { return tolStaggered; }
+    SolverType getSolverType() const { return solverType; }
+    int getMaxIterEIterative() const { return maxIterEIterative; }
+    double getTolEIterative() const { return tolEIterative; }
 
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxNewtonRaphsonIt(const int &_maxItNR) { maxItNR = _maxItNR; }
@@ -35,4 +41,5 @@ public:
     void setResidStaggered(const double &_residStaggered) { residStaggered = _residStaggered; }
     void setMaxItStaggered(const int &_maxItStaggered) { maxItStaggered = _maxItStaggered; }
     void setDeltaTime(const double &_deltaTime) { deltaTime = _deltaTime; }
+    void setSolverType(const SolverType &_solverType) { solverType = _solverType; }
 };

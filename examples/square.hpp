@@ -58,11 +58,12 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 
 // analysis1->setBoundaryFunction(boundaryFunction);
 //   ********************************** FEM INFORMATION **********************************
-params->setNSteps(200);
+params->setNSteps(999);
+params->setSolverType(EIterative);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);
-// analysis1->solveFEMProblem();
-analysis1->solvePhaseFieldProblem();
-// analysis1->solveFEMProblemNoPetsc();
-//  ********************************* NUMERICAL INTEGRATION *********************************
+analysis1->solveFEMProblem();
+// analysis1->solvePhaseFieldProblem();
+//  analysis1->solveFEMProblemNoPetsc();
+//   ********************************* NUMERICAL INTEGRATION *********************************

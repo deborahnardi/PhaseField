@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+
 #include <set>
 #include <iomanip> // Para std::setw e std::fixed
 #include "hdf5.h"
@@ -37,11 +39,11 @@ private:
     VectorXd F;
     VectorXd U;
 
-    Mat matrix, matrixPF;
+    Mat matrix, matrixPF, totalQMatrix;
     const PetscInt *JC, *IR; // ia contais the row pointer (equivalent to JC), ja contais the column index (equivalent to IR)
     PetscScalar *PA;
     double *DdkMinus1, *Ddk;
-    Vec rhs, solution, rhsPF, solutionPF;
+    Vec rhs, solution, rhsPF, solutionPF, totalVecq;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz;
     PetscInt *dirichletBC;
@@ -99,7 +101,7 @@ public:
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
     PetscErrorCode solveSystemByPSOR(Mat &A, Vec &b, Vec &x);
-    PetscErrorCode getPSORVecs(Mat &A, Vec &b);
+    PetscErrorCode getPSORVecs(Mat &A);
     void staggeredAlgorithm(int _iStep);
     PetscErrorCode updateFieldVariables(Vec &x, bool _hasConverged = true);
     /*----------------------------------------------------------------------------------
@@ -114,6 +116,7 @@ public:
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
+    PetscErrorCode assembleBetweenProcesses(Mat &A, Vec &b);
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------
@@ -124,6 +127,7 @@ public:
     void deleteFromString(std::string &fullStr, std::string removeStr);
     void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
 
+    double elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chrono::_V2::system_clock::time_point t2);
     /*----------------------------------------------------------------------------------
                                         FUNCTIONS
     ------------------------------------------------------------------------------------

@@ -12,6 +12,12 @@ FEM::FEM(const std::string _name)
 };
 FEM::~FEM() {}
 
+double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chrono::_V2::system_clock::time_point t2)
+{
+    std::chrono::duration<double> elapsed = t2 - t1;
+    return elapsed.count();
+}
+
 /*----------------------------------------------------------------------------------
                             DATA INPUT METHODS
 ------------------------------------------------------------------------------------*/
@@ -75,6 +81,7 @@ double FEM::computeNorm(const double *vec1, const double *vec2, const int &size)
 
 PetscErrorCode FEM::solveFEMProblem()
 {
+    auto start_timer = std::chrono::high_resolution_clock::now();
     int it = 0;
     double norm = 0.;
     for (auto n : nodes)
@@ -84,6 +91,7 @@ PetscErrorCode FEM::solveFEMProblem()
 
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
     {
+        PetscPrintf(PETSC_COMM_WORLD, "\n================ Step %d ================\n", iStep);
         double lambda = (1. + double(iStep)) / double(params->getNSteps());
         updateBoundaryValues(lambda);
 
@@ -96,11 +104,12 @@ PetscErrorCode FEM::solveFEMProblem()
         do
         {
             it++;
+            PetscPrintf(PETSC_COMM_WORLD, "\n------- Iteration %d -------\n", it);
             assembleProblem();
             solveLinearSystem(matrix, rhs, solution);
             updateVariables(solution);
             res = res / norm;
-
+            PetscPrintf(PETSC_COMM_WORLD, "Residual: %e\n", res);
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
         if (rank == 0)
@@ -108,6 +117,10 @@ PetscErrorCode FEM::solveFEMProblem()
     }
 
     cleanSolution(rhs, solution, matrix);
+
+    auto end_timer = std::chrono::high_resolution_clock::now();
+    PetscPrintf(PETSC_COMM_WORLD, "Total elapsed time: %f\n", elapsedTime(start_timer, end_timer));
+    return ierr;
 }
 
 PetscErrorCode FEM::cleanSolution(Vec &x, Vec &b, Mat &A)
@@ -147,13 +160,16 @@ PetscErrorCode FEM::assembleProblem()
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
 
+    // ====================== CALCULATING CONTRIBUTIONS ======================
+    auto t1 = std::chrono::high_resolution_clock::now();
     for (int Ii = Istart; Ii < Iend; Ii++)
         elements[Ii]->getContribution(matrix, rhs, negativeLoad);
 
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
+    auto t2 = std::chrono::high_resolution_clock::now();
 
-    // Assemble the matrix and the right-hand side vector
+    // ====================== ASSEMBLING MATRIX AND VECTOR ======================
     ierr = VecAssemblyBegin(rhs);
     CHKERRQ(ierr);
     ierr = VecAssemblyEnd(rhs);
@@ -162,17 +178,17 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
     ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
+    auto t3 = std::chrono::high_resolution_clock::now();
 
-    // ierr = VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
-
+    // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
+    auto t4 = std::chrono::high_resolution_clock::now();
 
-    // std::cout << "--------------------------------------------" << std::endl;
-    // std::cout << "After applying BCs: " << std::endl;
     if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
         printGlobalMatrix(matrix);
-    // std::cout << "--------------------------------------------" << std::endl;
+
+    PetscPrintf(PETSC_COMM_WORLD, "Assembling (s) %f %f %f\n", elapsedTime(t1, t2), elapsedTime(t2, t3), elapsedTime(t3, t4));
 
     return ierr;
 }
@@ -210,6 +226,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     PetscInt its;
 
     PetscReal norm1;
+    PetscReal residual_norm = 0.;
 
     ierr = VecNorm(b, NORM_2, &norm1);
     CHKERRQ(ierr);
@@ -224,13 +241,29 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     CHKERRQ(ierr);
     ierr = KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
     CHKERRQ(ierr);
+    ierr = KSPGetPC(ksp, &pc);
+    CHKERRQ(ierr);
 
-    switch (size)
+    switch (params->getSolverType())
     {
-    case 1:
-        ierr = KSPGetPC(ksp, &pc);
+    case ESuiteSparse: // Sequential
+        ierr = PCSetType(pc, PCLU);
         CHKERRQ(ierr);
-        ierr = PCSetType(pc, PCJACOBI);
+        ierr = PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK);
+        CHKERRQ(ierr);
+        break;
+    case EMumps: // Parallel
+        ierr = PCSetType(pc, PCLU);
+        CHKERRQ(ierr);
+        ierr = PCFactorSetMatSolverType(pc, MATSOLVERMUMPS);
+        CHKERRQ(ierr);
+        break;
+    case EIterative: // Parallel - faster than MUMPS, however it is harder to converge;
+        ierr = KSPSetTolerances(ksp, PETSC_DEFAULT, params->getTolEIterative(), PETSC_DEFAULT, params->getMaxIterEIterative());
+        CHKERRQ(ierr);
+        ierr = KSPSetType(ksp, KSPFGMRES);
+        CHKERRQ(ierr);
+        ierr = PCSetType(pc, PCBJACOBI); // PCBJACOBI can be modified to other preconditioners
         CHKERRQ(ierr);
         break;
     }
@@ -240,8 +273,13 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     ierr = KSPGetIterationNumber(ksp, &its); // Gets the number of iterations
     CHKERRQ(ierr);
 
-    // ierr = VecView(x, PETSC_VIEWER_STDOUT_WORLD); // Prints the solution vector
-    // CHKERRQ(ierr);
+    if (params->getSolverType() == EIterative)
+    {
+        ierr = KSPGetResidualNorm(ksp, &residual_norm);
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "EIterative(%d) residual norm: %e\n", its, (double)residual_norm);
+        CHKERRQ(ierr);
+    }
 
     ierr = KSPDestroy(&ksp);
     CHKERRQ(ierr);
@@ -291,12 +329,12 @@ void FEM::updateVariables(Vec &x, bool _hasConverged)
             }
 
     // // Print Update dof values
-    std::cout << "--------------------------------------------" << std::endl;
-    for (auto node : nodes)
-        for (auto dof : node->getDOFs())
-            if (dof->getDOFType() != D)
-                std::cout << dof->getValue() << std::endl;
+    // std::cout << "--------------------------------------------" << std::endl;
+    // for (auto node : nodes)
+    //     for (auto dof : node->getDOFs())
+    //         if (dof->getDOFType() != D)
+    //             std::cout << dof->getValue() << std::endl;
 
-    // std::cout << "Displacement values have been updated" << std::endl;
-    std::cout << "--------------------------------------------" << std::endl;
+    // // std::cout << "Displacement values have been updated" << std::endl;
+    // std::cout << "--------------------------------------------" << std::endl;
 }

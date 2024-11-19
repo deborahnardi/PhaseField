@@ -207,13 +207,6 @@ void FEM::readGeometry(const std::string &_filename)
         damageDOF->setIndex(n->getIndex());
     }
 
-    // Print damage DOFs
-    for (auto n : nodes)
-    {
-        DOF *damageDOF = n->getDOFs()[2];
-        std::cout << damageDOF->getIndex() << std::endl;
-    }
-
     // ********** BOUNDARY CONDITIONS **********
 
     while (line != "*BOUNDARY")
@@ -320,7 +313,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
     // ----------------------------------------------------------------
-    // PARTIONING PHASE FIELD DOFs
+    // PARTIONING PHASE FIELD DOFs (damage DOFs)
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
     CHKERRQ(ierr);
     ierr = VecSetSizes(x, PETSC_DECIDE, numNodes);
@@ -387,6 +380,15 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
         CHKERRQ(ierr);
     }
+
+    ierr = VecCreateSeq(PETSC_COMM_SELF, numNodes, &totalVecq);
+    CHKERRQ(ierr);
+
+    ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 3000, NULL, &totalQMatrix);
+    CHKERRQ(ierr);
+
+    ierr = MatSetFromOptions(totalQMatrix);
+    CHKERRQ(ierr);
 
     delete[] d_nnz;
     delete[] o_nnz;
