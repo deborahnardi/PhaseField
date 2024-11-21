@@ -328,6 +328,12 @@ void FEM::updateVariables(Vec &x, bool _hasConverged)
                 dof->incrementValue(value);
             }
 
+    // Erase the memory
+    delete[] localDisplacements;
+    delete[] numEachProcess;
+    delete[] globalBuffer;
+    delete[] finalDisplacements;
+
     // // Print Update dof values
     // std::cout << "--------------------------------------------" << std::endl;
     // for (auto node : nodes)

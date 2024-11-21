@@ -22,6 +22,16 @@ void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
                     o_nnz[damageDOF0->getIndex() - IstartPF]++;
             }
     }
+
+    // Total number of non-zero elements in the matrix, stores it in nzQ
+    int localNzQ = 0;
+    nzQ = 0;
+
+    for (int i = 0; i < rankLocalDOFs; i++)
+        localNzQ += d_nnz[i] + o_nnz[i];
+
+    MPI_Reduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, 0, PETSC_COMM_WORLD);
+    MPI_Allreduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, PETSC_COMM_WORLD);
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -38,6 +48,11 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
     DdkMinus1 = new double[numNodes]{}; // Damage field at the previous iteration
     Ddk = new double[numNodes]{};       // Damage field at the current iteration
+    totalMatrixQ = new double *[numNodes] {};
+    totalVecq = new double[numNodes]{};
+
+    for (int i = 0; i < numNodes; i++)
+        totalMatrixQ[i] = new double[numNodes]{};
 
     int nSteps = params->getNSteps();
 
@@ -200,7 +215,7 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
 PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 {
     assembleBetweenProcesses(A, b);
-    getPSORVecs(A);
+    getPSORVecs();
 
     double resPSOR = params->getResPSOR();
     int maxPSORIt = params->getMaxItPSOR();
@@ -246,16 +261,11 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
                     dotLDd += PA[h] * (Ddk[iRow] - DdkMinus1[iRow]);
             }
 
-            double q = 0.0;
-            ierr = VecGetValues(totalVecq, 1, &jCol, &q);
-            CHKERRQ(ierr);
-            Ddk[jCol] = DdkMinus1[jCol] - Dinv * (dotQDd + q + dotLDd);
+            Ddk[jCol] = DdkMinus1[jCol] - Dinv * (dotQDd + totalVecq[jCol] + dotLDd);
 
             if (Ddk[jCol] < 0.0)
                 Ddk[jCol] = 0.0; // Damage field must be positive
-            // PetscPrintf(PETSC_COMM_WORLD, "=========== OVER HERE 1 ===========\n");
         }
-        // PetscPrintf(PETSC_COMM_WORLD, "=========== OVER HERE 2 ===========\n");
         resPSOR = computeNorm(Ddk, DdkMinus1, numNodes);
 
     } while (resPSOR > tolPSOR && itPSOR < maxPSORIt);
@@ -273,62 +283,148 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 
 PetscErrorCode FEM::assembleBetweenProcesses(Mat &A, Vec &b)
 {
-    VecScatter ctx;
+    PetscInt startRow, endRow;
+    ierr = MatGetOwnershipRange(A, &startRow, &endRow);
+    CHKERRQ(ierr);
+    int rankLocalRows = endRow - startRow;
 
-    ierr = VecScatterCreateToAll(b, &ctx, &totalVecq);
-    CHKERRQ(ierr);
+    // Get the values from vector q and store them in the totalVecq
 
-    ierr = VecScatterBegin(ctx, b, totalVecq, INSERT_VALUES, SCATTER_FORWARD);
-    CHKERRQ(ierr);
-    ierr = VecScatterEnd(ctx, b, totalVecq, INSERT_VALUES, SCATTER_FORWARD);
-    CHKERRQ(ierr);
-    ierr = VecScatterDestroy(&ctx);
-    CHKERRQ(ierr);
+    double *localVecq = new double[rankLocalRows]{};
+    for (int i = startRow; i < endRow; i++)
+    {
+        PetscScalar value;
+        ierr = VecGetValues(b, 1, &i, &value);
+        CHKERRQ(ierr);
+        localVecq[i - startRow] = value;
+    }
 
-    ierr = MatView(A, PETSC_VIEWER_STDOUT_WORLD);
-    CHKERRQ(ierr);
+    int *numEachProcess = new int[size];
+    MPI_Allgather(&rankLocalRows, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
+
+    int *globalBuffer0 = new int[size];
+    globalBuffer0[0] = 0;
+    for (int i = 1; i < size; i++)
+        globalBuffer0[i] = globalBuffer0[i - 1] + numEachProcess[i - 1];
+
+    MPI_Gatherv(localVecq, rankLocalRows, MPI_DOUBLE, totalVecq, numEachProcess, globalBuffer0, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(totalVecq, numNodes, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+
+    // print the totalVecq
+    // PetscPrintf(PETSC_COMM_WORLD, "SIZE: %d\n", size);
+    // if (rank == 1)
+    // {
+    //     std::cout << "========== TOTAL VECTOR Q IN RANK:" << rank << "==========" << std::endl;
+    //     for (int i = 0; i < numNodes; i++)
+    //         std::cout << totalVecq[i] << " ";
+    // }
 
     // Get values from the matrix A and store them in the totalQMatrix
 
-    // PetscInt startRow, endRow;
-    // ierr = MatGetOwnershipRange(A, &startRow, &endRow);
-    // CHKERRQ(ierr);
+    // Broadcast the totalMatrixQ to all processes
+    double *totalMatrixQVecFormat = new double[numNodes * numNodes]{};
+    double *localQMatrix = new double[rankLocalRows * numNodes]{};
 
-    // for (PetscInt i = startRow; i < endRow; i++)
+    for (PetscInt i = startRow; i < endRow; i++)
+    {
+        for (int j = 0; j < numNodes; j++)
+        {
+            PetscScalar value;
+            ierr = MatGetValues(A, 1, &i, 1, &j, &value);
+            CHKERRQ(ierr);
+            localQMatrix[(i - startRow) * numNodes + j] = value;
+        }
+    }
+
+    int numIJ = rankLocalRows * numNodes;
+    MPI_Allgather(&numIJ, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
+
+    int *globalBuffer = new int[size];
+    globalBuffer[0] = 0;
+    for (int i = 1; i < size; i++)
+        globalBuffer[i] = globalBuffer[i - 1] + numEachProcess[i - 1];
+
+    MPI_Gatherv(localQMatrix, rankLocalRows * numNodes, MPI_DOUBLE, totalMatrixQVecFormat, numEachProcess, globalBuffer, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+    MPI_Bcast(totalMatrixQVecFormat, numNodes * numNodes, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+
+    // Convert the totalMatrixQVecFormat to totalMatrixQ
+    for (int i = 0; i < numNodes; i++)
+        for (int j = 0; j < numNodes; j++)
+            totalMatrixQ[i][j] = totalMatrixQVecFormat[i * numNodes + j];
+
+    // Print the totalMatrixQ
+    // if (rank == 2)
     // {
-    //     PetscInt ncols;
-    //     const PetscInt *cols;
-    //     const PetscScalar *vals;
-    //     ierr = MatGetRow(A, i, &ncols, &cols, &vals);
-    //     CHKERRQ(ierr);
-
-    //     for (PetscInt j = 0; j < ncols; j++)
+    //     std::cout << "========== TOTAL MATRIX Q IN RANK:" << rank << "==========" << std::endl;
+    //     for (int i = 0; i < numNodes; i++)
     //     {
-    //         ierr = MatSetValue(totalQMatrix, i, cols[j], vals[j], INSERT_VALUES);
-    //         CHKERRQ(ierr);
+    //         for (int j = 0; j < numNodes; j++)
+    //             std::cout << totalMatrixQ[i][j] << " ";
+    //         std::cout << std::endl;
     //     }
-
-    //     ierr = MatRestoreRow(A, i, &ncols, &cols, &vals);
-    //     CHKERRQ(ierr);
+    //     std::cout << "====================================" << std::endl;
     // }
 
-    // ierr = MatAssemblyBegin(totalQMatrix, MAT_FINAL_ASSEMBLY);
-    // CHKERRQ(ierr);
-    // ierr = MatAssemblyEnd(totalQMatrix, MAT_FINAL_ASSEMBLY);
-    // CHKERRQ(ierr);
-
-    // // Print the totalQMatrix
-
-    // ierr = MatView(totalQMatrix, PETSC_VIEWER_STDOUT_WORLD);
-    // CHKERRQ(ierr);
-
-    // PetscPrintf(PETSC_COMM_WORLD, "=========== OVER HERE 3 ===========\n");
+    // Erase the Memory
+    delete[] totalMatrixQVecFormat;
+    delete[] localQMatrix;
+    delete[] numEachProcess;
+    delete[] globalBuffer;
 
     return ierr;
 }
 
-PetscErrorCode FEM::getPSORVecs(Mat &A)
+PetscErrorCode FEM::getPSORVecs()
 {
+    // Get the matrix A in compressed column format
+
+    JC = new int[numNodes + 1]{};
+    IR = new int[nzQ]{};
+    PA = new double[nzQ]{};
+
+    int count = -1., var = 0;
+    for (int jj = 0; jj < numNodes; jj++)
+    {
+        var = 0;
+        for (int ii = 0; ii < numNodes; ii++)
+        {
+            if (totalMatrixQ[ii][jj] != 0.0)
+            {
+                count++;
+                PA[count] = totalMatrixQ[ii][jj];
+                IR[count] = ii;
+
+                if (var == 0)
+                {
+                    JC[jj] = count;
+                    var = 1;
+                }
+            }
+        }
+    }
+
+    JC[numNodes] = nzQ; // nzQ is the total number of non-zero elements in the matrix
+
+    // Print the PA, IR and JC arrays
+    std::cout << "PA array:" << std::endl;
+    if (rank == 0)
+    {
+        for (int i = 0; i < nzQ; i++)
+            std::cout << PA[i] << " ";
+    }
+
+    std::cout << std::endl;
+
+    // std::cout << "IR array:" << std::endl;
+    // for (int i = 0; i < nzQ; i++)
+    //     std::cout << IR[i] << " ";
+
+    // std::cout << std::endl;
+
+    // std::cout << "JC array:" << std::endl;
+    // for (int i = 0; i < numNodes + 1; i++)
+    //     std::cout << JC[i] << " ";
+
     /*
         Here the PA, IR and JC arrays are used to store the matrix A in compressed column format;
         PA stores the non-zero values of the matrix A;
@@ -337,35 +433,33 @@ PetscErrorCode FEM::getPSORVecs(Mat &A)
 
         CCS and CRS are the same if the matrix is symmetric;
     */
-    PetscInt nRows; // Number of rows in the matrix A
-    PetscBool done; // Flag to indicate if the matrix A has been completely processed
-    const PetscInt *localJC;
-    const PetscInt *localIR;
-    PetscScalar *localPA;
+    // PetscInt nRows; // Number of rows in the matrix A
+    // PetscBool done; // Flag to indicate if the matrix A has been completely processed
+    // const PetscInt *localJC;
+    // const PetscInt *localIR;
+    // PetscScalar *localPA;
 
-    // Get the matrix A in compressed column format
+    // // Get the matrix A in compressed column format
 
-    ierr = MatGetRowIJ(A, 0, PETSC_TRUE, PETSC_FALSE, &nRows, &JC, &IR, &done);
-    CHKERRQ(ierr);
-    localPA = new PetscScalar[JC[nRows]]; // Non-zero values of the matrix A
-    PA = new PetscScalar[JC[nRows]];      // Non-zero values of the matrix A
-    // Get the non-zero values of the matrix A
-    for (int i = 0; i < nRows; i++)
-    {
-        for (int j = JC[i]; j < JC[i + 1]; j++) // Iterate over the non-zero values
-        {
-            PetscInt col = IR[j];
-            ierr = MatGetValues(A, 1, &i, 1, &col, &PA[j]);
-            CHKERRQ(ierr);
-        }
-    }
-
-    MPI_Barrier(PETSC_COMM_WORLD);
+    // ierr = MatGetRowIJ(A, 0, PETSC_TRUE, PETSC_FALSE, &nRows, &JC, &IR, &done);
+    //  CHKERRQ(ierr);
+    //  localPA = new PetscScalar[JC[nRows]]; // Non-zero values of the matrix A
+    //  PA = new PetscScalar[JC[nRows]];      // Non-zero values of the matrix A
+    //  // Get the non-zero values of the matrix A
+    //  for (int i = 0; i < nRows; i++)
+    //  {
+    //      for (int j = JC[i]; j < JC[i + 1]; j++) // Iterate over the non-zero values
+    //      {
+    //          PetscInt col = IR[j];
+    //          ierr = MatGetValues(A, 1, &i, 1, &col, &PA[j]);
+    //          CHKERRQ(ierr);
+    //      }
+    //  }
 
     // print PA
-    PetscPrintf(PETSC_COMM_WORLD, "PA array:\n");
-    for (int i = 0; i < JC[numNodes]; i++)
-        PetscPrintf(PETSC_COMM_WORLD, "%f ", PA[i]);
+    // PetscPrintf(PETSC_COMM_WORLD, "PA array:\n");
+    // for (int i = 0; i < JC[numNodes]; i++)
+    //     PetscPrintf(PETSC_COMM_WORLD, "%f ", PA[i]);
 
     // std::cout << std::endl;
 
@@ -440,15 +534,16 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 
     // Print the damage field
     // if (_hasConverged)
-    // {
-    //     for (auto node : nodes)
+    //     if (rank == 0)
     //     {
-    //         DOF *damageDOF = node->getDOFs()[2];
-    //         // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
-    //         std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
+    //         for (auto node : nodes)
+    //         {
+    //             DOF *damageDOF = node->getDOFs()[2];
+    //             // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
+    //             std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
+    //         }
+    //         std::cout << std::endl;
     //     }
-    //     std::cout << std::endl;
-    // }
 
     return ierr;
 }

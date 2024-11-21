@@ -39,11 +39,14 @@ private:
     VectorXd F;
     VectorXd U;
 
-    Mat matrix, matrixPF, totalQMatrix;
-    const PetscInt *JC, *IR; // ia contais the row pointer (equivalent to JC), ja contais the column index (equivalent to IR)
-    PetscScalar *PA;
-    double *DdkMinus1, *Ddk;
-    Vec rhs, solution, rhsPF, solutionPF, totalVecq;
+    int nzQ = 0;
+    Mat matrix, matrixPF;
+    // const PetscInt *JC, *IR; // ia contais the row pointer (equivalent to JC), ja contais the column index (equivalent to IR)
+    // PetscScalar *PA;
+    int *JC, *IR;
+    double *PA;
+    double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
+    Vec rhs, solution, rhsPF, solutionPF;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz;
     PetscInt *dirichletBC;
@@ -101,7 +104,7 @@ public:
     PetscErrorCode assemblePhaseFieldProblem();
     void solvePhaseFieldProblem();
     PetscErrorCode solveSystemByPSOR(Mat &A, Vec &b, Vec &x);
-    PetscErrorCode getPSORVecs(Mat &A);
+    PetscErrorCode getPSORVecs();
     void staggeredAlgorithm(int _iStep);
     PetscErrorCode updateFieldVariables(Vec &x, bool _hasConverged = true);
     /*----------------------------------------------------------------------------------

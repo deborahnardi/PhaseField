@@ -381,15 +381,6 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         CHKERRQ(ierr);
     }
 
-    ierr = VecCreateSeq(PETSC_COMM_SELF, numNodes, &totalVecq);
-    CHKERRQ(ierr);
-
-    ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, 3000, NULL, &totalQMatrix);
-    CHKERRQ(ierr);
-
-    ierr = MatSetFromOptions(totalQMatrix);
-    CHKERRQ(ierr);
-
     delete[] d_nnz;
     delete[] o_nnz;
 

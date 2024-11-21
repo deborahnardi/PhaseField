@@ -12,7 +12,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
-double userNodes = 4; // 4; // 51;
+double userNodes = 4; // 51;
 
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
