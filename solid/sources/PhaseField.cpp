@@ -101,7 +101,6 @@ void FEM::staggeredAlgorithm(int _iStep)
                 previousU[i] = value;
             }
         }
-
         resStag = sqrt(normU);
         PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
@@ -272,12 +271,11 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 
     // Update the solution vector (solution vector is Delta_d)
 
-    for (int i = 0; i < numNodes; i++)
-    {
-        ierr = VecSetValues(x, 1, &i, &Ddk[i], INSERT_VALUES);
-        CHKERRQ(ierr);
-    }
-
+    // for (int i = 0; i < numNodes; i++)
+    // {
+    //     ierr = VecSetValues(x, 1, &i, &Ddk[i], INSERT_VALUES);
+    //     CHKERRQ(ierr);
+    // }
     return ierr;
 }
 
@@ -406,14 +404,14 @@ PetscErrorCode FEM::getPSORVecs()
     JC[numNodes] = nzQ; // nzQ is the total number of non-zero elements in the matrix
 
     // Print the PA, IR and JC arrays
-    std::cout << "PA array:" << std::endl;
-    if (rank == 0)
-    {
-        for (int i = 0; i < nzQ; i++)
-            std::cout << PA[i] << " ";
-    }
+    // std::cout << "PA array:" << std::endl;
+    // if (rank == 0)
+    // {
+    //     for (int i = 0; i < nzQ; i++)
+    //         std::cout << PA[i] << " ";
+    // }
 
-    std::cout << std::endl;
+    // std::cout << std::endl;
 
     // std::cout << "IR array:" << std::endl;
     // for (int i = 0; i < nzQ; i++)
@@ -480,7 +478,6 @@ PetscErrorCode FEM::getPSORVecs()
 
 PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 {
-
     /*
         getValue() returns the value of the DOF at the previous STEP; dn
         getDamageValue() returns the value of the DOF at the current iteration; delta_d^i (i-th iteration)
@@ -488,12 +485,22 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 
     if (_hasConverged)
     {
+        // for (int i = 0; i < numNodes; i++)
+        // {
+        //     DOF *damageDOF = nodes[i]->getDOFs()[2];
+        //     PetscScalar value;
+        //     ierr = VecGetValues(x, 1, &i, &value);
+        //     CHKERRQ(ierr);
+        //     damageDOF->incrementValue(value);
+        //     double convergedValue = damageDOF->getValue();
+        //     damageDOF->setValue(convergedValue);
+        //     damageDOF->setDamageValue(convergedValue);
+        // }
+
         for (int i = 0; i < numNodes; i++)
         {
             DOF *damageDOF = nodes[i]->getDOFs()[2];
-            PetscScalar value;
-            ierr = VecGetValues(x, 1, &i, &value);
-            CHKERRQ(ierr);
+            double value = Ddk[i];
             damageDOF->incrementValue(value);
             double convergedValue = damageDOF->getValue();
             damageDOF->setValue(convergedValue);
@@ -513,13 +520,23 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
     }
     else
     {
+        // for (int i = 0; i < numNodes; i++)
+        // {
+        //     DOF *damageDOF = nodes[i]->getDOFs()[2];
+        //     PetscScalar value = 0;
+        //     PetscPrintf(PETSC_COMM_WORLD, "============================ OVER HERE 1 ============================\n");
+        //     ierr = VecGetValues(x, 1, &i, &value);
+        //     CHKERRQ(ierr);
+        //     PetscPrintf(PETSC_COMM_WORLD, "============================ OVER HERE 2 ============================\n");
+        //     PetscScalar d_stag = damageDOF->getValue() + value;
+        //     damageDOF->setDamageValue(d_stag);
+        // }
+
         for (int i = 0; i < numNodes; i++)
         {
             DOF *damageDOF = nodes[i]->getDOFs()[2];
-            PetscScalar value = 0;
-            ierr = VecGetValues(x, 1, &i, &value);
-            CHKERRQ(ierr);
-            PetscScalar d_stag = damageDOF->getValue() + value;
+            double value = Ddk[i];
+            double d_stag = damageDOF->getValue() + value;
             damageDOF->setDamageValue(d_stag);
         }
 
@@ -539,7 +556,7 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
     //         for (auto node : nodes)
     //         {
     //             DOF *damageDOF = node->getDOFs()[2];
-    //             // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
+    //             std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
     //             std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
     //         }
     //         std::cout << std::endl;
