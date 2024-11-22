@@ -72,8 +72,11 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
 
         double damageValue = 0.;
-        for (PetscInt a = 0; a < numElNodes; a++)
-            damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getValue();
+        if (negativeLoad)
+            damageValue = 0.;
+        else
+            for (PetscInt a = 0; a < numElNodes; a++)
+                damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue();
 
         PetscReal dCoeff = pow(1 - damageValue, 2);
 
@@ -136,9 +139,10 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
 
 PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
 {
-    const PetscInt numNodeDOF = 2;                                            // Number of DOFs per node considering displacements only
-    PetscInt numElDOF = numElNodes;                                           // Only one DOF per node when considering only phase field
-    PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF](); // Equivalent to matrix Qlocal in the phase field problem
+    const PetscInt numNodeDOF = 2;                              // Number of DOFs per node considering displacements only
+    PetscInt numElDOF = numElNodes;                             // Only one DOF per node when considering only phase field
+    PetscReal *localQ = new PetscScalar[numElDOF * numElDOF](); // Equivalent to matrix Qlocal in the phase field problem
+    PetscReal *localRHS = new PetscScalar[numElDOF]();          // Equivalent to vector RHSlocal in the phase field problem
     PetscInt *idx = new PetscInt[numElDOF]();
     PetscScalar l0 = material->getL0();
     PetscScalar Gc = material->getGriffithCriterion();
@@ -190,6 +194,37 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
 
         PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
 
+        // ======================= FIRST DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE ========================
+        PetscScalar damageValue = 0.;
+        for (PetscInt c = 0; c < numElNodes; c++)
+            damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getDamageValue();
+
+        PetscScalar firstInt[numElNodes] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            for (PetscInt k = 0; k < 2; k++)
+                for (PetscInt l = 0; l < 2; l++)
+                    firstInt[a] += (1 - damageValue) * N[a] * (G * 0.5 * (gradU[k][l] + gradU[l][k]) * (gradU[k][l] + gradU[l][k])) * wJac;
+
+            firstInt[a] += (1 - damageValue) * N[a] * lame * divU * divU * wJac;
+        }
+
+        PetscScalar secondInt[numElNodes] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            for (PetscInt c = 0; c < numElNodes; c++)
+                for (PetscInt k = 0; k < 2; k++)
+                    secondInt[a] += Gc * (l0 * elemConnectivity[c]->getDOFs()[2]->getDamageValue() * dN_dX[a][k] * dN_dX[c][k]) * wJac;
+
+            secondInt[a] += Gc * (1 / l0 * damageValue * N[a]) * wJac;
+        }
+
+        for (PetscInt a = 0; a < numElNodes; a++)
+            localRHS[a] = -firstInt[a] + secondInt[a];
+
+        ierr = VecSetValues(rhs, numElDOF, idx, localRHS, ADD_VALUES);
+        CHKERRQ(ierr);
+        // ======================= SECOND DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE =======================
         for (PetscInt a = 0; a < numElNodes; a++)
             for (PetscInt b = 0; b < numElNodes; b++)
                 for (PetscInt k = 0; k < 2; k++)
@@ -197,7 +232,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
                     {
                         PetscInt pos = numElDOF * a + b;
                         PetscScalar value = N[a] * N[b] * (G * 0.5 * (gradU[k][l] + gradU[l][k]) * (gradU[k][l] + gradU[l][k]) + lame * divU * divU) * wJac;
-                        localStiffnessMatrix[pos] += value; // Integral 1
+                        localQ[pos] += value; // Integral 1
                     }
 
         for (PetscInt a = 0; a < numElNodes; a++)
@@ -209,12 +244,15 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
 
                 PetscInt pos = numElDOF * a + b;
                 double value = Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac;
-                localStiffnessMatrix[pos] += Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac; // Integral 2
+                localQ[pos] += Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac; // Integral 2
             }
     }
 
+    ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
+    CHKERRQ(ierr);
+
     delete[] idx;
-    delete[] localStiffnessMatrix;
+    delete[] localQ;
 
     return ierr;
 }
