@@ -40,7 +40,8 @@ int main(int argc, char **argv)
 
     // ================ Phase Field Examples =================
     // #include "examples/phaseField1D.hpp"
-#include "examples/phaseField2D.hpp"
+    //  #include "examples/phaseField2D.hpp"
+#include "examples/phaseField2Dcopy.hpp"
     PetscFinalize(); // Finalize main program
     // return ierr;
 }

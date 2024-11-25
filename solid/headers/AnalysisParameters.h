@@ -42,4 +42,5 @@ public:
     void setMaxItStaggered(const int &_maxItStaggered) { maxItStaggered = _maxItStaggered; }
     void setDeltaTime(const double &_deltaTime) { deltaTime = _deltaTime; }
     void setSolverType(const SolverType &_solverType) { solverType = _solverType; }
+    void setTolStaggered(const double &_tolStaggered) { tolStaggered = _tolStaggered; }
 };

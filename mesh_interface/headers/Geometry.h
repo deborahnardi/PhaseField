@@ -71,4 +71,9 @@ public:
     void setGlobalMeshSize(double meshMinSizeGlobal, double meshMaxSizeGlobal, double meshSizeFactorGlobal);
     // void generateInclusions();
     void writeMeshInfo();
+
+    void setRefiningFieldCurves(std::vector<Line *> lines, const int &tag);
+    void setThresholdRefinement(const double &_meshMinSize, const double &_meshMaxSize, const double &_meshDistMin, const double &_meshDistMax, const int &tagInField, const int &tag);
+    void setBoxRefinement(const double &_meshMinSize, const double &_meshMaxSize, const double &xmin, const double &xmax, const double &ymin, const double &ymax, const double &thickness_, const int &tag);
+    void setBackgroundMesh(std::vector<double> FieldsList, const int &tag);
 };

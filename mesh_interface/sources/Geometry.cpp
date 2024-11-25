@@ -175,6 +175,50 @@ void Geometry::setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _me
     gmsh::model::mesh::field::setAsBackgroundMesh(3);
 }
 
+void Geometry::setRefiningFieldCurves(std::vector<Line *> lines, const int &tag)
+{
+    std::vector<double> linesTags;
+    for (auto l : lines)
+        linesTags.push_back(l->getIndex() + 1);
+
+    // Refining the region around curves
+    gmsh::model::mesh::field::add("Distance", tag);
+    gmsh::model::mesh::field::setNumbers(tag, "CurvesList", linesTags); // List of surfaces to be refined
+    gmsh::model::mesh::field::setNumber(tag, "Sampling", 1000);         // Number of points to be sampled
+}
+
+void Geometry::setThresholdRefinement(const double &_meshMinSize, const double &_meshMaxSize, const double &_meshDistMin, const double &_meshDistMax, const int &tagInField, const int &tag)
+{
+    gmsh::model::mesh::field::add("Threshold", tag);                   // Threshold field allows to refine the mesh in a specific region
+    gmsh::model::mesh::field::setNumber(tag, "IField", tagInField);    // SizeMax -                     /------------------
+    gmsh::model::mesh::field::setNumber(tag, "SizeMin", _meshMinSize); //                              /
+    gmsh::model::mesh::field::setNumber(tag, "SizeMax", _meshMaxSize); //                             /
+    gmsh::model::mesh::field::setNumber(tag, "DistMin", _meshDistMin); //                            /
+    gmsh::model::mesh::field::setNumber(tag, "DistMax", _meshDistMax); // SizeMin -o----------------/
+                                                                       //          |                |    |
+                                                                       //        Point         DistMin  DistMax
+}
+
+void Geometry::setBoxRefinement(const double &_meshMinSize, const double &_meshMaxSize, const double &xmin, const double &xmax, const double &ymin, const double &ymax, const double &thickness_, const int &tag) // xmax, xmin, ymax, ymin -> delimit the box
+{
+    gmsh::model::mesh::field::add("Box", tag);
+    gmsh::model::mesh::field::setNumber(tag, "VIn", _meshMinSize);
+    gmsh::model::mesh::field::setNumber(tag, "VOut", _meshMaxSize);
+    gmsh::model::mesh::field::setNumber(tag, "XMin", xmin);
+    gmsh::model::mesh::field::setNumber(tag, "XMax", xmax);
+    gmsh::model::mesh::field::setNumber(tag, "YMin", ymin);
+    gmsh::model::mesh::field::setNumber(tag, "YMax", ymax);
+    gmsh::model::mesh::field::setNumber(tag, "Thickness", thickness_);
+}
+
+void Geometry::setBackgroundMesh(std::vector<double> FieldsList, const int &tag)
+{
+    gmsh::model::mesh::field::add("Min", tag);
+    gmsh::model::mesh::field::setNumbers(tag, "FieldsList", FieldsList);
+
+    gmsh::model::mesh::field::setAsBackgroundMesh(tag);
+}
+
 void Geometry::GenerateMeshAPI(const bool &showInterface)
 {
     gmsh::option::setNumber("Mesh.Algorithm", algorithm);

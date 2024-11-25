@@ -14,6 +14,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
+double dL = 0.0001;
 double elSize = 0.1 * L;
 
 // ================================ MESH GENERATION INFORMATION ================================
@@ -24,11 +25,9 @@ points.push_back(geo1->addPoint({0.0, 0.0, 0.0}, elSize));
 points.push_back(geo1->addPoint({L, 0.0, 0.0}, elSize));
 points.push_back(geo1->addPoint({L, L, 0.0}, elSize));
 points.push_back(geo1->addPoint({0.0, L, 0.0}, elSize));
-points.push_back(geo1->addPoint({0.0, L / 2 + 0.1, 0.0}, elSize));
-// points.push_back(geo1->addPoint({0.0, L / 2 + 0.0001, 0.0}, elSize));
+points.push_back(geo1->addPoint({0.0, L / 2 + dL, 0.0}, elSize));
 points.push_back(geo1->addPoint({L / 2, L / 2, 0.0}, elSize));
-// points.push_back(geo1->addPoint({0.0, L / 2 - 0.0001, 0.0}, elSize));
-points.push_back(geo1->addPoint({0.0, L / 2 - 0.1, 0.0}, elSize));
+points.push_back(geo1->addPoint({0.0, L / 2 - dL, 0.0}, elSize));
 
 lines.push_back(geo1->addLine({points[0], points[1]}));
 lines.push_back(geo1->addLine({points[1], points[2]}));
@@ -51,42 +50,43 @@ materials[0]->setL0(0.01); // Internal lenght of Phase Field model, in mm;
 
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
-double a0 = 0.05;
+double meshMinSizeGlobal = 1.e-4, meshMaxSizeGlobal = 0.1, meshSizeFactorGlobal = 1.0;
+double meshMinSize = 0.005, meshMaxSize = 0.1, meshDistMin = 0.01, meshDistMax = 0.1;
 
-double meshMinSizeIncl = 0.1 * a0 * L;
-double meshMaxSizeIncl = 1.0 * a0 * L;
-double meshDistMin = a0 * L;
-double meshDistMax = 1.2 * a0 * L;
-geo1->setGlobalMeshSize(1.e-4 * L, 1.e-1 * L, 5.);
-geo1->setSurfaceRefinement({lineLoops[0]}, meshMinSizeIncl, meshMaxSizeIncl, meshDistMin, meshDistMax);
+geo1->setGlobalMeshSize(meshMinSizeGlobal, meshMaxSizeGlobal, meshSizeFactorGlobal);
+geo1->setRefiningFieldCurves({lines[4], lines[5]}, 1); // lines 4 and 5 are the notch lines
+geo1->setThresholdRefinement(meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 1, 2);
+geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.47, 0.53, 0.05, 3);
+geo1->setBackgroundMesh({2, 3}, 4);
 
 geo1->GenerateMeshAPI(visualizeMesh);
 
 // ================================ FEM INFORMATION ================================
-// params->setDeltaTime(1);
-// params->setNSteps(80);
-// params->setSolverType(EIterative);
+params->setDeltaTime(1);
+params->setNSteps(80);
+params->setSolverType(ESuiteSparse);
 
-// // Generating the loading vector
+// Generating the loading vector
 
-// analysis1->setLoadingVector(0.004, 80);
+analysis1->setLoadingVector(0.004, 80);
 
-// auto boundaryFunction = [](const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)
-// {
-//     if (dof->getDOFType() == Y)
-//         if (coord[1] == L) // Applying load at the right end
-//         {
-//             double val = load[pseudoTime];
-//             dof->setValue(val);
-//             dof->setControlledDOF();
-//         }
-// };
-// analysis1->setBoundaryFunction(boundaryFunction);
+auto boundaryFunction = [](const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)
+{
+    if (dof->getDOFType() == Y)
+        if (coord[1] == 1) // Applying load at the right end
+        {
+            double val = load[pseudoTime];
+            dof->setValue(val);
+            dof->setControlledDOF();
+        }
+};
+analysis1->setBoundaryFunction(boundaryFunction);
 
 // //   ********************************** FEM INFORMATION **********************************
-// params->setNSteps(200);
-// params->setSolverType(EIterative);
-// analysis1->setAnalysisParameters(params);
-// analysis1->readGeometry(projectName + ".mir");
-// analysis1->setPrintMatrix(false);
+params->setSolverType(EIterative);
+params->setTolStaggered(1.e-4);
+analysis1->setAnalysisParameters(params);
+analysis1->readGeometry(projectName + ".mir");
+analysis1->setPrintMatrix(false);
 // analysis1->solveFEMProblem();
+analysis1->solvePhaseFieldProblem();

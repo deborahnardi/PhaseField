@@ -81,7 +81,7 @@ void FEM::staggeredAlgorithm(int _iStep)
     int it = 0;
     double resStag = 0.0;
     double previousU[globalDOFs.size()]{}; // Previous displacement field
-
+    double maxTol = params->getTolStaggered();
     do
     {
         it++;

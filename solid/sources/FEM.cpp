@@ -21,44 +21,49 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
 /*----------------------------------------------------------------------------------
                             DATA INPUT METHODS
 ------------------------------------------------------------------------------------*/
-// void FEM::setLoadingVector(double ubar, int nSteps)
-// {
-//     // From 0 to ubar with x variating from 0 to 19 (20 steps)
-//     double step1 = ubar / 19; // 20 points -> 19 intervals
-//     for (int i = 0; i < 20; ++i)
-//         load.push_back(step1 * i);
-
-//     double step2 = 2 * ubar / 40;
-//     for (int i = 1; i <= 40; i++) // Índices 20 a 59
-//         load.push_back(ubar - step2 * i);
-
-//     double step3 = 2 * ubar / 20;
-//     for (int i = 1; i <= 20; i++)
-//         load.push_back(-ubar + step3 * i);
-// }
-
 void FEM::setLoadingVector(double ubar, int nSteps)
 {
-    double stepSize = ubar / nSteps;
+    // From 0 to ubar with x variating from 0 to 19 (20 steps)
+    double step1 = ubar / 19; // 20 points -> 19 intervals
+    for (int i = 0; i < 20; ++i)
+        load.push_back(step1 * i);
 
-    // Load ramp
-    for (int i = 1; i <= nSteps; ++i)
-        load.push_back(stepSize * i);
+    double step2 = 2 * ubar / 40;
+    for (int i = 1; i <= 40; i++) // Índices 20 a 59
+        load.push_back(ubar - step2 * i);
 
-    // Load unloading
-    for (int i = nSteps; i >= 1; --i)
-        load.push_back(stepSize * i);
+    double step3 = 2 * ubar / 20;
+    for (int i = 1; i <= 20; i++)
+        load.push_back(-ubar + step3 * i);
 
-    // Negative load ramp
-    for (int i = 1; i <= nSteps; ++i)
-        load.push_back(-stepSize * i);
+    for (int i = 0; i < load.size(); i++)
+        std::cout << i << " " << load[i] << std::endl;
 
-    // Negative load unloading
-    for (int i = nSteps; i >= 1; --i)
-        load.push_back(-stepSize * i);
-
-    std::cout << "Loading vector size: " << load.size() << std::endl;
+    std::cout << std::endl;
 }
+
+// void FEM::setLoadingVector(double ubar, int nSteps)
+// {
+//     double stepSize = ubar / nSteps;
+
+//     // Load ramp
+//     for (int i = 1; i <= nSteps; ++i)
+//         load.push_back(stepSize * i);
+
+//     // Load unloading
+//     for (int i = nSteps; i >= 1; --i)
+//         load.push_back(stepSize * i);
+
+//     // Negative load ramp
+//     for (int i = 1; i <= nSteps; ++i)
+//         load.push_back(-stepSize * i);
+
+//     // Negative load unloading
+//     for (int i = nSteps; i >= 1; --i)
+//         load.push_back(-stepSize * i);
+
+//     std::cout << "Loading vector size: " << load.size() << std::endl;
+// }
 
 void FEM::createResultsPath()
 {
