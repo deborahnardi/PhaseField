@@ -39,8 +39,8 @@ int main(int argc, char **argv)
     // p->PETScParallelTest();
 
     // ================ Phase Field Examples =================
-#include "examples/phaseField.hpp"
-
+    // #include "examples/phaseField1D.hpp"
+#include "examples/phaseField2D.hpp"
     PetscFinalize(); // Finalize main program
     // return ierr;
 }

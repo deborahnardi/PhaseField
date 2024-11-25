@@ -112,6 +112,7 @@ void FEM::solveDisplacementField(int _iStep)
     double lambda = (1. + double(_iStep)) / double(params->getNSteps());
     updateBoundaryValues(lambda);
 
+    double entry = double(_iStep) * params->getDeltaTime();
     if (boundaryFunction)                                                // 0 is false, any non zero value is true;
         updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); //
 
@@ -437,7 +438,7 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
     //         for (auto node : nodes)
     //         {
     //             DOF *damageDOF = node->getDOFs()[2];
-    //             std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
+    //             // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
     //             std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
     //         }
     //         std::cout << std::endl;

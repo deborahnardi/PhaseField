@@ -4,11 +4,11 @@ FEM::FEM() {}
 FEM::FEM(const std::string _name)
     : name(_name)
 {
+    MPI_Comm_size(PETSC_COMM_WORLD, &size);
+    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
     setResultsPath();
     deleteResults(true);
     createResultsPath();
-    MPI_Comm_size(PETSC_COMM_WORLD, &size);
-    MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
 };
 FEM::~FEM() {}
 
@@ -21,6 +21,22 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
 /*----------------------------------------------------------------------------------
                             DATA INPUT METHODS
 ------------------------------------------------------------------------------------*/
+// void FEM::setLoadingVector(double ubar, int nSteps)
+// {
+//     // From 0 to ubar with x variating from 0 to 19 (20 steps)
+//     double step1 = ubar / 19; // 20 points -> 19 intervals
+//     for (int i = 0; i < 20; ++i)
+//         load.push_back(step1 * i);
+
+//     double step2 = 2 * ubar / 40;
+//     for (int i = 1; i <= 40; i++) // Índices 20 a 59
+//         load.push_back(ubar - step2 * i);
+
+//     double step3 = 2 * ubar / 20;
+//     for (int i = 1; i <= 20; i++)
+//         load.push_back(-ubar + step3 * i);
+// }
+
 void FEM::setLoadingVector(double ubar, int nSteps)
 {
     double stepSize = ubar / nSteps;
@@ -40,6 +56,8 @@ void FEM::setLoadingVector(double ubar, int nSteps)
     // Negative load unloading
     for (int i = nSteps; i >= 1; --i)
         load.push_back(-stepSize * i);
+
+    std::cout << "Loading vector size: " << load.size() << std::endl;
 }
 
 void FEM::createResultsPath()
