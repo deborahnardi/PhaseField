@@ -23,21 +23,36 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
 ------------------------------------------------------------------------------------*/
 void FEM::setLoadingVector(double ubar, int nSteps)
 {
+    double ubar1 = ubar;
+    double ubar2 = -ubar / 1000;
+    double ubar3 = ubar / 10;
     // From 0 to ubar with x variating from 0 to 19 (20 steps)
-    double step1 = ubar / 19; // 20 points -> 19 intervals
+    double step1 = ubar1 / 19;
     for (int i = 0; i < 20; ++i)
         load.push_back(step1 * i);
 
-    double step2 = 2 * ubar / 40;
-    for (int i = 1; i <= 40; i++) // Índices 20 a 59
-        load.push_back(ubar - step2 * i);
+    double step2 = (ubar1 - ubar2) / 39;
+    for (int i = 1; i <= 40; ++i)
+        load.push_back(ubar1 - step2 * i);
 
-    double step3 = 2 * ubar / 20;
-    for (int i = 1; i <= 20; i++)
-        load.push_back(-ubar + step3 * i);
+    double step3 = (ubar3 - ubar2) / 19;
+    for (int i = 1; i <= 20; ++i)
+        load.push_back(ubar2 + step3 * i);
 
-    for (int i = 0; i < load.size(); i++)
-        std::cout << i << " " << load[i] << std::endl;
+    // double step1 = ubar / 19; // 20 points -> 19 intervals
+    // for (int i = 0; i < 20; ++i)
+    //     load.push_back(step1 * i);
+
+    // double step2 = 2 * ubar / 40;
+    // for (int i = 1; i <= 40; i++) // Índices 20 a 59
+    //     load.push_back(ubar - step2 * i);
+
+    // double step3 = 2 * ubar / 20;
+    // for (int i = 1; i <= 20; i++)
+    //     load.push_back(-ubar + step3 * i);
+
+    // for (int i = 0; i < load.size(); i++)
+    //     std::cout << i << " " << load[i] << std::endl;
 
     std::cout << std::endl;
 }
@@ -61,8 +76,6 @@ void FEM::setLoadingVector(double ubar, int nSteps)
 //     // Negative load unloading
 //     for (int i = nSteps; i >= 1; --i)
 //         load.push_back(-stepSize * i);
-
-//     std::cout << "Loading vector size: " << load.size() << std::endl;
 // }
 
 void FEM::createResultsPath()

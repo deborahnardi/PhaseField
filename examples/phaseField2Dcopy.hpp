@@ -1,7 +1,7 @@
 std::string projectName = "phaseField2D";
 Geometry *geo1 = new Geometry(projectName);
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -14,9 +14,9 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
-double dL = 0.001;
+double dL = 0.0001;
 double elSize = 0.1 * L;
-double ubar = 0.004;
+double ubar = 0.02;
 
 // ================================ MESH GENERATION INFORMATION ================================
 geo1->setAlgorithm(DELAUNAY);
@@ -60,12 +60,13 @@ planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[1]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
 double meshMinSizeGlobal = 1.e-4, meshMaxSizeGlobal = 0.1, meshSizeFactorGlobal = 1.0;
-double meshMinSize = 0.005, meshMaxSize = 0.1, meshDistMin = 0.01, meshDistMax = 0.1;
+double meshMinSize = 0.005, meshMaxSize = 0.1, meshDistMin = 0.01, meshDistMax = 0.05;
 
 geo1->setGlobalMeshSize(meshMinSizeGlobal, meshMaxSizeGlobal, meshSizeFactorGlobal);
 geo1->setRefiningFieldCurves({lines[3], lines[8]}, 1); // lines 4 and 5 are the notch lines
 geo1->setThresholdRefinement(meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 1, 2);
-geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.47, 0.53, 0.05, 3);
+geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.48, 0.52, 0.05, 3);
+// geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.47, 0.53, 0.05, 3);
 geo1->setBackgroundMesh({2, 3}, 4);
 
 geo1->GenerateMeshAPI(visualizeMesh);
@@ -73,7 +74,7 @@ geo1->GenerateMeshAPI(visualizeMesh);
 // ================================ FEM INFORMATION ================================
 params->setDeltaTime(1);
 params->setNSteps(80);
-params->setSolverType(ESuiteSparse);
+params->setSolverType(EIterative);
 
 // Generating the loading vector
 
