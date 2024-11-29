@@ -33,7 +33,7 @@ private:
     std::vector<BoundaryElement *> bdElements;
     std::vector<DOF *> globalDOFs;
     AnalysisParameters *params;
-    bool negativeLoad = false;
+    bool negativeLoad = false, prescribedDamageField = false;
 
     MatrixXd K;
     VectorXd F;
@@ -80,9 +80,11 @@ public:
     void renumberNodesIndexes(std::vector<Node *> &_nodes);
     void createResultsPath();
     void deleteResults(bool _deleteResults);
-    void setLoadingVector(double ubar, int nSteps);
+    void setLoadingVector1(double ubar, int nSteps);
+    void setLoadingVector2(double ubar, int nSteps);
 
     std::vector<double> getLoadingVector() { return load; }
+    void setPrescribedDamageField(bool _prescribedDamageField) { prescribedDamageField = true; }
     /*----------------------------------------------------------------------------------
                                  FEM PROBLEM METHODS
     ------------------------------------------------------------------------------------
@@ -107,6 +109,7 @@ public:
     PetscErrorCode getPSORVecs();
     void staggeredAlgorithm(int _iStep);
     PetscErrorCode updateFieldVariables(Vec &x, bool _hasConverged = true);
+    PetscErrorCode updateFieldDistribution();
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@ private:
     DOFType type;
     double value = 0.; // Value is the current value of the DOF
     double vDirichlet = 0., vNeumann = 0., vDamage = 0.;
-    bool bDirichlet = false, bNeumann = false, isControlled = false;
+    bool bDirichlet = false, bNeumann = false, isControlled = false, bDamage = false;
 
 public:
     DOF();
@@ -38,4 +38,6 @@ public:
     void setNeumannValue(const double &_value) { vNeumann = _value, value = _value; }
     bool isNeumann() const { return bNeumann; }
     double getNeumannValue() const { return vNeumann; }
+
+    void setPrescribedDamage() { bDamage = true; }
 };

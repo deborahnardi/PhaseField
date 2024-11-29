@@ -3,23 +3,23 @@
 <Xdmf Version="2.0" >
 <Domain>
   <Grid>
-    <Topology TopologyType="Triangle" NumberOfElements="3916" >
-      <DataItem Format=    "HDF" NumberType="int" Dimensions="3916 3" >
+    <Topology TopologyType="Triangle" NumberOfElements="4928" >
+      <DataItem Format=    "HDF" NumberType="int" Dimensions="4928 3" >
         hdf5/FEM_phaseField2D_connectivity.h5:/connec
       </DataItem>
     </Topology>
     <Geometry GeometryType="XYZ">
-      <DataItem Format="HDF" NumberType="double" Dimensions="2093 3">
+      <DataItem Format="HDF" NumberType="double" Dimensions="2501 3">
         hdf5/FEM_phaseField2D_100004.h5:/coords
       </DataItem>
     </Geometry>
     <Attribute Name="Displacement" Center="Node" AttributeType="Vector" >
-      <DataItem Format="HDF" NumberType="double" Dimensions="2093 3">
+      <DataItem Format="HDF" NumberType="double" Dimensions="2501 3">
         hdf5/FEM_phaseField2D_100004.h5:/displacement
       </DataItem>
     </Attribute>
     <Attribute Name="Phase Field" Center="Node" AttributeType="Scalar" >
-      <DataItem Format="HDF" NumberType="double" Dimensions="2093 1">
+      <DataItem Format="HDF" NumberType="double" Dimensions="2501 1">
         hdf5/FEM_phaseField2D_100004.h5:/phasefield
       </DataItem>
     </Attribute>

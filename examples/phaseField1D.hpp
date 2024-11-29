@@ -57,7 +57,7 @@ param->setSolverType(EIterative);
 
 // Generating the loading vector
 
-analysis1->setLoadingVector(0.005, 200);
+analysis1->setLoadingVector1(0.005, 200);
 
 auto boundaryFunction = [](const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)
 {

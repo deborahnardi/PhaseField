@@ -221,7 +221,7 @@ void FEM::readGeometry(const std::string &_filename)
         std::getline(file, line);
         std::vector<std::string> result = split(line, ' ');
         int index = std::stoi(result[0]);
-        BoundaryType bdType = static_cast<BoundaryType>(std::stoi(result[1])); // 0: Dirichlet; 1: Neumann
+        BoundaryType bdType = static_cast<BoundaryType>(std::stoi(result[1])); // 0: Dirichlet; 1: Neumann, 2: Damage
         int physicalEntity = std::stoi(result[2]) - 1;
         int numAppliedBCs = (result.size() - 3) / 2;
 

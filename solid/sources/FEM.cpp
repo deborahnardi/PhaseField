@@ -21,11 +21,12 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
 /*----------------------------------------------------------------------------------
                             DATA INPUT METHODS
 ------------------------------------------------------------------------------------*/
-void FEM::setLoadingVector(double ubar, int nSteps)
+void FEM::setLoadingVector2(double ubar, int nSteps)
 {
     double ubar1 = ubar;
-    double ubar2 = -ubar / 1000;
-    double ubar3 = ubar / 10;
+    double ubar2 = -ubar; //; / 10;
+    double ubar3 = ubar;  // / 10;
+
     // From 0 to ubar with x variating from 0 to 19 (20 steps)
     double step1 = ubar1 / 19;
     for (int i = 0; i < 20; ++i)
@@ -39,44 +40,32 @@ void FEM::setLoadingVector(double ubar, int nSteps)
     for (int i = 1; i <= 20; ++i)
         load.push_back(ubar2 + step3 * i);
 
-    // double step1 = ubar / 19; // 20 points -> 19 intervals
-    // for (int i = 0; i < 20; ++i)
-    //     load.push_back(step1 * i);
-
-    // double step2 = 2 * ubar / 40;
-    // for (int i = 1; i <= 40; i++) // Índices 20 a 59
-    //     load.push_back(ubar - step2 * i);
-
-    // double step3 = 2 * ubar / 20;
-    // for (int i = 1; i <= 20; i++)
-    //     load.push_back(-ubar + step3 * i);
-
-    // for (int i = 0; i < load.size(); i++)
-    //     std::cout << i << " " << load[i] << std::endl;
+    for (int i = 0; i < load.size(); i++)
+        std::cout << i << " " << load[i] << " " << std::endl;
 
     std::cout << std::endl;
 }
 
-// void FEM::setLoadingVector(double ubar, int nSteps)
-// {
-//     double stepSize = ubar / nSteps;
+void FEM::setLoadingVector1(double ubar, int nSteps)
+{
+    double stepSize = ubar / nSteps;
 
-//     // Load ramp
-//     for (int i = 1; i <= nSteps; ++i)
-//         load.push_back(stepSize * i);
+    // Load ramp
+    for (int i = 1; i <= nSteps; ++i)
+        load.push_back(stepSize * i);
 
-//     // Load unloading
-//     for (int i = nSteps; i >= 1; --i)
-//         load.push_back(stepSize * i);
+    // Load unloading
+    for (int i = nSteps; i >= 1; --i)
+        load.push_back(stepSize * i);
 
-//     // Negative load ramp
-//     for (int i = 1; i <= nSteps; ++i)
-//         load.push_back(-stepSize * i);
+    // Negative load ramp
+    for (int i = 1; i <= nSteps; ++i)
+        load.push_back(-stepSize * i);
 
-//     // Negative load unloading
-//     for (int i = nSteps; i >= 1; --i)
-//         load.push_back(-stepSize * i);
-// }
+    // Negative load unloading
+    for (int i = nSteps; i >= 1; --i)
+        load.push_back(-stepSize * i);
+}
 
 void FEM::createResultsPath()
 {
@@ -124,6 +113,24 @@ PetscErrorCode FEM::solveFEMProblem()
         norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
 
     norm = sqrt(norm);
+
+    if (prescribedDamageField)
+    {
+
+        matrixPreAllocationPF(IstartPF, IendPF);
+        createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
+
+        DdkMinus1 = new double[numNodes]{}; // Damage field at the previous iteration
+        Ddk = new double[numNodes]{};       // Damage field at the current iteration
+        totalMatrixQ = new double *[numNodes] {};
+        totalVecq = new double[numNodes]{};
+
+        for (int i = 0; i < numNodes; i++)
+            totalMatrixQ[i] = new double[numNodes]{};
+
+        updateFieldDistribution();
+        updateFieldVariables(solutionPF);
+    }
 
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
     {

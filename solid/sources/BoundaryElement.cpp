@@ -40,6 +40,12 @@ void BoundaryElement::addCondition(BoundaryType _bdType, DOFType _type, double _
                     dof->setDirichlet();
                     dof->setDirichletValue(_value);
                 }
+                else if (_bdType == DAMAGE)
+                {
+                    dof->setPrescribedDamage();
+                    dof->setDamageValue(_value);
+                    dof->setValue(_value);
+                }
                 dofVec.push_back(dof);
             }
     conditions.push_back({_bdType, dofVec, _value}); // Each boundary element has its own conditions"

@@ -10,7 +10,8 @@ enum SolverType
 enum BoundaryType
 {
     DIRICHLET = 0,
-    NEUMANN = 1
+    NEUMANN = 1,
+    DAMAGE = 2
 };
 
 enum MeshAlgorithm

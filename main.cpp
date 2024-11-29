@@ -17,31 +17,32 @@ int main(int argc, char **argv)
 
     PetscInitialize(&argc, &argv, (char *)0, help); // Starts main program invoking PETSc
 
-    // DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
-    // #include "examples/pointerAndReference.hpp"
-    // #include "examples/Ex01Inclusions.hpp"
-    // #include "examples/square.hpp"
-    //       #include "examples/squareEllipse.hpp"
-    //       #include "examples/Ex02NumericalIntegration.hpp"
-    //          #include "examples/Ex03Truss.hpp"
-    //   #include "examples/Ex04Truss.hpp"
+// DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
+// #include "examples/pointerAndReference.hpp"
+// #include "examples/Ex01Inclusions.hpp"
+// #include "examples/square.hpp"
+//       #include "examples/squareEllipse.hpp"
+//       #include "examples/Ex02NumericalIntegration.hpp"
+//          #include "examples/Ex03Truss.hpp"
+//   #include "examples/Ex04Truss.hpp"
 
-    // =======================================
+// =======================================
 
-    // PETSC Examples
-    // PetscFunctionBeginUser; // States the beginning of a user-defined function/program
-    // PetscErrorCode ierr; // PETSc error code
-    // ierr = PetscInitialize(&argc, &argv, (char *)0, help);
-    // CHKERRQ(ierr);
+// PETSC Examples
+// PetscFunctionBeginUser; // States the beginning of a user-defined function/program
+// PetscErrorCode ierr; // PETSc error code
+// ierr = PetscInitialize(&argc, &argv, (char *)0, help);
+// CHKERRQ(ierr);
 
-    // PETScExs *p = new PETScExs();
-    //  p->PETScSequentialTest();
-    // p->PETScParallelTest();
+// PETScExs *p = new PETScExs();
+//  p->PETScSequentialTest();
+// p->PETScParallelTest();
 
-    // ================ Phase Field Examples =================
-    // #include "examples/phaseField1D.hpp"
-    //  #include "examples/phaseField2D.hpp"
-#include "examples/phaseField2Dcopy.hpp"
+// ================ Phase Field Examples =================
+// #include "examples/phaseField1D.hpp"
+//  #include "examples/phaseField2D-01.hpp"
+// #include "examples/phaseField2D-02.hpp"
+#include "examples/phaseField2D-03.hpp"
     PetscFinalize(); // Finalize main program
     // return ierr;
 }

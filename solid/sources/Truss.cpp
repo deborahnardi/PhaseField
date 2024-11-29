@@ -39,7 +39,7 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
 
     PetscScalar d0 = 0., d1 = 0.;
 
-    d0 = elemConnectivity[0]->getDOF(2)->getDamageValue();
+    d0 = elemConnectivity[0]->getDOF(2)->getDamageValue(); // d_stag = dn + delta_d
     d1 = elemConnectivity[1]->getDOF(2)->getDamageValue();
 
     PetscScalar damageValue = 0.;

@@ -33,7 +33,6 @@ void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
     MPI_Reduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, 0, PETSC_COMM_WORLD);
     MPI_Allreduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, PETSC_COMM_WORLD);
 }
-
 // --------------------------------------------------------------------------------------------------
 void FEM::solvePhaseFieldProblem() // Called by the main program
 {
@@ -53,6 +52,9 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
     for (int i = 0; i < numNodes; i++)
         totalMatrixQ[i] = new double[numNodes]{};
+
+    if (prescribedDamageField)
+        updateFieldDistribution();
 
     int nSteps = params->getNSteps();
 
@@ -142,6 +144,35 @@ PetscErrorCode FEM::solvePhaseField()
     return ierr;
 }
 
+PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed damage field is setted
+{
+    MPI_Barrier(PETSC_COMM_WORLD);
+
+    ierr = MatZeroEntries(matrixPF);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(rhsPF);
+    CHKERRQ(ierr);
+    ierr = VecZeroEntries(solutionPF);
+    CHKERRQ(ierr);
+
+    for (int Ii = Istart; Ii < Iend; Ii++)
+        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF, true);
+
+    ierr = VecAssemblyBegin(rhsPF);
+    CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(rhsPF);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+    ierr = MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY);
+    CHKERRQ(ierr);
+
+    solveSystemByPSOR(matrixPF, rhsPF, solutionPF); // Solves Ddk
+    updateFieldVariables(solutionPF, true);         // d = dn + delta_d, where dn is the damage field from the PREVIOUS STEP
+
+    return ierr;
+}
+
 PetscErrorCode FEM::assemblePhaseFieldProblem()
 {
     MPI_Barrier(PETSC_COMM_WORLD);
@@ -181,8 +212,7 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
         for (int i = 0; i < numNodes; i++)
         {
             DOF *damageDOF = nodes[i]->getDOFs()[2];
-            PetscScalar value = damageDOF->getValue();
-            // PetscScalar value = damageDOF->getDamageValue();
+            PetscScalar value = damageDOF->getValue(); // dn, converge value from the last step
             ierr = VecSetValues(Dn, 1, &i, &value, INSERT_VALUES);
             CHKERRQ(ierr);
         }
@@ -392,12 +422,18 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 
         for (int i = 0; i < numNodes; i++)
         {
+            // DOF *damageDOF = nodes[i]->getDOFs()[2];
+            // double value = Ddk[i];
+            // damageDOF->incrementValue(value);
+            // double convergedValue = damageDOF->getValue();
+            // damageDOF->setValue(convergedValue);
+            // damageDOF->setDamageValue(convergedValue);
+
             DOF *damageDOF = nodes[i]->getDOFs()[2];
-            double value = Ddk[i];
-            damageDOF->incrementValue(value);
-            double convergedValue = damageDOF->getValue();
-            damageDOF->setValue(convergedValue);
-            damageDOF->setDamageValue(convergedValue);
+            double deltaD = Ddk[i];
+            double d_stag = damageDOF->getValue() + deltaD;
+            damageDOF->setDamageValue(d_stag);
+            damageDOF->setValue(d_stag); // dn value
         }
 
         // Setting d = 1 for the nodes with d > 1
@@ -417,8 +453,8 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         for (int i = 0; i < numNodes; i++)
         {
             DOF *damageDOF = nodes[i]->getDOFs()[2];
-            double value = Ddk[i];
-            double d_stag = damageDOF->getValue() + value;
+            double deltaD = Ddk[i];
+            double d_stag = damageDOF->getValue() + deltaD;
             damageDOF->setDamageValue(d_stag);
         }
 
