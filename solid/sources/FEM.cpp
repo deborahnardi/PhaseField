@@ -24,8 +24,8 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
 void FEM::setLoadingVector2(double ubar, int nSteps)
 {
     double ubar1 = ubar;
-    double ubar2 = -ubar; //; / 10;
-    double ubar3 = ubar;  // / 10;
+    double ubar2 = -ubar / 10; //; / 10;
+    double ubar3 = ubar / 10;  // / 10;
 
     // From 0 to ubar with x variating from 0 to 19 (20 steps)
     double step1 = ubar1 / 19;

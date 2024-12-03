@@ -93,17 +93,6 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
                     }
                 }
 
-    // for (PetscInt a = 0; a < numElNodes; a++)
-    //     for (PetscInt i = 0; i < 2; i++)
-    //         for (PetscInt b = 0; b < numElNodes; b++)
-    //             for (PetscInt j = 0; j < 2; j++)
-    //             {
-    //                 double value = elemConnectivity[b]->getDOFs()[j]->getValue();
-    //                 double fi = -localStiffnessMatrix[numElDOF * (2 * a + i) + 2 * b + j] * elemConnectivity[b]->getDOF(j)->getValue();
-    //                 ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
-    //                 CHKERRQ(ierr);
-    //             }
-
     delete[] indx;
     delete[] localStiff;
 

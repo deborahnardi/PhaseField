@@ -417,21 +417,17 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         getDamageValue() returns the value of the DOF at the current iteration; delta_d^i (i-th iteration)
     */
 
+    double dtol = 0.9999999999;
+
     if (_hasConverged)
     {
 
         for (int i = 0; i < numNodes; i++)
         {
-            // DOF *damageDOF = nodes[i]->getDOFs()[2];
-            // double value = Ddk[i];
-            // damageDOF->incrementValue(value);
-            // double convergedValue = damageDOF->getValue();
-            // damageDOF->setValue(convergedValue);
-            // damageDOF->setDamageValue(convergedValue);
 
             DOF *damageDOF = nodes[i]->getDOFs()[2];
             double deltaD = Ddk[i];
-            double d_stag = damageDOF->getValue() + deltaD;
+            double d_stag = damageDOF->getValue() + deltaD; // damageDOF->getValue() = dn
             damageDOF->setDamageValue(d_stag);
             damageDOF->setValue(d_stag); // dn value
         }
@@ -440,10 +436,10 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         for (auto node : nodes)
         {
             DOF *damageDOF = node->getDOFs()[2];
-            if (damageDOF->getDamageValue() > 1.0)
+            if (damageDOF->getDamageValue() >= dtol)
             {
-                damageDOF->setDamageValue(1.0);
-                damageDOF->setValue(1.0);
+                damageDOF->setDamageValue(dtol);
+                damageDOF->setValue(dtol);
             }
         }
     }
@@ -462,8 +458,8 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         for (auto node : nodes)
         {
             DOF *damageDOF = node->getDOFs()[2];
-            if (damageDOF->getDamageValue() > 1.0)
-                damageDOF->setDamageValue(1.0);
+            if (damageDOF->getDamageValue() >= dtol)
+                damageDOF->setDamageValue(dtol);
         }
     }
 

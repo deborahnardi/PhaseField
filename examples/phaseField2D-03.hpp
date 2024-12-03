@@ -15,7 +15,7 @@ std::vector<Material *> materials;
 
 double L = 1.0;
 double elSize = 0.1 * L;
-double ubar = 2e-2;
+double ubar = 4e-3;
 
 // ================================ MESH GENERATION INFORMATION ================================
 geo1->setAlgorithm(DELAUNAY);
@@ -46,7 +46,7 @@ planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[1]}));
 
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[0], DIRICHLET, {{X, 0.0}, {Y, 0.0}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[6], DIRICHLET, {{X, 0.0}, {Y, ubar}}));
-boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DAMAGE, {{D, 1.0}}));
+boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DAMAGE, {{D, 0.9999999999}}));
 
 materials.push_back(geo1->addMaterial(210000., 0.3));
 materials[0]->setGriffithCriterion(2.7);
@@ -59,7 +59,7 @@ double meshMinSizeGlobal = 1.e-4, meshMaxSizeGlobal = 0.1, meshSizeFactorGlobal 
 double meshMinSize = 0.005, meshMaxSize = 0.1, meshDistMin = 0.01, meshDistMax = 0.05;
 
 geo1->setGlobalMeshSize(meshMinSizeGlobal, meshMaxSizeGlobal, meshSizeFactorGlobal);
-geo1->setRefiningFieldCurves({lines[3]}, 1); // lines 4 and 5 are the notch lines
+geo1->setRefiningFieldCurves({lines[3]}, 1);
 geo1->setThresholdRefinement(meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 1, 2);
 geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.48, 0.52, 0.05, 3);
 // geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.47, 0.53, 0.05, 3);
@@ -70,7 +70,7 @@ geo1->GenerateMeshAPI(visualizeMesh);
 // ================================ FEM INFORMATION ================================
 params->setDeltaTime(1);
 params->setNSteps(80);
-params->setSolverType(EIterative);
+params->setSolverType(EMumps);
 
 // Generating the loading vector
 
@@ -89,8 +89,8 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 analysis1->setBoundaryFunction(boundaryFunction);
 analysis1->setPrescribedDamageField(true);
 // //   ********************************** FEM INFORMATION **********************************
-params->setSolverType(EIterative);
-params->setTolStaggered(1.e-4);
+params->setSolverType(EMumps);
+params->setTolStaggered(1.e-3);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

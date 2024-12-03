@@ -76,7 +76,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
             damageValue = 0.;
         else
             for (PetscInt a = 0; a < numElNodes; a++)
-                damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue();
+                damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); //DamageValue -> dstag = dn + delta_d^i
 
         PetscReal dCoeff = pow(1 - damageValue, 2);
 
@@ -99,6 +99,10 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
         delete[] dN;
     }
 
+    /*
+        Applying prescribed Dirichlet boundary conditions
+    */
+
     for (PetscInt a = 0; a < numElNodes; a++)
         for (PetscInt i = 0; i < 2; i++)
             for (PetscInt b = 0; b < numElNodes; b++)
@@ -109,24 +113,6 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
                     ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
                     CHKERRQ(ierr);
                 }
-    /*
-        Applying prescribed Dirichlet boundary conditions
-    */
-
-    // for (PetscInt a = 0; a < numElNodes; a++)
-    //     for (PetscInt i = 0; i < 2; i++)
-    //         for (PetscInt b = 0; b < numElNodes; b++)
-    //             for (PetscInt j = 0; j < 2; j++)
-    //             {
-    //                 DOF *dof = elemConnectivity[b]->getDOFs()[j];
-    //                 double value = dof->getDirichletValue();
-    //                 if (value != 0)
-    //                 {
-    //                     double fi = -localStiffnessMatrix[numElDOF * (2 * a + i) + 2 * b + j] * value;
-    //                     ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
-    //                     CHKERRQ(ierr);
-    //                 }
-    //             }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
     CHKERRQ(ierr);
@@ -197,7 +183,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
         // ======================= FIRST DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE ========================
         PetscScalar damageValue = 0.;
         for (PetscInt c = 0; c < numElNodes; c++)
-            damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getValue();
+            damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getValue(); // dn
 
         PetscScalar firstInt[numElNodes] = {};
         for (PetscInt a = 0; a < numElNodes; a++)
