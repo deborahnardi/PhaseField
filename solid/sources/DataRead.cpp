@@ -169,16 +169,16 @@ void FEM::readGeometry(const std::string &_filename)
         case TRUSS_ELEMENT:
             numElNodes = 2;
             material = materials[physicalEntities[physicalEntity].material];
-            elements.push_back(new Truss(elements.size(), elemDim, connectivity, material, physicalEntity, value));
+            elements.push_back(new Truss(elements.size(), elemDim, connectivity, material, physicalEntity, value, params));
             break;
         case SOLID_ELEMENT:
             numElNodes = 3; // 3-node triangle considered so far
             material = materials[physicalEntities[physicalEntity].material];
-            elements.push_back(new Solid2D(elements.size(), elemDim, connectivity, material, physicalEntity));
+            elements.push_back(new Solid2D(elements.size(), elemDim, connectivity, material, physicalEntity, params));
             break;
         default:
             material = materials[physicalEntities[physicalEntity].material];
-            bdElements.push_back(new BoundaryElement(bdElements.size(), elemDim, connectivity, material, physicalEntity));
+            bdElements.push_back(new BoundaryElement(bdElements.size(), elemDim, connectivity, material, physicalEntity, params));
             break;
         }
     }
@@ -383,6 +383,12 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
 
     delete[] d_nnz;
     delete[] o_nnz;
+
+    if (params->getCalculateReactionForces())
+    {
+        ierr = VecDuplicate(b, &nodalForces);
+        CHKERRQ(ierr);
+    }
 
     return ierr;
 }

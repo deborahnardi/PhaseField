@@ -1,8 +1,8 @@
 #include "../headers/Element.h"
 
 Solid2D::Solid2D() {}
-Solid2D::Solid2D(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity)
-    : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity)
+Solid2D::Solid2D(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, AnalysisParameters *_params)
+    : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity, _params)
 {
     for (auto n : _elemConnectivity)
     {
@@ -76,7 +76,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
             damageValue = 0.;
         else
             for (PetscInt a = 0; a < numElNodes; a++)
-                damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); //DamageValue -> dstag = dn + delta_d^i
+                damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
 
         PetscReal dCoeff = pow(1 - damageValue, 2);
 

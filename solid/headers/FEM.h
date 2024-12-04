@@ -24,36 +24,30 @@ class FEM
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size;
-    std::string name, filename, resultsPath;
     double *finalDisplacements, norm = 0., res = 0.;
+    std::string name, filename, resultsPath;
     std::vector<std::set<int>> nodeNeighbours;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
     std::vector<BoundaryElement *> bdElements;
     std::vector<DOF *> globalDOFs;
+    std::vector<double> load;
     AnalysisParameters *params;
-    bool negativeLoad = false, prescribedDamageField = false;
+    bool negativeLoad = false, prescribedDamageField = false, showMatrix = false;
+
+    Mat matrix, matrixPF, matrixCopy;
+    Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
+    PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
+    PetscInt *d_nnz, *o_nnz, *dirichletBC;
+    PetscErrorCode ierr;
+    int *JC, *IR, nzQ = 0;
+    double *PA;
+    double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
 
     MatrixXd K;
     VectorXd F;
     VectorXd U;
-
-    int nzQ = 0;
-    Mat matrix, matrixPF;
-    // const PetscInt *JC, *IR; // ia contais the row pointer (equivalent to JC), ja contais the column index (equivalent to IR)
-    // PetscScalar *PA;
-    int *JC, *IR;
-    double *PA;
-    double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
-    Vec rhs, solution, rhsPF, solutionPF;
-    PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
-    PetscInt *d_nnz, *o_nnz;
-    PetscInt *dirichletBC;
-    PetscErrorCode ierr;
-    bool showMatrix = false;
-
-    std::vector<double> load;
 
 public:
     FEM();
@@ -95,6 +89,7 @@ public:
     void assembleProblemNoPetsc();
     void setBoundaryConditionsNoPetsc();
     void solveLinearSystemNoPetsc();
+    PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods

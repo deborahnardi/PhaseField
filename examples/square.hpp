@@ -1,7 +1,7 @@
 std::string projectName = "square";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = false;
+bool visualizeMesh = true;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -13,7 +13,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 AnalysisParameters *params = new AnalysisParameters();
 
-double L = 1.0;
+double L = 5.0;
 
 geo1->setAlgorithm(DELAUNAY);
 geo1->setDimension(3);
@@ -37,7 +37,7 @@ planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[0]}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DIRICHLET, {{X, 0.0}, {Y, 0.0}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[1], DIRICHLET, {{X, 1.0}, {Y, 0.0}}));
 
-materials.push_back(geo1->addMaterial(1000., 0.2));
+materials.push_back(geo1->addMaterial(1000., 0.0));
 
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
@@ -46,20 +46,22 @@ planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 geo1->GenerateMeshAPI(visualizeMesh);
 params->setDeltaTime(0.1);
 // Function is only created here
-auto boundaryFunction = [](const std::vector<double> &coord, const double &pseudoTime, DOF *dof)
+auto boundaryFunction = [](const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)
 {
     if (dof->getDOFType() == X)
-        if (coord[0] == 1)
+        if (coord[0] == 5)
         {
             double val = 0.1 * sin(pseudoTime);
+            // double val = 0.1;
             dof->setValue(val);
+            dof->setControlledDOF();
         }
 };
-
-// analysis1->setBoundaryFunction(boundaryFunction);
+analysis1->setBoundaryFunction(boundaryFunction);
 //   ********************************** FEM INFORMATION **********************************
-params->setNSteps(999);
+params->setNSteps(10);
 params->setSolverType(EIterative);
+params->calculateReactionForces(true);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

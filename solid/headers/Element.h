@@ -6,6 +6,7 @@
 #include "ShapeFunction.h"
 #include "Quadrature.h"
 #include "../../enumclass.hpp"
+#include "AnalysisParameters.h"
 
 class Element
 {
@@ -19,10 +20,11 @@ protected:
     double **coords, *weights;
     MatrixXd K, localStiff;
     PetscErrorCode ierr;
+    AnalysisParameters *params;
 
 public:
     Element();
-    Element(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
+    Element(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, AnalysisParameters *_params);
     ~Element();
 
     int getIndex() const { return index; }
@@ -61,7 +63,7 @@ private:
 
 public:
     Truss();
-    Truss(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, const double &area_);
+    Truss(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, const double &area_, AnalysisParameters *_params);
     ~Truss();
 
     int getLength() const { return length; }
@@ -96,7 +98,7 @@ private:
 
 public:
     Solid2D();
-    Solid2D(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
+    Solid2D(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, AnalysisParameters *_params);
     ~Solid2D();
 
     double getArea() const { return area; }

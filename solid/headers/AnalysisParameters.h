@@ -16,6 +16,7 @@ private:
     double tolEIterative = 1.e-8;
     std::vector<double> dispByStep;
     SolverType solverType = EMumps;
+    bool calcReactionForces = false;
 
 public:
     AnalysisParameters();
@@ -34,6 +35,7 @@ public:
     SolverType getSolverType() const { return solverType; }
     int getMaxIterEIterative() const { return maxIterEIterative; }
     double getTolEIterative() const { return tolEIterative; }
+    bool getCalculateReactionForces() const { return calcReactionForces; }
 
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxNewtonRaphsonIt(const int &_maxItNR) { maxItNR = _maxItNR; }
@@ -43,4 +45,6 @@ public:
     void setDeltaTime(const double &_deltaTime) { deltaTime = _deltaTime; }
     void setSolverType(const SolverType &_solverType) { solverType = _solverType; }
     void setTolStaggered(const double &_tolStaggered) { tolStaggered = _tolStaggered; }
+    void setCalculateReactionForces(const bool &_calcReactionForces) { calcReactionForces = _calcReactionForces; }
+    void calculateReactionForces(const bool &_calcReactionForces) { calcReactionForces = _calcReactionForces; }
 };

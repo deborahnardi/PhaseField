@@ -6,6 +6,7 @@
 #include "ShapeFunction.h"
 #include "Quadrature.h"
 #include "../../enumclass.hpp"
+#include "AnalysisParameters.h"
 
 class BoundaryElement
 {
@@ -16,6 +17,7 @@ private:
     ShapeFunction *sF;
     Quadrature *q;
     PetscErrorCode ierr;
+    AnalysisParameters *params;
 
     struct BoundaryCondition
     {
@@ -28,7 +30,7 @@ private:
 
 public:
     BoundaryElement();
-    BoundaryElement(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity);
+    BoundaryElement(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, AnalysisParameters *_params);
     ~BoundaryElement();
 
     int getIndex() const { return index; }

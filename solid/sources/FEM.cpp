@@ -24,24 +24,31 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
 void FEM::setLoadingVector2(double ubar, int nSteps)
 {
     double ubar1 = ubar;
-    double ubar2 = -ubar / 10; //; / 10;
-    double ubar3 = ubar / 10;  // / 10;
+    double ubar2 = -ubar; //; / 10;
+    double ubar3 = ubar;  // / 10;
+
+    double totalLoad = 0;
 
     // From 0 to ubar with x variating from 0 to 19 (20 steps)
-    double step1 = ubar1 / 19;
     for (int i = 0; i < 20; ++i)
-        load.push_back(step1 * i);
+        load.push_back(ubar * i);
 
-    double step2 = (ubar1 - ubar2) / 39;
-    for (int i = 1; i <= 40; ++i)
-        load.push_back(ubar1 - step2 * i);
+    for (int i = 20; i < 60; ++i)
+        load.push_back(ubar * (40 - i));
 
-    double step3 = (ubar3 - ubar2) / 19;
-    for (int i = 1; i <= 20; ++i)
-        load.push_back(ubar2 + step3 * i);
+    for (int i = 60; i < 80; ++i)
+        load.push_back(ubar * (i - 80));
 
-    for (int i = 0; i < load.size(); i++)
-        std::cout << i << " " << load[i] << " " << std::endl;
+    // double step2 = (ubar1 - ubar2) / 39;
+    // for (int i = 1; i <= 40; ++i)
+    //     load.push_back(ubar1 - step2 * i);
+
+    // double step3 = (ubar3 - ubar2) / 19;
+    // for (int i = 1; i <= 20; ++i)
+    //     load.push_back(ubar2 + step3 * i);
+
+    // for (int i = 0; i < load.size(); i++)
+    //     std::cout << i << " " << load[i] << " " << std::endl;
 
     std::cout << std::endl;
 }
@@ -116,7 +123,7 @@ PetscErrorCode FEM::solveFEMProblem()
 
     if (prescribedDamageField)
     {
-
+        params->setCalculateReactionForces(false);
         matrixPreAllocationPF(IstartPF, IendPF);
         createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
 
@@ -130,6 +137,7 @@ PetscErrorCode FEM::solveFEMProblem()
 
         updateFieldDistribution();
         updateFieldVariables(solutionPF);
+        params->setCalculateReactionForces(true);
     }
 
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
@@ -156,7 +164,11 @@ PetscErrorCode FEM::solveFEMProblem()
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
         if (rank == 0)
+        {
             showResults(iStep);
+            if (params->getCalculateReactionForces())
+                computeReactionForces();
+        }
     }
 
     cleanSolution(rhs, solution, matrix);
@@ -202,6 +214,8 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
+    ierr = VecZeroEntries(nodalForces);
+    CHKERRQ(ierr);
 
     // ====================== CALCULATING CONTRIBUTIONS ======================
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -210,8 +224,8 @@ PetscErrorCode FEM::assembleProblem()
 
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
-    auto t2 = std::chrono::high_resolution_clock::now();
 
+    auto t2 = std::chrono::high_resolution_clock::now();
     // ====================== ASSEMBLING MATRIX AND VECTOR ======================
     ierr = VecAssemblyBegin(rhs);
     CHKERRQ(ierr);
@@ -221,8 +235,26 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
     ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
-    auto t3 = std::chrono::high_resolution_clock::now();
+    ierr = VecAssemblyBegin(nodalForces);
+    CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(nodalForces);
+    CHKERRQ(ierr);
 
+    if (params->getCalculateReactionForces())
+    {
+        for (auto dof : globalDOFs)
+            if (dof->getDOFType() != D)
+            {
+                PetscScalar value = 0.;
+                PetscInt idx = dof->getIndex();
+                ierr = VecGetValues(rhs, 1, &idx, &value);
+                CHKERRQ(ierr);
+                ierr = VecSetValues(nodalForces, 1, &idx, &value, INSERT_VALUES);
+                CHKERRQ(ierr);
+            }
+    }
+
+    auto t3 = std::chrono::high_resolution_clock::now();
     // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);
@@ -376,14 +408,35 @@ void FEM::updateVariables(Vec &x, bool _hasConverged)
     delete[] numEachProcess;
     delete[] globalBuffer;
     delete[] finalDisplacements;
+}
 
-    // // Print Update dof values
-    // std::cout << "--------------------------------------------" << std::endl;
-    // for (auto node : nodes)
-    //     for (auto dof : node->getDOFs())
-    //         if (dof->getDOFType() != D)
-    //             std::cout << dof->getValue() << std::endl;
+PetscErrorCode FEM::computeReactionForces()
+{
+    int count = 0;
+    double sumDisp = 0.;
+    double sumForces = 0.;
 
-    // // std::cout << "Displacement values have been updated" << std::endl;
-    // std::cout << "--------------------------------------------" << std::endl;
+    for (auto dof : globalDOFs)
+        if (dof->isControlledDOF())
+            if (dof->getDOFType() != D)
+            {
+                // Print in a txt file force vs displacement
+                PetscInt idx = dof->getIndex();
+                PetscScalar value;
+                ierr = VecGetValues(nodalForces, 1, &idx, &value);
+                CHKERRQ(ierr);
+                sumDisp += dof->getValue();
+                sumForces -= value;
+                count++;
+            }
+
+    if (count != 0)
+        sumDisp /= count;
+
+    std::ofstream file;
+    file.open(resultsPath + "results/force_displacement.txt", std::ios::app);
+    file << sumDisp << " " << sumForces << std::endl;
+    file.close();
+
+    return ierr;
 }

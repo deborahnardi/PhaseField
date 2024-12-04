@@ -43,7 +43,10 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     norm = sqrt(norm);
 
     matrixPreAllocationPF(IstartPF, IendPF);
+
+    params->setCalculateReactionForces(false);
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
+    params->setCalculateReactionForces(true);
 
     DdkMinus1 = new double[numNodes]{}; // Damage field at the previous iteration
     Ddk = new double[numNodes]{};       // Damage field at the current iteration
@@ -69,7 +72,11 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
         updateFieldVariables(solutionPF);
 
         if (rank == 0)
-            showResults(iStep); // Paraview
+        {
+            showResults(iStep);
+            if (params->getCalculateReactionForces())
+                computeReactionForces();
+        }
     }
 
     cleanSolution(rhs, solution, matrix);

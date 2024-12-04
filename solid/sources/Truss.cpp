@@ -1,8 +1,8 @@
 #include "../headers/Element.h"
 
 Truss::Truss() {}
-Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, const double &area_)
-    : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity), area(area_)
+Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Node *> &_elemConnectivity, Material *_material, const int &_physicalEntity, const double &area_, AnalysisParameters *_params)
+    : Element(_index, _elemDimension, _elemConnectivity, _material, _physicalEntity, _params), area(area_)
 {
     Node *_node1 = elemConnectivity[0];
     Node *_node2 = elemConnectivity[1];
@@ -23,6 +23,11 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
         else if (_node2->getY() - _node1->getY() < 0) // If the element is pointing downwards
             theta = -M_PI / 2;
     }
+
+    sF = new S2ShapeFunction();
+    q = new LineQuadrature(numHammerPoints);
+    coords = q->getQuadratureCoordinates();
+    weights = q->getQuadratureWeights();
 }
 Truss::~Truss() {}
 
@@ -30,6 +35,89 @@ Truss::~Truss() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
+// PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
+// {
+//     PetscInt numElDOF = 4;
+//     PetscReal *localStiff = new PetscScalar[numElDOF * numElDOF]();
+//     PetscReal *localRHS = new PetscScalar[numElDOF]();
+//     PetscInt *idx = new PetscInt[numElDOF]();
+
+//     const double G = material->getShearModulus();
+//     const double lame = material->getLameConstant();
+//     const double l0 = material->getL0();
+
+//     PetscInt count = 0;
+//     for (auto node : elemConnectivity)
+//         for (auto dof : node->getDOFs())
+//             if (dof->getDOFType() != D)
+//                 idx[count++] = dof->getIndex();
+
+//     for (int ih = 0; ih < numHammerPoints; ih++)
+//     {
+//         double *xi = coords[ih];
+//         double weight = weights[ih];
+
+//         double *N = sF->evaluateShapeFunction(xi);
+//         double **dN = sF->getShapeFunctionDerivative(xi);
+
+//         double tangent[2] = {};
+//         for (int a = 0; a < 2; a++)
+//             for (int i = 0; i < 2; i++) // when i = 0, it is the x component; when i = 1, it is the y component
+//                 tangent[i] += dN[a][0] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+//         double jac = sqrt(tangent[0] * tangent[0] + tangent[1] * tangent[1]);
+//         double wJac = weight * jac;
+
+//         PetscReal dX_dXsiInv[2] = {};
+//         dX_dXsiInv[0] = tangent[0] / jac;
+//         dX_dXsiInv[1] = tangent[1] / jac;
+
+//         PetscReal dN_dX[2] = {};
+//         for (int a = 0; a < 2; a++)
+//             for (int i = 0; i < 2; i++)
+//                 dN_dX[a] += dN[a][0] * dX_dXsiInv[i];
+
+//         double damageValue = 0.;
+//         if (negativeLoad)
+//             damageValue = 0.;
+//         else
+//             for (PetscInt a = 0; a < numElNodes; a++)
+//                 damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
+
+//         PetscReal dCoeff = pow(1 - damageValue, 2);
+
+//         for (int a = 0; a < numElNodes; a++)
+//             for (int i = 0; i < 2; i++)
+//                 for (int b = 0; b < numElNodes; b++)
+//                     for (int j = 0; j < 2; j++)
+//                     {
+//                         PetscInt pos = numElDOF * (2 * a + i) + 2 * b + j;
+//                         PetscReal value +=
+//                     }
+
+//         /*
+//             Applying prescribed Dirichlet boundary conditions
+//         */
+
+//         for (PetscInt a = 0; a < numElNodes; a++)
+//             for (PetscInt i = 0; i < 2; i++)
+//                 for (PetscInt b = 0; b < numElNodes; b++)
+//                     for (PetscInt j = 0; j < 2; j++)
+//                     {
+//                         DOF *dof = elemConnectivity[b]->getDOFs()[j];
+//                         double value = dof->getValue();
+
+//                         if (value != 0)
+//                         {
+//                             double fi = -localStiff[numElDOF * (2 * a + i) + 2 * b + j] * value;
+//                             ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
+//                             CHKERRQ(ierr);
+//                         }
+//                     }
+//     }
+
+//     return ierr;
+// }
 PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
 {
     PetscInt numElDOF = 4;
