@@ -64,3 +64,20 @@ public:
     double getAngle2() const { return angle2; }
     std::vector<double> getXAxis() const { return xAxis; }
 };
+
+class EllipseArc : public Wire
+{
+private:
+    int startTag, centerTag, majorTag, endTag;
+
+public:
+    EllipseArc();
+    EllipseArc(const int _startTag, const int _centerTag, const int _majorTag, const int _endTag, const int _index);
+    ~EllipseArc();
+
+    // Getters
+    double getStartTag() const { return startTag; }
+    double getCenterTag() const { return centerTag; }
+    double getMajorTag() const { return majorTag; }
+    double getEndTag() const { return endTag; }
+};

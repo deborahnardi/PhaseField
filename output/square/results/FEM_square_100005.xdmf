@@ -23,6 +23,11 @@
         hdf5/FEM_square_100005.h5:/phasefield
       </DataItem>
     </Attribute>
+    <Attribute Name="Reaction Force" Center="Node" AttributeType="Vector" >
+      <DataItem Format="HDF" NumberType="double" Dimensions="13 3">
+        hdf5/FEM_square_100005.h5:/reactionforce
+      </DataItem>
+    </Attribute>
   </Grid>
 </Domain>
 </Xdmf>

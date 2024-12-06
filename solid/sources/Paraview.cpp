@@ -188,6 +188,15 @@ void FEM::showResults(int _nStep)
 
         writeInHDF5(file, output_v, error, dataset, dataspace, "Phase Field", "Scalar", scalar, scalarDims, r1);
 
+        for (auto n : discritizedNodes)
+        {
+            int index = n->getIndex();
+            for (int i = 0; i < 2; i++)
+                vector[3 * index + i] = n->getDOF(i)->getReactionForce();
+            vector[3 * index + 2] = 0.;
+        }
+        writeInHDF5(file, output_v, error, dataset, dataspace, "Reaction Force", "Vector", vector, vectorDims, r1);
+
         output_v << "  </Grid>" << std::endl
                  << "</Domain>" << std::endl
                  << "</Xdmf>" << std::endl;

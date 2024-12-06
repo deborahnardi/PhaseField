@@ -59,7 +59,7 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 };
 analysis1->setBoundaryFunction(boundaryFunction);
 //   ********************************** FEM INFORMATION **********************************
-params->setNSteps(10);
+params->setNSteps(100);
 params->setSolverType(EIterative);
 params->calculateReactionForces(true);
 analysis1->setAnalysisParameters(params);

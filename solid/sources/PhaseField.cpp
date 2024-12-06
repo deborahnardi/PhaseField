@@ -73,9 +73,9 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
         if (rank == 0)
         {
-            showResults(iStep);
             if (params->getCalculateReactionForces())
                 computeReactionForces();
+            showResults(iStep);
         }
     }
 

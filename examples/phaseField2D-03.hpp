@@ -1,4 +1,11 @@
-std::string projectName = "phaseField2D-03"; // IMPOSED DAMAGE FIELD LINE
+/*
+            ======================================== MODE I CRACK PROPAGATION ============================================
+            DECEMBER 5th, 2024
+            DAMAGE LINE IMPOSED AS BOUNDARY CONDITION
+            THE EXAMPLE IS AVALIABLE IN Ferreira, Marengo and Perego 2024 (https://doi.org/10.1016/j.cma.2024.117328)
+            ==============================================================================================================
+*/
+std::string projectName = "phaseField2D-03";
 Geometry *geo1 = new Geometry(projectName);
 FEM *analysis1 = new FEM(projectName);
 bool visualizeMesh = true;

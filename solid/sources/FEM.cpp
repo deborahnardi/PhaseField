@@ -165,9 +165,9 @@ PetscErrorCode FEM::solveFEMProblem()
 
         if (rank == 0)
         {
-            showResults(iStep);
             if (params->getCalculateReactionForces())
                 computeReactionForces();
+            showResults(iStep);
         }
     }
 
@@ -428,6 +428,7 @@ PetscErrorCode FEM::computeReactionForces()
                 sumDisp += dof->getValue();
                 sumForces -= value;
                 count++;
+                dof->setReactionForce(-value);
             }
 
     if (count != 0)

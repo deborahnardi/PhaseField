@@ -59,8 +59,14 @@ LineLoop *Geometry::addLineLoop(const std::vector<Line *> &_lines)
 
 Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::vector<double> center)
 {
-    // Generating coordinates for the ellipse
-    double rad = (_alpha + 90.) * M_PI / 180.;             // Converting to radians
+    /*
+        _a : Major axis
+        _b : Minor axis
+        _alpha : Angle of the major axis with the x-axis
+        center : Center of the ellipse
+    */
+
+    double rad = (_alpha + 90.) * M_PI / 180.;      // Converting to radians
     std::vector<double> xAxis = {cos(rad), sin(rad), 0.0}; // Positive anticlockwise
     double baux = _a * _b;
 

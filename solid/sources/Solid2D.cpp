@@ -72,13 +72,30 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
 
         double damageValue = 0.;
-        if (negativeLoad)
-            damageValue = 0.;
-        else
-            for (PetscInt a = 0; a < numElNodes; a++)
-                damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
+
+        // if (negativeLoad)
+        //     damageValue = 0.;
+        // else
+        for (PetscInt a = 0; a < numElNodes; a++)
+            damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
 
         PetscReal dCoeff = pow(1 - damageValue, 2);
+
+        if (dCoeff > 1)
+        {
+            std::cout << " ================= ATENTION =================" << std::endl;
+            std::cout << "Damage value is greater than 1:" << dCoeff << std::endl;
+            std::cout << " ==========================================" << std::endl;
+            // std::exit(EXIT_FAILURE);
+        }
+
+        if (damageValue < 0)
+        {
+            std::cout << " ================= ATENTION =================" << std::endl;
+            std::cout << "Damage value is negative:" << dCoeff << std::endl;
+            std::cout << " ==========================================" << std::endl;
+            // std::exit(EXIT_FAILURE);
+        }
 
         for (PetscInt a = 0; a < numElNodes; a++)
 
