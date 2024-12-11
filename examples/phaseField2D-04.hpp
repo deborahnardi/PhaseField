@@ -169,5 +169,5 @@ params->calculateReactionForces(true);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);
-analysis1->solveFEMProblem();
-//  analysis1->solvePhaseFieldProblem();
+// analysis1->solveFEMProblem();
+analysis1->solvePhaseFieldProblem();
