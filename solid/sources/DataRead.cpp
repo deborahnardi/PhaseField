@@ -158,8 +158,8 @@ void FEM::readGeometry(const std::string &_filename)
 
         Material *material = nullptr;
 
-        for (auto node : connectivity)
-            node->setIsDiscritized();
+        // for (auto node : connectivity)
+        //     node->setIsDiscritized();
 
         double value = physicalEntities[physicalEntity].value;
         int elemDim = physicalEntities[physicalEntity].dimension;
@@ -184,8 +184,16 @@ void FEM::readGeometry(const std::string &_filename)
     }
 
     // ********** SETTING DOFS **********
-
+    int idx = 0;
     for (auto n : nodes)
+        if (n->getIsDiscritized())
+        {
+            discritizedNodes.push_back(n);
+            n->setIndex(idx);
+            idx++;
+        }
+
+    for (auto n : discritizedNodes)
         for (auto dof : n->getDOFs())
         {
             if (dof->getDOFType() != D)
@@ -195,13 +203,11 @@ void FEM::readGeometry(const std::string &_filename)
             }
         }
 
+    numNodes = discritizedNodes.size();
     numElements = elements.size();
     nDOFs = globalDOFs.size(); // Only displacement DOFs are considered
-    for (auto n : nodes)
-        if (n->getIsDiscritized())
-            discritizedNodes.push_back(n);
 
-    for (auto n : nodes)
+    for (auto n : discritizedNodes)
     {
         DOF *damageDOF = n->getDOFs()[2];
         damageDOF->setIndex(n->getIndex());
@@ -257,7 +263,8 @@ void FEM::readGeometry(const std::string &_filename)
 
 void FEM::findNeighbours()
 {
-    nodeNeighbours.resize(numNodes);
+    int numNodesAux = nodes.size();
+    nodeNeighbours.resize(numNodesAux);
 
     /*
         std::vector<std::set<int>> nodeNeighbours declared in the private section of the class FEM;
@@ -335,12 +342,12 @@ PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
     d_nnz = new PetscInt[rankLocalDOFs]();
     o_nnz = new PetscInt[rankLocalDOFs]();
 
-    for (auto node1 : nodes)
+    for (auto node1 : discritizedNodes)
         for (auto dof1 : node1->getDOFs()) // Rows of the matrix
             if (dof1->getDOFType() != D)
                 if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
                     for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
-                        for (auto dof2 : nodes[node2]->getDOFs())
+                        for (auto dof2 : discritizedNodes[node2]->getDOFs())
                             if (dof2->getDOFType() != D)
                                 if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
                                     d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index

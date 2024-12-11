@@ -6,13 +6,13 @@ BoundaryElement::BoundaryElement(const int &_index, const int &_elemDimension, c
 {
     numBdNodes = _elemConnectivity.size();
 
-    for (auto n : _elemConnectivity)
-    {
-        n->setIsDiscritized();
-        n->addDOF(new DOF(X, 0.));
-        n->addDOF(new DOF(Y, 0.));
-        n->addDOF(new DOF(D, 0.));
-    }
+    // for (auto n : _elemConnectivity)
+    // {
+    //     // n->setIsDiscritized();
+    //     n->addDOF(new DOF(X, 0.));
+    //     n->addDOF(new DOF(Y, 0.));
+    //     n->addDOF(new DOF(D, 0.));
+    // }
 
     if (elemDimension == 1)
     {

@@ -86,7 +86,7 @@ analysis1->setLoadingVector2(ubar, 80);
 auto boundaryFunction = [](const std::vector<double> &coord, const double &pseudoTime, DOF *dof, const std::vector<double> &load)
 {
     if (dof->getDOFType() == Y)
-        if (coord[1] == 1) // Applying load at the right end
+        if (coord[1] == 1)
         {
             double val = load[pseudoTime];
             dof->setValue(val);

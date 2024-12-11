@@ -9,7 +9,7 @@ void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
 
     // In the phase-field problem, there is only one DOF
 
-    for (auto node : nodes)
+    for (auto node : discritizedNodes)
     {
         DOF *damageDOF0 = node->getDOFs()[2];
         if (damageDOF0->getIndex() >= IstartPF && damageDOF0->getIndex() < IendPF)
@@ -38,7 +38,7 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 {
     auto start_timer = std::chrono::high_resolution_clock::now();
 
-    for (auto n : nodes)
+    for (auto n : discritizedNodes)
         norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
     norm = sqrt(norm);
 
@@ -125,7 +125,7 @@ void FEM::solveDisplacementField(int _iStep)
     if (boundaryFunction)                                                // 0 is false, any non zero value is true;
         updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); //
 
-    for (auto node : nodes)
+    for (auto node : discritizedNodes)
     {
         for (auto dof : node->getDOFs())
             if (dof->isControlledDOF() && dof->getValue() < 0.)
@@ -218,7 +218,7 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
 
         for (int i = 0; i < numNodes; i++)
         {
-            DOF *damageDOF = nodes[i]->getDOFs()[2];
+            DOF *damageDOF = discritizedNodes[i]->getDOFs()[2];
             PetscScalar value = damageDOF->getValue(); // dn, converge value from the last step
             ierr = VecSetValues(Dn, 1, &i, &value, INSERT_VALUES);
             CHKERRQ(ierr);
@@ -432,7 +432,7 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         for (int i = 0; i < numNodes; i++)
         {
 
-            DOF *damageDOF = nodes[i]->getDOFs()[2];
+            DOF *damageDOF = discritizedNodes[i]->getDOFs()[2];
             double deltaD = Ddk[i];
             double d_stag = damageDOF->getValue() + deltaD; // damageDOF->getValue() = dn
             damageDOF->setDamageValue(d_stag);
@@ -440,7 +440,7 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
         }
 
         // Setting d = 1 for the nodes with d > 1
-        for (auto node : nodes)
+        for (auto node : discritizedNodes)
         {
             DOF *damageDOF = node->getDOFs()[2];
             if (damageDOF->getDamageValue() >= dtol)
@@ -455,14 +455,14 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 
         for (int i = 0; i < numNodes; i++)
         {
-            DOF *damageDOF = nodes[i]->getDOFs()[2];
+            DOF *damageDOF = discritizedNodes[i]->getDOFs()[2];
             double deltaD = Ddk[i];
             double d_stag = damageDOF->getValue() + deltaD;
             damageDOF->setDamageValue(d_stag);
         }
 
         // Setting d = 1 for the nodes with d > 1
-        for (auto node : nodes)
+        for (auto node : discritizedNodes)
         {
             DOF *damageDOF = node->getDOFs()[2];
             if (damageDOF->getDamageValue() >= dtol)

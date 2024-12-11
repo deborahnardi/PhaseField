@@ -74,6 +74,46 @@ void FEM::setLoadingVector1(double ubar, int nSteps)
         load.push_back(-stepSize * i);
 }
 
+void FEM::setLoadingVector3(double ubar, int nSteps)
+{
+    load.clear();
+
+    double delta1 = 1e-3;
+    double delta2 = 3e-4;
+    double delta3 = -3e-4;
+
+    double currentVal = 0.;
+
+    for (int i = 0; i < 6; i++)
+    {
+        currentVal += delta1;
+        load.push_back(currentVal);
+    }
+
+    for (int i = 6; i < 26; i++)
+    {
+        currentVal += delta2;
+        load.push_back(currentVal);
+    }
+
+    for (int i = 26; i < 106; i++)
+    {
+        currentVal += delta3;
+        load.push_back(currentVal);
+    }
+
+    for (int i = 106; i < 146; i++)
+    {
+        currentVal += delta2;
+        load.push_back(currentVal);
+    }
+
+    // for (size_t i = 0; i < load.size(); ++i)
+    //     std::cout << i + 1 << " " << load[i] << std::endl;
+
+    std::cout << std::endl;
+}
+
 void FEM::createResultsPath()
 {
     if (rank == 0)
@@ -116,7 +156,7 @@ PetscErrorCode FEM::solveFEMProblem()
     auto start_timer = std::chrono::high_resolution_clock::now();
     int it = 0;
     double norm = 0.;
-    for (auto n : nodes)
+    for (auto n : discritizedNodes)
         norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
 
     norm = sqrt(norm);
@@ -214,8 +254,12 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
     ierr = VecZeroEntries(solution);
     CHKERRQ(ierr);
-    ierr = VecZeroEntries(nodalForces);
-    CHKERRQ(ierr);
+
+    if (params->getCalculateReactionForces())
+    {
+        ierr = VecZeroEntries(nodalForces);
+        CHKERRQ(ierr);
+    }
 
     // ====================== CALCULATING CONTRIBUTIONS ======================
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -235,10 +279,14 @@ PetscErrorCode FEM::assembleProblem()
     CHKERRQ(ierr);
     ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
     CHKERRQ(ierr);
-    ierr = VecAssemblyBegin(nodalForces);
-    CHKERRQ(ierr);
-    ierr = VecAssemblyEnd(nodalForces);
-    CHKERRQ(ierr);
+
+    if (params->getCalculateReactionForces())
+    {
+        ierr = VecAssemblyBegin(nodalForces);
+        CHKERRQ(ierr);
+        ierr = VecAssemblyEnd(nodalForces);
+        CHKERRQ(ierr);
+    }
 
     if (params->getCalculateReactionForces())
     {

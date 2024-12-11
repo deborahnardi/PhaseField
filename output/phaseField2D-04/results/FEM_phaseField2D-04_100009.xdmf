@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE Xdmf SYSTEM "Xdmf.dtd" []>
+<Xdmf Version="2.0" >
+<Domain>
+  <Grid>
+    <Topology TopologyType="Triangle" NumberOfElements="4287" >
+      <DataItem Format=    "HDF" NumberType="int" Dimensions="4287 3" >
+        hdf5/FEM_phaseField2D-04_connectivity.h5:/connec
+      </DataItem>
+    </Topology>
+    <Geometry GeometryType="XYZ">
+      <DataItem Format="HDF" NumberType="double" Dimensions="2200 3">
+        hdf5/FEM_phaseField2D-04_100009.h5:/coords
+      </DataItem>
+    </Geometry>
+    <Attribute Name="Displacement" Center="Node" AttributeType="Vector" >
+      <DataItem Format="HDF" NumberType="double" Dimensions="2200 3">
+        hdf5/FEM_phaseField2D-04_100009.h5:/displacement
+      </DataItem>
+    </Attribute>
+    <Attribute Name="Phase Field" Center="Node" AttributeType="Scalar" >
+      <DataItem Format="HDF" NumberType="double" Dimensions="2200 1">
+        hdf5/FEM_phaseField2D-04_100009.h5:/phasefield
+      </DataItem>
+    </Attribute>
+    <Attribute Name="Reaction Force" Center="Node" AttributeType="Vector" >
+      <DataItem Format="HDF" NumberType="double" Dimensions="2200 3">
+        hdf5/FEM_phaseField2D-04_100009.h5:/reactionforce
+      </DataItem>
+    </Attribute>
+  </Grid>
+</Domain>
+</Xdmf>

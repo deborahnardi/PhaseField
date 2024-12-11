@@ -76,9 +76,10 @@ public:
     void deleteResults(bool _deleteResults);
     void setLoadingVector1(double ubar, int nSteps);
     void setLoadingVector2(double ubar, int nSteps);
+    void setLoadingVector3(double ubar, int nSteps);
 
     std::vector<double> getLoadingVector() { return load; }
-    void setPrescribedDamageField(bool _prescribedDamageField) { prescribedDamageField = true; }
+    void setPrescribedDamageField(bool _prescribedDamageField) { prescribedDamageField = _prescribedDamageField; }
     /*----------------------------------------------------------------------------------
                                  FEM PROBLEM METHODS
     ------------------------------------------------------------------------------------

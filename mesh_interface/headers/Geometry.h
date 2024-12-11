@@ -57,6 +57,7 @@ public:
 
     Point *addPoint(const std::vector<double> &_coordinates, const double &_lc = 0.);
     Line *addLine(const std::vector<Point *> &_points);
+    Line *addSpline(std::vector<Point *> points);
     Circle *addCircle(const std::vector<Point *> &_points);
     LineLoop *addLineLoop(const std::vector<Line *> &_lines);
     PlaneSurface *addPlaneSurface(std::vector<Wire *> _wire);

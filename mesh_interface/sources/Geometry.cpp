@@ -32,6 +32,22 @@ Line *Geometry::addLine(const std::vector<Point *> &_points)
     return line;
 }
 
+Line *Geometry::addSpline(std::vector<Point *> points)
+{
+    Line *l = new Line(points, lines.size());
+    lines.push_back(l);
+
+    std::vector<int> pointIndexes;
+    for (auto p : points)
+        pointIndexes.push_back(p->getIndex() + 1);
+
+    gmsh::model::occ::addSpline(pointIndexes, l->getIndex() + 1);
+    gmsh::model::occ::synchronize();
+    gmsh::model::addPhysicalGroup(1, {l->getIndex() + 1}, -1, l->getEntityName());
+
+    return l;
+}
+
 Circle *Geometry::addCircle(const std::vector<Point *> &_points)
 {
     Circle *c = new Circle(_points, lines.size());
@@ -66,7 +82,7 @@ Ellipse *Geometry::addEllipse(double _a, double _b, const double _alpha, std::ve
         center : Center of the ellipse
     */
 
-    double rad = (_alpha + 90.) * M_PI / 180.;      // Converting to radians
+    double rad = (_alpha + 90.) * M_PI / 180.;             // Converting to radians
     std::vector<double> xAxis = {cos(rad), sin(rad), 0.0}; // Positive anticlockwise
     double baux = _a * _b;
 

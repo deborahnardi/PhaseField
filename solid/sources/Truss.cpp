@@ -8,6 +8,16 @@ Truss::Truss(const int &_index, const int &_elemDimension, const std::vector<Nod
     Node *_node2 = elemConnectivity[1];
     area = area_;
 
+    _node1->setIsDiscritized();
+    _node1->addDOF(new DOF(X, 0.));
+    _node1->addDOF(new DOF(Y, 0.));
+    _node1->addDOF(new DOF(D, 0.));
+
+    _node2->setIsDiscritized();
+    _node2->addDOF(new DOF(X, 0.));
+    _node2->addDOF(new DOF(Y, 0.));
+    _node2->addDOF(new DOF(D, 0.));
+
     length = pow((_node2->getX() - _node1->getX()) * (_node2->getX() - _node1->getX()) +
                      (_node2->getY() - _node1->getY()) * (_node2->getY() - _node1->getY()),
                  0.5);
