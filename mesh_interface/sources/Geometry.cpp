@@ -161,16 +161,16 @@ void Geometry::setGlobalMeshSize(double meshMinSizeGlobal, double meshMaxSizeGlo
     gmsh::option::setNumber("Mesh.MeshSizeFromCurvature", 0);
 }
 
-void Geometry::setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _meshMinSizeIncl, double _meshMaxSizeIncl, double _meshDistMin, double _meshDistMax)
+void Geometry::setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _meshMinSizeIncl, double _meshMaxSizeIncl, double _meshDistMin, double _meshDistMax, int tag)
 {
     std::vector<double> wireTags;
     for (auto w : _elipseWires)
         wireTags.push_back(w->getIndex() + 1);
 
     // Refining the region around and inside the inclusions
-    gmsh::model::mesh::field::add("Distance", 1);
-    gmsh::model::mesh::field::setNumbers(1, "SurfacesList", wireTags); // List of surfaces to be refined
-    gmsh::model::mesh::field::setNumber(1, "Sampling", 1000);          // Number of points to be sampled
+    gmsh::model::mesh::field::add("Distance", tag);
+    gmsh::model::mesh::field::setNumbers(tag, "SurfacesList", wireTags); // List of surfaces to be refined
+    gmsh::model::mesh::field::setNumber(tag, "Sampling", 1000);          // Number of points to be sampled
 
     // We then define a `Threshold' field, which uses the return value of the
     // `Distance' field 1 in order to define a simple change in element size
@@ -183,18 +183,6 @@ void Geometry::setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _me
     // SizeMin -o----------------/
     //          |                |    |
     //        Point         DistMin  DistMax
-
-    gmsh::model::mesh::field::add("Threshold", 2); // Threshold field allows to refine the mesh in a specific region
-    gmsh::model::mesh::field::setNumber(2, "IField", 1);
-    gmsh::model::mesh::field::setNumber(2, "SizeMin", _meshMinSizeIncl);
-    gmsh::model::mesh::field::setNumber(2, "SizeMax", _meshMaxSizeIncl);
-    gmsh::model::mesh::field::setNumber(2, "DistMin", _meshDistMin);
-    gmsh::model::mesh::field::setNumber(2, "DistMax", _meshDistMax);
-
-    gmsh::model::mesh::field::add("Min", 3);
-    gmsh::model::mesh::field::setNumbers(3, "FieldsList", {2});
-
-    gmsh::model::mesh::field::setAsBackgroundMesh(3);
 }
 
 void Geometry::setRefiningFieldCurves(std::vector<Line *> lines, const int &tag)

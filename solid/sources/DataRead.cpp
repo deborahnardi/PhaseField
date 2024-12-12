@@ -97,7 +97,7 @@ void FEM::readGeometry(const std::string &_filename)
     {
         std::getline(file, line);
         std::vector<std::string> result = split(line, ' ');
-        int j = std::stoi(result[1]);
+        int j = std::stoi(result[1]) - 1;
         physicalEntities[j].dimension = std::stoi(result[0]);
         physicalEntities[j].indexType = std::stoi(result[1]);
         physicalEntities[j].name = result[2];

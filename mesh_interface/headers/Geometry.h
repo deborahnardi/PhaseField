@@ -68,7 +68,7 @@ public:
     void addTransfiniteLine(const std::vector<Line *> &_lines, const int &_divisions, const double &_progression = 1.0);
 
     void GenerateMeshAPI(const bool &showInterface = false);
-    void setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _meshMinSizeIncl, double _meshMaxSizeIncl, double _meshDistMin, double _meshDistMax);
+    void setSurfaceRefinement(std::vector<Wire *> _elipseWires, double _meshMinSizeIncl, double _meshMaxSizeIncl, double _meshDistMin, double _meshDistMax, int tag);
     void setGlobalMeshSize(double meshMinSizeGlobal, double meshMaxSizeGlobal, double meshSizeFactorGlobal);
     // void generateInclusions();
     void writeMeshInfo();
