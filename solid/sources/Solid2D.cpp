@@ -113,6 +113,8 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
                     }
                 }
         delete[] N;
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
         delete[] dN;
     }
 
@@ -135,6 +137,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
     CHKERRQ(ierr);
 
     delete[] idx;
+    delete[] localRHS;
     delete[] localStiffnessMatrix;
 
     return ierr;
@@ -255,6 +258,11 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
                 double value = Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac;
                 localQ[pos] += value; // Integral 2
             }
+
+        delete[] N;
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
     }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
@@ -262,6 +270,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
 
     delete[] idx;
     delete[] localQ;
+    delete[] localRHS;
 
     return ierr;
 }
@@ -377,6 +386,11 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
                 double value = Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac;
                 localQ[pos] += Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac; // Integral 2
             }
+
+        delete[] N;
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
     }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
@@ -384,6 +398,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
 
     delete[] idx;
     delete[] localQ;
+    delete[] localRHS;
 
     return ierr;
 }

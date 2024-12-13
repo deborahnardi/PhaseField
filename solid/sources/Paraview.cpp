@@ -200,6 +200,8 @@ void FEM::showResults(int _nStep)
         output_v << "  </Grid>" << std::endl
                  << "</Domain>" << std::endl
                  << "</Xdmf>" << std::endl;
+
+        error = H5Fclose(file);
     }
     delete[] connectivity;
     delete[] tensor;

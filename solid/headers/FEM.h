@@ -24,7 +24,7 @@ class FEM
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size;
-    double *finalDisplacements, norm = 0., res = 0.;
+    double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
     std::vector<std::set<int>> nodeNeighbours;
     std::vector<Material *> materials;

@@ -159,9 +159,6 @@ void FEM::readGeometry(const std::string &_filename)
 
         Material *material = nullptr;
 
-        // for (auto node : connectivity)
-        //     node->setIsDiscritized();
-
         double value = physicalEntities[physicalEntity].value;
         int elemDim = physicalEntities[physicalEntity].dimension;
 

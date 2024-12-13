@@ -48,8 +48,7 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
     params->setCalculateReactionForces(true);
 
-    DdkMinus1 = new double[numNodes]{}; // Damage field at the previous iteration
-    Ddk = new double[numNodes]{};       // Damage field at the current iteration
+    Ddk = new double[numNodes]{}; // Damage field at the current iteration
     // totalMatrixQ = new double *[numNodes] {};
     // totalVecq = new double[numNodes]{};
 
@@ -67,7 +66,7 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     for (int iStep = 0; iStep < nSteps; iStep++)
     {
         PetscPrintf(PETSC_COMM_WORLD, "\n================ STEP %d ================\n", iStep);
-
+        printMemoryUsage(iStep);
         staggeredAlgorithm(iStep); // Returns converged uStag and dStag
         updateFieldVariables(solutionPF);
 
@@ -98,9 +97,6 @@ void FEM::staggeredAlgorithm(int _iStep)
         solveDisplacementField(_iStep); // Obtains ustag
         solvePhaseField();              // Obtains dstag
 
-        PetscPrintf(PETSC_COMM_WORLD, "\n-- Memory usage by Phase Field --\n");
-        printMemoryUsage(_iStep);
-
         // Compute the norm of the difference between the previous and current displacement fields
         double normU = 0.0;
         for (int i = 0; i < globalDOFs.size(); i++)
@@ -121,8 +117,6 @@ void FEM::staggeredAlgorithm(int _iStep)
 
 void FEM::solveDisplacementField(int _iStep)
 {
-    printMemoryUsage(_iStep);
-
     double lambda = (1. + double(_iStep)) / double(params->getNSteps());
     updateBoundaryValues(lambda);
 
@@ -196,11 +190,6 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     ierr = VecZeroEntries(solutionPF);
     CHKERRQ(ierr);
 
-    ierr = PetscMemoryGetCurrentUsage(&bytes);
-    CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "==MEMORY USED BEFORE ASSEMB. Q MATRIX IN PETSC: %f Mb\n", bytes / (1024 * 1024));
-    CHKERRQ(ierr);
-
     for (int Ii = Istart; Ii < Iend; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
 
@@ -256,13 +245,6 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
         CHKERRQ(ierr);
     }
 
-    ierr = PetscMemoryGetCurrentUsage(&bytes);
-    CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "==MEMORY USED AFTER ASSEMB. Q MATRIX IN PETSC: %f Mb\n", bytes / (1024 * 1024));
-    CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "=========================\n");
-    CHKERRQ(ierr);
-
     return ierr;
 }
 
@@ -277,6 +259,8 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
     int itPSOR = 0;
 
     MPI_Barrier(PETSC_COMM_WORLD);
+
+    DdkMinus1 = new double[numNodes]{};
 
     for (int i = 0; i < numNodes; i++)
     {
@@ -329,6 +313,7 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
     delete[] IR;
     delete[] PA;
     delete[] totalVecq;
+    delete[] DdkMinus1;
 
     return ierr;
 }
@@ -443,20 +428,10 @@ PetscErrorCode FEM::getPSORVecs()
 
     JC[numNodes] = nzQ; // nzQ is the total number of non-zero elements in the matrix
 
-    ierr = PetscMemoryGetCurrentUsage(&bytes);
-    CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "MEMORY USED BEFORE DELETING Q MATRIX: %f Mb\n", bytes / (1024 * 1024));
-    CHKERRQ(ierr);
-
     for (int i = 0; i < numNodes; i++)
         delete[] totalMatrixQ[i];
 
     delete[] totalMatrixQ;
-
-    ierr = PetscMemoryGetCurrentUsage(&bytes);
-    CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "MEMORY USED AFTER DELETING Q MATRIX: %f Mb\n", bytes / (1024 * 1024));
-    CHKERRQ(ierr);
 
     return ierr;
 }

@@ -25,6 +25,13 @@ PetscErrorCode FEM::printMemoryUsage(const int &iStep)
     ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
     CHKERRQ(ierr);
 
+    if (rank == 0)
+    {
+        std::ofstream file(resultsPath + "memoryUsage.txt", std::ios::app);
+        file << iStep << " " << bytes / (1024 * 1024) << std::endl;
+        file.close();
+    }
+
     return ierr;
 }
 
@@ -188,6 +195,11 @@ PetscErrorCode FEM::solveFEMProblem()
         updateFieldDistribution();
         updateFieldVariables(solutionPF);
         params->setCalculateReactionForces(true);
+
+        for (int i = 0; i < numNodes; i++)
+            delete[] totalMatrixQ[i];
+        delete[] totalMatrixQ;
+        delete[] totalVecq;
     }
 
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
@@ -238,6 +250,8 @@ PetscErrorCode FEM::cleanSolution(Vec &x, Vec &b, Mat &A)
     CHKERRQ(ierr);
     ierr = MatDestroy(&A);
     CHKERRQ(ierr);
+
+    delete[] Ddk;
 
     return ierr;
 }
@@ -359,14 +373,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     KSP ksp;
     PC pc;
     PetscInt its;
-
-    PetscReal norm1;
     PetscReal residual_norm = 0.;
-
-    ierr = VecNorm(b, NORM_2, &norm1);
-    CHKERRQ(ierr);
-    // std::cout << "Norm of rhs DISPLACEMENT:" << norm1 << std::endl;
-    // std::cout << "--------------------" << std::endl;
 
     ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
     CHKERRQ(ierr);
@@ -425,10 +432,9 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 void FEM::updateVariables(Vec &x, bool _hasConverged)
 {
     // Set the solution to the final coordinates of the nodes
-    finalDisplacements = new double[globalDOFs.size()];
+    double *finalDisplacements = new double[globalDOFs.size()];
     int rankLocalDOFs = IIIend - IIIstart;
-    double *localDisplacements;
-    localDisplacements = new double[rankLocalDOFs];
+    double *localDisplacements = new double[rankLocalDOFs];
 
     for (int i = IIIstart; i < IIIend; i++)
     {

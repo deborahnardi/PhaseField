@@ -107,10 +107,17 @@ PetscErrorCode BoundaryElement::getContribution(Vec &rhs) // entra com lambda aq
                         PetscScalar ti = N[a] * c.value * wJac; // entra com lambda aqui
                         localRhs[a] += ti;
                     }
-                }
 
+                    delete[] N;
+                    for (int a = 0; a < numBdNodes; a++)
+                        delete[] dN[a];
+                    delete[] dN;
+                }
                 ierr = VecSetValues(rhs, numBdNodes, idx, localRhs, ADD_VALUES);
                 CHKERRQ(ierr);
+
+                delete[] idx;
+                delete[] localRhs;
             }
     return ierr;
 }
