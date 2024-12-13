@@ -30,6 +30,9 @@ double L = 1.0;
 double dL = 2e-4;
 double elSize = 0.1 * L;
 double ubar = 1e-3;
+// double lcar = 0.002;
+// double lcar2 = 0.02;
+
 double lcar = 0.002;
 double lcar2 = 0.02;
 
@@ -259,5 +262,5 @@ params->calculateReactionForces(true);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);
-analysis1->solveFEMProblem();
-// analysis1->solvePhaseFieldProblem();
+// analysis1->solveFEMProblem();
+analysis1->solvePhaseFieldProblem();

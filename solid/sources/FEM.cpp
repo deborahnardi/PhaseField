@@ -18,6 +18,16 @@ double FEM::elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chro
     return elapsed.count();
 }
 
+PetscErrorCode FEM::printMemoryUsage(const int &iStep)
+{
+    ierr = PetscMemoryGetCurrentUsage(&bytes);
+    CHKERRQ(ierr);
+    ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
+    CHKERRQ(ierr);
+
+    return ierr;
+}
+
 /*----------------------------------------------------------------------------------
                             DATA INPUT METHODS
 ------------------------------------------------------------------------------------*/
@@ -183,6 +193,8 @@ PetscErrorCode FEM::solveFEMProblem()
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
     {
         PetscPrintf(PETSC_COMM_WORLD, "\n================ Step %d ================\n", iStep);
+        printMemoryUsage(iStep);
+
         double lambda = (1. + double(iStep)) / double(params->getNSteps());
         updateBoundaryValues(lambda);
 

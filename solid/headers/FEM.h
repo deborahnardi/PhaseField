@@ -35,6 +35,7 @@ private:
     std::vector<double> load;
     AnalysisParameters *params;
     bool negativeLoad = false, prescribedDamageField = false, showMatrix = false;
+    PetscLogDouble bytes = 0.0;
 
     Mat matrix, matrixPF, matrixCopy;
     Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
@@ -90,6 +91,7 @@ public:
     void assembleProblemNoPetsc();
     void setBoundaryConditionsNoPetsc();
     void solveLinearSystemNoPetsc();
+    PetscErrorCode printMemoryUsage(const int &iStep);
     PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
     /*----------------------------------------------------------------------------------
