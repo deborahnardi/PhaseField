@@ -260,7 +260,7 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     CHKERRQ(ierr);
     ierr = PetscPrintf(PETSC_COMM_WORLD, "==MEMORY USED AFTER ASSEMB. Q MATRIX IN PETSC: %f Mb\n", bytes / (1024 * 1024));
     CHKERRQ(ierr);
-    ierr = PetscPrintf(PETSC_COMM_WORLD, "========================="\n);
+    ierr = PetscPrintf(PETSC_COMM_WORLD, "=========================\n");
     CHKERRQ(ierr);
 
     return ierr;
