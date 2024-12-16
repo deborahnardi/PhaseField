@@ -33,8 +33,8 @@ double ubar = 1e-3;
 // double lcar = 0.002;
 // double lcar2 = 0.02;
 
-double lcar = 0.002;
-double lcar2 = 0.02;
+double lcar = 0.009;
+double lcar2 = 0.09;
 
 int np = 20;
 
@@ -196,41 +196,6 @@ materials[0]->setL0(0.01); // Internal lenght of Phase Field model, in mm;
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[1]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[2]->setAttributes(materials[0], 1., SOLID_ELEMENT);
-
-// lines.push_back(geo1->addLine({points[4], pEllipse2.back()})); // 4
-// lines.push_back(geo1->addLine({pEllipse2.back(), points[5]})); // 5
-// lines.push_back(geo1->addLine({points[5], pEllipse1[0]}));     // 6
-// lines.push_back(geo1->addLine({pEllipse1[0], points[6]}));     // 7
-// lines.push_back(geo1->addLine({points[6], points[0]}));        // 8
-
-// lines.push_back(geo1->addSpline(pEllipse1)); // 9
-// lines.push_back(geo1->addSpline(pEllipse2)); // 10
-
-// lineLoops.push_back(geo1->addLineLoop({lines[0], lines[1], lines[2], lines[3], lines[4], lines[10], lines[9], lines[7], lines[8]}));
-
-// lineLoops.push_back(geo1->addLineLoop({lines[10], lines[9], lines[6], lines[5]}));
-
-// planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[0]}));
-// planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[1]}));
-
-// boundaryConditions.push_back(geo1->addBoundaryCondition(lines[0], DIRICHLET, {{X, 0.0}, {Y, 0.0}}));
-// boundaryConditions.push_back(geo1->addBoundaryCondition(lines[2], DIRICHLET, {{X, ubar}, {Y, 0.0}}));
-
-// materials.push_back(geo1->addMaterial(210000., 0.3));
-// materials[0]->setGriffithCriterion(2.7);
-// materials[0]->setL0(0.01); // Internal lenght of Phase Field model, in mm;
-
-// planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
-// planeSurfaces[1]->setAttributes(materials[0], 1., SOLID_ELEMENT);
-
-// double meshMinSizeGlobal = 1.e-4, meshMaxSizeGlobal = 0.1, meshSizeFactorGlobal = 1.0;
-// double meshMinSize = 1.e-2, meshMaxSize = 0.5, meshDistMin = 0.05, meshDistMax = 0.08;
-
-// geo1->setGlobalMeshSize(meshMinSizeGlobal, meshMaxSizeGlobal, meshSizeFactorGlobal);
-// geo1->setSurfaceRefinement({lineLoops[1]}, meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 1);
-// geo1->setRefiningFieldCurves({lines[9], lines[10]}, 2);
-// geo1->setThresholdRefinement(meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 2, 3);
-// geo1->setBackgroundMesh({3}, 4);
 
 geo1->GenerateMeshAPI(visualizeMesh);
 
