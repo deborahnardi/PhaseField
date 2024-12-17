@@ -197,6 +197,25 @@ void FEM::showResults(int _nStep)
         }
         writeInHDF5(file, output_v, error, dataset, dataspace, "Reaction Force", "Vector", vector, vectorDims, r1);
 
+        // STRESS TENSOR
+        for (auto n : discritizedNodes)
+        {
+            int index = n->getIndex();
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    tensor[9 * index + 3 * i + j] = 0.;
+        }
+
+        for (auto n : discritizedNodes)
+        {
+            int index = n->getIndex();
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                    tensor[9 * index + 3 * i + j] = n->getStress(i, j);
+        }
+        writeInHDF5(file, output_v, error, dataset, dataspace, "Stress", "Tensor", tensor, tensorDims, r1);
+        // STRESS TENSOR
+
         output_v << "  </Grid>" << std::endl
                  << "</Domain>" << std::endl
                  << "</Xdmf>" << std::endl;

@@ -534,3 +534,62 @@ void Solid2D::assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff)
     //         GlobalStiff(dof3 + i, dof3 + j) += localStiff(i + 4, j + 4);
     //     }
 }
+
+// =========================================================
+// ==================== POST PROCESSING ====================
+// =========================================================
+PetscErrorCode Solid2D::calculateStress()
+{
+    const PetscInt &numElDOF = numElNodes * 2;
+    const double &G = material->getShearModulus();
+    const double &lame = material->getLameConstant();
+
+    double **coord;
+    sF->getNodalXi(coord);
+
+    for (int a = 0; a < numElNodes; a++)
+    {
+        double *xi = coords[a];
+        double **dN = sF->getShapeFunctionDerivative(xi);
+
+        PetscReal dX_dXsi[2][2] = {}, dX_dXsiInv[2][2] = {}, gradU[2][2] = {}, strain[2][2] = {}, stress[2][2] = {};
+        for (PetscInt a = 0; a < 3; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dX_dXsi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
+        PetscReal jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
+
+        dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
+        dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
+        dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
+        dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
+
+        PetscReal dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
+
+        for (PetscInt a = 0; a < 3; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    gradU[i][j] += elemConnectivity[a]->getDOFs()[i]->getValue() * dN_dX[a][j];
+
+        for (PetscInt i = 0; i < 2; i++)
+            for (PetscInt j = 0; j < 2; j++)
+                strain[i][j] = 0.5 * (gradU[i][j] + gradU[j][i]);
+
+        material->Lame(strain, stress);
+
+        const int &recurrence = elemConnectivity[a]->getInverseIncidence().size();
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 2; j++)
+                elemConnectivity[a]->incrementStress(i, j, stress[i][j] / double(recurrence));
+
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
+    }
+
+    return ierr;
+}

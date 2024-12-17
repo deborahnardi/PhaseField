@@ -227,6 +227,8 @@ PetscErrorCode FEM::solveFEMProblem()
             PetscPrintf(PETSC_COMM_WORLD, "Residual: %e\n", res);
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
+        postProc();
+
         if (rank == 0)
         {
             if (params->getCalculateReactionForces())

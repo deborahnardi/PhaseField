@@ -17,3 +17,12 @@ Material::Material(int _index, double _poisson, double _young, PlaneAnalysis _pl
     }
 }
 Material::~Material() {};
+
+void Material::Lame(const double E[2][2], double S[2][2])
+{
+    const double &trE = E[0][0] + E[1][1];
+    S[0][0] = 2. * shearModulus * E[0][0] + lameConstant * trE;
+    S[1][1] = 2. * shearModulus * E[1][1] + lameConstant * trE;
+    S[0][1] = 2. * shearModulus * E[0][1];
+    S[1][0] = 2. * shearModulus * E[1][0];
+}

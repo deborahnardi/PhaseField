@@ -132,6 +132,14 @@ public:
     void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
 
     double elapsedTime(std::chrono::_V2::system_clock::time_point t1, std::chrono::_V2::system_clock::time_point t2);
+
+    /*----------------------------------------------------------------------------------
+                                POST PROCESSING METHODS
+------------------------------------------------------------------------------------
+*/
+    void postProc();
+    void computeNodalStress();
+
     /*----------------------------------------------------------------------------------
                                         FUNCTIONS
     ------------------------------------------------------------------------------------

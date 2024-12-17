@@ -70,6 +70,8 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
         staggeredAlgorithm(iStep); // Returns converged uStag and dStag
         updateFieldVariables(solutionPF);
 
+        postProc();
+
         if (rank == 0)
         {
             if (params->getCalculateReactionForces())
@@ -95,7 +97,8 @@ void FEM::staggeredAlgorithm(int _iStep)
         it++;
         PetscPrintf(PETSC_COMM_WORLD, "\n------- Stag Iteration %d -------\n", it);
         solveDisplacementField(_iStep); // Obtains ustag
-        solvePhaseField();              // Obtains dstag
+
+        solvePhaseField(); // Obtains dstag
 
         // Compute the norm of the difference between the previous and current displacement fields
         double normU = 0.0;

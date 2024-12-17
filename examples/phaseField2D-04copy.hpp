@@ -33,8 +33,8 @@ double ubar = 1e-3;
 // double lcar = 0.002;
 // double lcar2 = 0.02;
 
-double lcar = 0.02;
-double lcar2 = 0.002;
+double lcar = 0.09;
+double lcar2 = 0.009;
 
 int np = 20;
 

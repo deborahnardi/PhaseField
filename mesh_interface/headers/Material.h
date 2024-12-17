@@ -33,4 +33,6 @@ public:
     void setLameConstant(double _lameConstant) { lameConstant = _lameConstant; }
     void setGriffithCriterion(double _griff) { griffithCriterion = _griff; }
     void setL0(double _l0) { l0 = _l0; }
+
+    void Lame(const double E[2][2], double S[2][2]);
 };

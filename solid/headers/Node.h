@@ -11,6 +11,8 @@
 #include <petscmat.h>
 #include <metis.h>
 
+#include <algorithm>
+
 #include "../../enumclass.hpp"
 #include "DOF.h"
 
@@ -21,6 +23,10 @@ private:
     std::vector<double> initialCoordinates;
     std::vector<DOF *> dofs; // Degrees of freedom of the node
     bool isDiscritized = false;
+
+    std::vector<int> inverseIncidence;
+
+    double stress[3][3] = {};
 
 public:
     Node();
@@ -47,4 +53,11 @@ public:
     int getNumDOFs() const { return dofs.size(); }
     void setIsDiscritized() { isDiscritized = true; }
     void setPhysicalEntity(const int &physicalEntity_) { physicalEntity = physicalEntity_; }
+
+    void addInverseIncidence(int el);
+    std::vector<int> getInverseIncidence() { return inverseIncidence; }
+
+    void setStress(const int &i, const int &j, const double &val) { stress[i][j] = val; }
+    void incrementStress(const int &i, const int &j, const double &val) { stress[i][j] += val; }
+    double getStress(const int &i, const int &j) { return stress[i][j]; }
 };

@@ -13,3 +13,12 @@ void Node::addDOF(DOF *_dof)
 
     dofs.push_back(_dof);
 }
+
+void Node::addInverseIncidence(int el)
+{
+    if (std::any_of(inverseIncidence.begin(), inverseIncidence.end(), [el](int existingEl)
+                    { return existingEl == el; })) // Check if element already exists
+        return;                                    // element already exists, no need to add it again
+
+    inverseIncidence.push_back(el);
+}

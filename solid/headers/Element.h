@@ -50,6 +50,11 @@ public:
     virtual void getContribution() {};
     virtual void Test(PetscScalar &integral) {};
     virtual void computeDeformation() {};
+
+    // =======================================
+    // =========== POST PROCESSING ===========
+    // =======================================
+    virtual PetscErrorCode calculateStress() {};
 };
 
 class Truss : public Element
@@ -113,4 +118,9 @@ public:
     PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField) override;
     void getContribution() override;
     void Test(PetscScalar &integral) override;
+
+    // =======================================
+    // =========== POST PROCESSING ===========
+    // =======================================
+    PetscErrorCode calculateStress() override;
 };
