@@ -104,4 +104,14 @@ void Geometry::writeMeshInfo()
 
         file << std::endl;
     }
+
+    file << "*TRACTION BOUNDARY" << std::endl;
+    file << tractionBoundaries.size() << std::endl;
+
+    int cont = 0;
+
+    for (auto tb : tractionBoundaries)
+    {
+        file << ++cont << " " << tb->getEntityName();
+    }
 }

@@ -482,21 +482,21 @@ PetscErrorCode FEM::computeReactionForces()
 {
     int count = 0;
     double sumDisp = 0.;
-    double sumForces = 0.;
+    // double sumForces = 0.;
 
     for (auto dof : globalDOFs)
         if (dof->isControlledDOF())
             if (dof->getDOFType() != D)
             {
                 // Print in a txt file force vs displacement
-                PetscInt idx = dof->getIndex();
-                PetscScalar value;
-                ierr = VecGetValues(nodalForces, 1, &idx, &value);
-                CHKERRQ(ierr);
+                // PetscInt idx = dof->getIndex();
+                // PetscScalar value;
+                // ierr = VecGetValues(nodalForces, 1, &idx, &value);
+                // CHKERRQ(ierr);
                 sumDisp += dof->getValue();
-                sumForces -= value;
+                // sumForces -= value;
                 count++;
-                dof->setReactionForce(-value);
+                // dof->setReactionForce(-value);
             }
 
     if (count != 0)
@@ -504,7 +504,7 @@ PetscErrorCode FEM::computeReactionForces()
 
     std::ofstream file;
     file.open(resultsPath + "results/force_displacement.txt", std::ios::app);
-    file << sumDisp << " " << sumForces << std::endl;
+    file << sumDisp << " " << force[0] << std::endl;
     file.close();
 
     return ierr;

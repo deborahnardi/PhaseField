@@ -245,3 +245,9 @@ void Geometry::GenerateMeshAPI(const bool &showInterface)
     gmsh::clear();
     gmsh::finalize();
 }
+
+void Geometry::setTractionBoundary(const std::vector<Line *> &_lines)
+{
+    for (auto l : _lines)
+        tractionBoundaries.push_back(l);
+}

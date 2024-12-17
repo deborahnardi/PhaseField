@@ -122,6 +122,49 @@ PetscErrorCode BoundaryElement::getContribution(Vec &rhs) // entra com lambda aq
     return ierr;
 }
 
+void BoundaryElement::calculateNormal(double **dN, double normal[], double &djac)
+{
+    double dX_dxi[2] = {};
+    for (int i = 0; i < 2; i++)
+        for (int a = 0; a < numBdNodes; a++)
+            dX_dxi[i] += elemConnectivity[a]->getInitialCoordinates()[i] * dN[a][0];
+
+    normal[0] = dX_dxi[1];
+    normal[1] = -dX_dxi[0];
+
+    djac = sqrt(normal[0] * normal[0] + normal[1] * normal[1]);
+    normal[0] /= djac;
+    normal[1] /= djac;
+}
+
+void BoundaryElement::calculateTraction(double force[])
+{
+    double **coords = q->getQuadratureCoordinates();
+    double *weights = q->getQuadratureWeights();
+
+    for (int ip = 0; ip < numQuadraturePoints; ip++)
+    {
+        double *xi = coords[ip];
+
+        double *N = sF->evaluateShapeFunction(xi);
+        double **dN = sF->getShapeFunctionDerivative(xi);
+
+        double _stress[2][2] = {};
+        for (int a = 0; a < numBdNodes; a++)
+            for (int i = 0; i < 2; i++)
+                for (int j = 0; j < 2; j++)
+                    _stress[i][j] += elemConnectivity[a]->getStress(i, j) * N[a];
+
+        double normal[2] = {}, djac = 0.;
+        calculateNormal(dN, normal, djac);
+        const double wjac = weights[ip] * djac;
+
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 2; j++)
+                force[i] += _stress[i][j] * normal[j] * wjac; // It is actually a force, not a traction
+    }
+}
+
 /*----------------------------------------------------------------------------------
                 Assembling and solving problem without PETSc
 ----------------------------------------------------------------------------------

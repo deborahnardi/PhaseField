@@ -45,6 +45,9 @@ public:
     void getContributionNoPetsc(VectorXd &F, MatrixXd &K);
     void updateBoundaryValues(double _lambda);
 
+    void calculateNormal(double **dN, double normal[], double &djac);
+    void calculateTraction(double force[]);
+
     /*
         PETSc Methods
     */

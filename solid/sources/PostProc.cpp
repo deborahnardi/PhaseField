@@ -3,6 +3,7 @@
 void FEM::postProc()
 {
     computeNodalStress();
+    computeTractions();
 }
 
 void FEM::computeNodalStress()
@@ -13,4 +14,12 @@ void FEM::computeNodalStress()
                 n->setStress(i, j, 0.);
     for (auto el : elements)
         el->calculateStress();
+}
+
+void FEM::computeTractions()
+{
+    force[0] = 0.;
+    force[1] = 0.;
+    for (auto bd : tractionBd)
+        bd->calculateTraction(force);
 }

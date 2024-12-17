@@ -197,6 +197,8 @@ planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[1]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[2]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
+geo1->setTractionBoundary({lines[2]});
+
 geo1->GenerateMeshAPI(visualizeMesh);
 
 // ================================ FEM INFORMATION ================================

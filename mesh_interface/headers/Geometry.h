@@ -41,6 +41,8 @@ private:
     std::vector<BoundaryCondition *> boundaryConditions;
     MeshAlgorithm algorithm;
 
+    std::vector<Line *> tractionBoundaries;
+
 public:
     Geometry();
     Geometry(const std::string _name);
@@ -77,4 +79,6 @@ public:
     void setThresholdRefinement(const double &_meshMinSize, const double &_meshMaxSize, const double &_meshDistMin, const double &_meshDistMax, const int &tagInField, const int &tag);
     void setBoxRefinement(const double &_meshMinSize, const double &_meshMaxSize, const double &xmin, const double &xmax, const double &ymin, const double &ymax, const double &thickness_, const int &tag);
     void setBackgroundMesh(std::vector<double> FieldsList, const int &tag);
+
+    void setTractionBoundary(const std::vector<Line *> &_lines);
 };

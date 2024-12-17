@@ -30,7 +30,7 @@ private:
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
-    std::vector<BoundaryElement *> bdElements;
+    std::vector<BoundaryElement *> bdElements, tractionBd;
     std::vector<DOF *> globalDOFs;
     std::vector<double> load;
     AnalysisParameters *params;
@@ -49,6 +49,8 @@ private:
     MatrixXd K;
     VectorXd F;
     VectorXd U;
+
+    double force[2] = {};
 
 public:
     FEM();
@@ -139,7 +141,7 @@ public:
 */
     void postProc();
     void computeNodalStress();
-
+    void computeTractions();
     /*----------------------------------------------------------------------------------
                                         FUNCTIONS
     ------------------------------------------------------------------------------------

@@ -244,6 +244,26 @@ void FEM::readGeometry(const std::string &_filename)
         if (globalDOFs[i]->isDirichlet())
             dirichletBC[j++] = i;
 
+    while (line != "*TRACTION BOUNDARY")
+        std::getline(file, line);
+    std::getline(file, line);
+    int nTractionBCs = std::stoi(line);
+
+    for (int i = 0; i < nTractionBCs; i++)
+    {
+        std::getline(file, line);
+        std::vector<std::string> result = split(line, ' ');
+        std::string name = result[1];
+        int index = -1;
+        for (auto pe : physicalEntities)
+            if (pe.name == name)
+                index = pe.indexType - 1;
+
+        for (auto be : bdElements)
+            if (be->getPhysicalEntity() == index)
+                tractionBd.push_back(be);
+    }
+
     file.close();
 
     PetscPrintf(PETSC_COMM_WORLD, "Geometry read successfully!\n");
