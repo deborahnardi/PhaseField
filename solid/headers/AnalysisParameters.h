@@ -17,6 +17,7 @@ private:
     std::vector<double> dispByStep;
     SolverType solverType = EMumps;
     bool calcReactionForces = false;
+    std::string PFmodel = "AT2";
 
 public:
     AnalysisParameters();
@@ -36,6 +37,7 @@ public:
     int getMaxIterEIterative() const { return maxIterEIterative; }
     double getTolEIterative() const { return tolEIterative; }
     bool getCalculateReactionForces() const { return calcReactionForces; }
+    std::string getPFModel() const { return PFmodel; }
 
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxNewtonRaphsonIt(const int &_maxItNR) { maxItNR = _maxItNR; }
@@ -47,4 +49,5 @@ public:
     void setTolStaggered(const double &_tolStaggered) { tolStaggered = _tolStaggered; }
     void setCalculateReactionForces(const bool &_calcReactionForces) { calcReactionForces = _calcReactionForces; }
     void calculateReactionForces(const bool &_calcReactionForces) { calcReactionForces = _calcReactionForces; }
+    void setPFModel(const std::string &_PFmodel) { PFmodel = _PFmodel; }
 };

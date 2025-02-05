@@ -9,7 +9,7 @@
 std::string projectName = "phaseField2D-04copy";
 Geometry *geo1 = new Geometry(projectName);
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -33,8 +33,8 @@ double ubar = 1e-3;
 // double lcar = 0.002;
 // double lcar2 = 0.02;
 
-double lcar = 0.09;
-double lcar2 = 0.009;
+double lcar = 0.015;
+double lcar2 = 0.0015;
 
 int np = 20;
 
@@ -197,6 +197,8 @@ planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[1]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[2]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
+geo1->setTractionBoundary({lines[2]});
+
 geo1->GenerateMeshAPI(visualizeMesh);
 
 // ================================ FEM INFORMATION ================================
@@ -224,6 +226,7 @@ analysis1->setPrescribedDamageField(false);
 params->setSolverType(EIterative);
 params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
+params->setPFModel("AT1");
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

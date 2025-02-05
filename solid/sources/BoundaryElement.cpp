@@ -162,6 +162,11 @@ void BoundaryElement::calculateTraction(double force[])
         for (int i = 0; i < 2; i++)
             for (int j = 0; j < 2; j++)
                 force[i] += _stress[i][j] * normal[j] * wjac; // It is actually a force, not a traction
+
+        delete[] N;
+        for (int i = 0; i < numBdNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
     }
 }
 

@@ -154,6 +154,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
     PetscScalar Gc = material->getGriffithCriterion();
     PetscScalar lame = material->getLameConstant();
     PetscScalar G = material->getShearModulus();
+    std::string PFmodel = params->getPFModel();
 
     PetscInt count = 0;
     for (auto node : elemConnectivity)
@@ -215,14 +216,32 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
             firstInt[a] += (1 - damageValue) * N[a] * lame * divU * divU * wJac;
         }
 
+        /*
+            AT1 OR AT2 PHASE FIELD MODEL:
+            The second integral of the first derivative with respect to the field variable is different for AT1 and AT2 models.
+        */
         PetscScalar secondInt[numElNodes] = {};
-        for (PetscInt a = 0; a < numElNodes; a++)
+        if (PFmodel == "AT2")
         {
-            for (PetscInt c = 0; c < numElNodes; c++)
-                for (PetscInt k = 0; k < 2; k++)
-                    secondInt[a] += Gc * (l0 * elemConnectivity[c]->getDOFs()[2]->getValue() * dN_dX[a][k] * dN_dX[c][k]) * wJac;
+            for (PetscInt a = 0; a < numElNodes; a++)
+            {
+                for (PetscInt c = 0; c < numElNodes; c++)
+                    for (PetscInt k = 0; k < 2; k++)
+                        secondInt[a] += Gc * (l0 * elemConnectivity[c]->getDOFs()[2]->getValue() * dN_dX[a][k] * dN_dX[c][k]) * wJac;
 
-            secondInt[a] += Gc * (1 / l0 * damageValue * N[a]) * wJac;
+                secondInt[a] += Gc * (1 / l0 * damageValue * N[a]) * wJac;
+            }
+        }
+        else if (PFmodel == "AT1")
+        {
+            for (PetscInt a = 0; a < numElNodes; a++)
+            {
+                for (PetscInt c = 0; c < numElNodes; c++)
+                    for (PetscInt k = 0; k < 2; k++)
+                        secondInt[a] += Gc * (0.75 * l0 * elemConnectivity[c]->getDOFs()[2]->getValue() * dN_dX[a][k] * dN_dX[c][k]) * wJac;
+
+                secondInt[a] += Gc * ((0.375 / l0) * N[a]) * wJac;
+            }
         }
 
         for (PetscInt a = 0; a < numElNodes; a++)
@@ -247,17 +266,38 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs)
                 localQ[pos] += N[a] * N[b] * lame * divU * divU * wJac;
             }
 
-        for (PetscInt a = 0; a < numElNodes; a++)
-            for (PetscInt b = 0; b < numElNodes; b++)
-            {
-                PetscScalar contraction = 0.;
-                for (PetscInt k = 0; k < 2; k++)
-                    contraction += dN_dX[a][k] * dN_dX[b][k];
+        /*
+            AT1 OR AT2 PHASE FIELD MODEL:
+            The second integral of the first derivative with respect to the field variable is different for AT1 and AT2 models.
+        */
+        if (PFmodel == "AT2")
+        {
+            for (PetscInt a = 0; a < numElNodes; a++)
+                for (PetscInt b = 0; b < numElNodes; b++)
+                {
+                    PetscScalar contraction = 0.;
+                    for (PetscInt k = 0; k < 2; k++)
+                        contraction += dN_dX[a][k] * dN_dX[b][k];
 
-                PetscInt pos = numElDOF * a + b;
-                double value = Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac;
-                localQ[pos] += value; // Integral 2
-            }
+                    PetscInt pos = numElDOF * a + b;
+                    double value = Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac;
+                    localQ[pos] += value; // Integral 2 for AT2
+                }
+        }
+        else if (PFmodel == "AT1")
+        {
+            for (PetscInt a = 0; a < numElNodes; a++)
+                for (PetscInt b = 0; b < numElNodes; b++)
+                {
+                    PetscScalar contraction = 0.;
+                    for (PetscInt k = 0; k < 2; k++)
+                        contraction += dN_dX[a][k] * dN_dX[b][k];
+
+                    PetscInt pos = numElDOF * a + b;
+                    double value = Gc * (0.75 * l0 * contraction) * wJac;
+                    localQ[pos] += value; // Integral 2 for AT1
+                }
+        }
 
         delete[] N;
         for (int i = 0; i < numElNodes; i++)
@@ -590,6 +630,9 @@ PetscErrorCode Solid2D::calculateStress()
             delete[] dN[i];
         delete[] dN;
     }
+    for (int i = 0; i < numElNodes; i++)
+        delete[] coord[i];
+    delete[] coord;
 
     return ierr;
 }

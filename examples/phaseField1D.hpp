@@ -73,9 +73,11 @@ analysis1->setBoundaryFunction(boundaryFunction);
 // ********************************** MESH GENERATION INFORMATION **********************************
 geo1->GenerateMeshAPI(visualizeMesh);
 // ********************************** FEM INFORMATION **********************************************
-analysis1->readGeometry(projectName + ".mir");
+param->setTolStaggered(1.e-4);
+param->calculateReactionForces(false);
 analysis1->setAnalysisParameters(param);
 analysis1->setPrintMatrix(false);
+analysis1->readGeometry(projectName + ".mir");
 // analysis1->solveFEMProblem();
 //    analysis1->solveFEMProblemNoPetsc();
 //   ********************************** PHASE FIELD INFORMATION **************************************

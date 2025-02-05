@@ -8,7 +8,7 @@
 std::string projectName = "phaseField2D-03";
 Geometry *geo1 = new Geometry(projectName);
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -98,7 +98,8 @@ analysis1->setPrescribedDamageField(true);
 //  //   ********************************** FEM INFORMATION **********************************
 params->setSolverType(EIterative);
 params->setTolStaggered(1.e-4);
-params->calculateReactionForces(true);
+params->calculateReactionForces(false);
+params->setPFModel("AT1");
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

@@ -9,7 +9,7 @@
 std::string projectName = "phaseField2D-04";
 Geometry *geo1 = new Geometry(projectName);
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -33,8 +33,11 @@ double ubar = 1e-3;
 // double lcar = 0.002;
 // double lcar2 = 0.02;
 
-double lcar = 0.0095;
-double lcar2 = 0.05;
+// double lcar = 0.0018;
+// double lcar2 = 0.018;
+
+double lcar = 0.0019;
+double lcar2 = 0.019;
 
 int np = 20;
 
@@ -204,7 +207,6 @@ geo1->GenerateMeshAPI(visualizeMesh);
 // ================================ FEM INFORMATION ================================
 params->setDeltaTime(1);
 params->setNSteps(146);
-params->setSolverType(EIterative);
 
 // Generating the loading vector
 

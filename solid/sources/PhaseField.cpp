@@ -46,7 +46,8 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
     params->setCalculateReactionForces(false);
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
-    params->setCalculateReactionForces(true);
+    // params->setCalculateReactionForces(true);
+    params->getCalculateReactionForces();
 
     Ddk = new double[numNodes]{}; // Damage field at the current iteration
     // totalMatrixQ = new double *[numNodes] {};
@@ -270,8 +271,6 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
         DdkMinus1[i] = 0.0;
         Ddk[i] = 0.0;
     }
-
-    // Print PA, IR and JC
 
     do
     {
