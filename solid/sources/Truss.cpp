@@ -197,7 +197,7 @@ PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
     return ierr;
 }
 
-PetscErrorCode Truss::getPhaseFieldContribution(Mat &A, Vec &rhs)
+PetscErrorCode Truss::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField)
 {
     /*
         Analytical solution for the phase field problem in a truss element

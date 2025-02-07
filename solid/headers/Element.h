@@ -45,8 +45,8 @@ public:
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
 
     virtual PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false) {};
-    virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs) {};
-    virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField) {};
+    // virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs) {};
+    virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField = false) {};
     virtual void getContribution() {};
     virtual void Test(PetscScalar &integral) {};
     virtual void computeDeformation() {};
@@ -88,7 +88,7 @@ public:
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false) override;
-    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override;
+    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField = false) override;
     void getContribution() override;
     void computeDeformation() override;
 };
@@ -114,8 +114,8 @@ public:
 
     MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false) override;
-    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override;
-    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField) override;
+    // PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override;
+    PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField = false) override;
     void getContribution() override;
     void Test(PetscScalar &integral) override;
 

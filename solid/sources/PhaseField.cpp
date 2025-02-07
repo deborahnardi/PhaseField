@@ -59,6 +59,8 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     if (prescribedDamageField)
         updateFieldDistribution();
 
+    prescribedDamageField = false;
+
     int nSteps = params->getNSteps();
 
     MPI_Barrier(PETSC_COMM_WORLD);
