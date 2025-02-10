@@ -223,10 +223,11 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 analysis1->setBoundaryFunction(boundaryFunction);
 analysis1->setPrescribedDamageField(false);
 // //   ********************************** FEM INFORMATION **********************************
-params->setSolverType(EIterative);
+params->setSolverType(ESuiteSparse);
 params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
-params->setPFModel("AT2");
+params->setReactionDir("X");
+params->setPFModel("AT1");
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

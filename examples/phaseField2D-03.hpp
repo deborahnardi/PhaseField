@@ -55,6 +55,8 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(lines[0], DIRICHLET, {{X
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[6], DIRICHLET, {{X, 0.0}, {Y, ubar}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DAMAGE, {{D, 1.0}}));
 
+geo1->setTractionBoundary({lines[6]});
+
 materials.push_back(geo1->addMaterial(210000., 0.3));
 materials[0]->setGriffithCriterion(2.7);
 materials[0]->setL0(0.01); // Internal lenght of Phase Field model, in mm;
@@ -98,8 +100,9 @@ analysis1->setPrescribedDamageField(true);
 //  //   ********************************** FEM INFORMATION **********************************
 params->setSolverType(ESuiteSparse);
 params->setTolStaggered(1.e-4);
-params->calculateReactionForces(false);
-params->setPFModel("AT2");
+params->calculateReactionForces(true);
+params->setReactionDir("Y");
+params->setPFModel("AT1");
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

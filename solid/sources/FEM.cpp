@@ -503,8 +503,13 @@ PetscErrorCode FEM::computeReactionForces()
         sumDisp /= count;
 
     std::ofstream file;
-    file.open(resultsPath + "results/force_displacement.txt", std::ios::app);
-    file << sumDisp << " " << force[0] << std::endl;
+    file.open(resultsPath + "force_displacement.txt", std::ios::app);
+
+    if (params->getReactionDir() == "X")
+        file << sumDisp << " " << force[0] << std::endl;
+    else if (params->getReactionDir() == "Y")
+        file << sumDisp << " " << force[1] << std::endl;
+
     file.close();
 
     return ierr;

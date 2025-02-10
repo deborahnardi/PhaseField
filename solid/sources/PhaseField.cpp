@@ -46,8 +46,7 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
     params->setCalculateReactionForces(false);
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
-    // params->setCalculateReactionForces(true);
-    params->getCalculateReactionForces();
+    params->setCalculateReactionForces(true);
 
     Ddk = new double[numNodes]{}; // Damage field at the current iteration
     // totalMatrixQ = new double *[numNodes] {};
