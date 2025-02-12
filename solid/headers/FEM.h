@@ -96,6 +96,7 @@ public:
     PetscErrorCode printMemoryUsage(const int &iStep);
     PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
+
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods
     ------------------------------------------------------------------------------------

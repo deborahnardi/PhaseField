@@ -25,23 +25,43 @@ Solid2D::~Solid2D() {}
 */
 PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
 {
-    PetscInt numElDOF = numElNodes * 2;
-    PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
+    /*
+         Ke = int{B^T C B}dOmega_e
+         B^T C B IS HEREIN DEFINED THROUGH AN ANALYTICAL EXPRESSION
+         ONLY THE UPPER TRIANGULAR PART OF THE MATRIX IS COMPUTED (21 ELEMENTS DUE TO SYMMETRY)
+         ONLY ISOTROPIC MATERIALS ARE CONSIDERED (SEE CONSTITUTIVE TENSOR)
+
+         B = [dN1/dx, 0, dN2/dx, 0, dN3/dx, 0]
+                [0, dN1/dy, 0, dN2/dy, 0, dN3/dy]
+                [dN1/dy, dN1/dx, dN2/dy, dN2/dx, dN3/dy, dN3/dx]
+
+            dN/dx = dN/dxi * dxi/dx + dN/deta * deta/dx
+            dN/dy = dN/dxi * dxi/dy + dN/deta * deta/dy
+
+        Jacobian matrix:
+            J = [dx/dxi, dy/dxi]
+                [dx/deta, dy/deta]
+
+        Inverse of the Jacobian matrix:
+            J^-1 = 1/det(J) * [dy/deta, -dy/dxi]
+                              [-dx/deta, dx/dxi]
+
+        Derivative of the shape functions with respect to global coordinates:
+            [dN1/dx, dN1/dy]             [dN1/dxi, dN1/deta]
+            [dN2/dx, dN2/dy](3x2)   =    [dN2/dxi, dN2/deta](3x2)  * [J^-1](2x2)
+            [dN3/dx, dN3/dy]             [dN3/dxi, dN3/deta]
+    */
+    PetscInt numElDOF = numElNodes * 2;                      // = 6
+    PetscReal *localStiffnessMatrix = new PetscScalar[21](); // 6x6 matrix, 21 is the number of elements in the upper triangular part of the matrix
     PetscReal *localRHS = new PetscScalar[numElDOF]();
     PetscInt *idx = new PetscInt[numElDOF]();
 
-    PetscReal kroen[2][2] = {{1., 0.}, {0., 1.}};
-
-    const double G = material->getShearModulus();
-    const double lame = material->getLameConstant();
-    const double kappa = lame + 2.0 / 3.0 * G;
-    const double mu = G;
-
-    PetscInt count = 0;
-    for (auto node : elemConnectivity)
-        for (auto dof : node->getDOFs())
-            if (dof->getDOFType() != D)
-                idx[count++] = dof->getIndex();
+    // COMPUTING THE CONSTITUTIVE TENSOR
+    const double c00 = material->getLameConstant() + 2.0 * material->getShearModulus();
+    const double c01 = material->getLameConstant();
+    const double c10 = c01;
+    const double c11 = c00;
+    const double c22 = material->getShearModulus();
 
     for (int ih = 0; ih < numHammerPoints; ih++)
     {
@@ -51,69 +71,166 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
         double *N = sF->evaluateShapeFunction(xi);
         double **dN = sF->getShapeFunctionDerivative(xi);
 
-        PetscReal dX_dXsi[2][2] = {};
-
-        for (PetscInt a = 0; a < 3; a++)
-            for (PetscInt i = 0; i < 2; i++)
-                for (PetscInt j = 0; j < 2; j++)
-                    dX_dXsi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
-
-        PetscReal jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
-        PetscReal wJac = weight * jac;
-
-        PetscReal dX_dXsiInv[2][2] = {};
-        dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
-        dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
-        dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
-        dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
-
-        PetscReal dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
+        // COMPUTING THE JACOBIAN MATRIX
+        PetscReal jacobianMatrix[2][2] = {};
         for (PetscInt a = 0; a < numElNodes; a++)
             for (PetscInt i = 0; i < 2; i++)
                 for (PetscInt j = 0; j < 2; j++)
-                    dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
+                    jacobianMatrix[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
 
+        // COMPUTING THE JACOBIAN FOR 2D SPACE
+        PetscReal jac = jacobianMatrix[0][0] * jacobianMatrix[1][1] - jacobianMatrix[0][1] * jacobianMatrix[1][0];
+        PetscReal wJac = weight * jac;
+
+        // COMPUTING THE INVERSE OF THE JACOBIAN MATRIX
+        PetscReal jacobianMatrixInv[2][2] = {};
+        jacobianMatrixInv[0][0] = jacobianMatrix[1][1] / jac;
+        jacobianMatrixInv[0][1] = -jacobianMatrix[0][1] / jac;
+        jacobianMatrixInv[1][0] = -jacobianMatrix[1][0] / jac;
+        jacobianMatrixInv[1][1] = jacobianMatrix[0][0] / jac;
+
+        // COMPUTING THE DERIVATIVE OF THE SHAPE FUNCTIONS WITH RESPECT TO GLOBAL COORDINATES (3x2 matrix - nNodes x nDirections)
+        PetscReal dN_dX[numElNodes][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * jacobianMatrixInv[j][i];
+
+        // RELATING dN_dX TO THE B MATRIX
+        PetscReal B[3][6] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            B[0][2 * a] = dN_dX[a][0];
+            B[1][2 * a + 1] = dN_dX[a][1];
+            B[2][2 * a] = dN_dX[a][1];
+            B[2][2 * a + 1] = dN_dX[a][0];
+        }
+
+        // COMPUTING THE DEGRADATION FUNCTION (1-d)^2
         double damageValue = 0.;
-
-        // if (negativeLoad)
-        //     damageValue = 0.;
-        // else
         for (PetscInt a = 0; a < numElNodes; a++)
             damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
 
         PetscReal dCoeff = pow(1 - damageValue, 2);
 
-        PetscScalar gradU[2][2] = {};
-        for (PetscInt c = 0; c < numElNodes; c++)
-            for (PetscInt k = 0; k < 2; k++)
-                for (PetscInt l = 0; l < 2; l++)
-                    gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+        // COMPUTING THE LOCAL STIFFNESS MATRIX
+        localStiffnessMatrix[0] = dCoeff * (B[0][0] * B[0][0] * c00 + B[2][0] * B[2][0] * c22) * wJac;
+        localStiffnessMatrix[1] = dCoeff * (B[0][0] * B[1][1] * c01 + B[2][0] * B[2][1] * c22) * wJac;
+        localStiffnessMatrix[2] = dCoeff * (B[0][0] * B[0][2] * c00 + B[2][0] * B[2][2] * c22) * wJac;
+        localStiffnessMatrix[3] = dCoeff * (B[0][0] * B[1][3] * c01 + B[2][0] * B[2][3] * c22) * wJac;
+        localStiffnessMatrix[4] = dCoeff * (B[0][0] * B[0][4] * c00 + B[2][0] * B[2][4] * c22) * wJac;
+        localStiffnessMatrix[5] = dCoeff * (B[0][0] * B[1][5] * c01 + B[2][0] * B[2][5] * c22) * wJac;
+        localStiffnessMatrix[6] = dCoeff * (B[1][1] * B[1][1] * c11 + B[2][1] * B[2][1] * c22) * wJac;
+        localStiffnessMatrix[7] = dCoeff * (B[0][2] * B[1][1] * c10 + B[2][1] * B[2][2] * c22) * wJac;
+        localStiffnessMatrix[8] = dCoeff * (B[1][1] * B[1][3] * c11 + B[2][1] * B[2][3] * c22) * wJac;
+        localStiffnessMatrix[9] = dCoeff * (B[0][4] * B[1][1] * c10 + B[2][1] * B[2][4] * c22) * wJac;
+        localStiffnessMatrix[10] = dCoeff * (B[1][1] * B[1][5] * c11 + B[2][1] * B[2][5] * c22) * wJac;
+        localStiffnessMatrix[11] = dCoeff * (B[0][2] * B[0][2] * c00 + B[2][2] * B[2][2] * c22) * wJac;
+        localStiffnessMatrix[12] = dCoeff * (B[0][2] * B[1][3] * c01 + B[2][2] * B[2][3] * c22) * wJac;
+        localStiffnessMatrix[13] = dCoeff * (B[0][2] * B[0][4] * c00 + B[2][2] * B[2][4] * c22) * wJac;
+        localStiffnessMatrix[14] = dCoeff * (B[0][2] * B[1][5] * c01 + B[2][2] * B[2][5] * c22) * wJac;
+        localStiffnessMatrix[15] = dCoeff * (B[1][3] * B[1][3] * c11 + B[2][3] * B[2][3] * c22) * wJac;
+        localStiffnessMatrix[16] = dCoeff * (B[0][4] * B[1][3] * c10 + B[2][3] * B[2][4] * c22) * wJac;
+        localStiffnessMatrix[17] = dCoeff * (B[1][3] * B[1][5] * c11 + B[2][3] * B[2][5] * c22) * wJac;
+        localStiffnessMatrix[18] = dCoeff * (B[0][4] * B[0][4] * c00 + B[2][4] * B[2][4] * c22) * wJac;
+        localStiffnessMatrix[19] = dCoeff * (B[0][4] * B[1][5] * c01 + B[2][4] * B[2][5] * c22) * wJac;
+        localStiffnessMatrix[20] = dCoeff * (B[1][5] * B[1][5] * c11 + B[2][5] * B[2][5] * c22) * wJac;
 
-        const PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
-
-        for (PetscInt a = 0; a < numElNodes; a++)
-
-            for (PetscInt i = 0; i < 2; i++)
-                for (PetscInt b = 0; b < numElNodes; b++)
-                {
-                    PetscReal contraction = 0.;
-                    for (PetscInt k = 0; k < 2; k++)
-                        contraction += dN_dX[a][k] * dN_dX[b][k];
-
-                    for (PetscInt j = 0; j < 2; j++)
-                    {
-                        PetscInt pos = numElDOF * (2 * a + i) + 2 * b + j;
-                        if (divU > 0)
-                            localStiffnessMatrix[pos] += dCoeff * (mu * (kroen[i][j] * contraction + dN_dX[a][j] * dN_dX[b][i] - (2.0 / 3.0) * dN_dX[a][i] * dN_dX[b][j]) + kappa * dN_dX[a][i] * dN_dX[b][j]) * wJac;
-                        else if (divU <= 0)
-                            localStiffnessMatrix[pos] += dCoeff * (mu * (kroen[i][j] * contraction + dN_dX[a][j] * dN_dX[b][i] - (2.0 / 3.0) * dN_dX[a][i] * dN_dX[b][j])) * wJac + kappa * dN_dX[a][i] * dN_dX[b][j] * wJac;
-                    }
-                }
         delete[] N;
         for (int i = 0; i < numElNodes; i++)
             delete[] dN[i];
         delete[] dN;
     }
+
+    //     PetscInt numElDOF = numElNodes * 2;
+    //     PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
+    //     PetscReal *localRHS = new PetscScalar[numElDOF]();
+    //     PetscInt *idx = new PetscInt[numElDOF]();
+
+    //     PetscReal kroen[2][2] = {{1., 0.}, {0., 1.}};
+
+    //     const double G = material->getShearModulus();
+    //     const double lame = material->getLameConstant();
+    //     const double kappa = lame + 2.0 / 3.0 * G;
+    //     const double mu = G;
+
+    //     PetscInt count = 0;
+    //     for (auto node : elemConnectivity)
+    //         for (auto dof : node->getDOFs())
+    //             if (dof->getDOFType() != D)
+    //                 idx[count++] = dof->getIndex();
+
+    //     for (int ih = 0; ih < numHammerPoints; ih++)
+    //     {
+    //         double *xi = coords[ih];
+    //         double weight = weights[ih];
+
+    //         double *N = sF->evaluateShapeFunction(xi);
+    //         double **dN = sF->getShapeFunctionDerivative(xi);
+
+    //         PetscReal dX_dXsi[2][2] = {};
+
+    //         for (PetscInt a = 0; a < 3; a++)
+    //             for (PetscInt i = 0; i < 2; i++)
+    //                 for (PetscInt j = 0; j < 2; j++)
+    //                     dX_dXsi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+    //         PetscReal jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
+    //         PetscReal wJac = weight * jac;
+
+    //         PetscReal dX_dXsiInv[2][2] = {};
+    //         dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
+    //         dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
+    //         dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
+    //         dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
+
+    //         PetscReal dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
+    //         for (PetscInt a = 0; a < numElNodes; a++)
+    //             for (PetscInt i = 0; i < 2; i++)
+    //                 for (PetscInt j = 0; j < 2; j++)
+    //                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
+
+    //         double damageValue = 0.;
+
+    //         // if (negativeLoad)
+    //         //     damageValue = 0.;
+    //         // else
+    //         for (PetscInt a = 0; a < numElNodes; a++)
+    //             damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
+
+    //         PetscReal dCoeff = pow(1 - damageValue, 2);
+
+    //         PetscScalar gradU[2][2] = {};
+    //         for (PetscInt c = 0; c < numElNodes; c++)
+    //             for (PetscInt k = 0; k < 2; k++)
+    //                 for (PetscInt l = 0; l < 2; l++)
+    //                     gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+
+    //         const PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
+
+    //         for (PetscInt a = 0; a < numElNodes; a++)
+
+    //             for (PetscInt i = 0; i < 2; i++)
+    //                 for (PetscInt b = 0; b < numElNodes; b++)
+    //                 {
+    //                     PetscReal contraction = 0.;
+    //                     for (PetscInt k = 0; k < 2; k++)
+    //                         contraction += dN_dX[a][k] * dN_dX[b][k];
+
+    //                     for (PetscInt j = 0; j < 2; j++)
+    //                     {
+    //                         PetscInt pos = numElDOF * (2 * a + i) + 2 * b + j;
+    //                         if (divU > 0)
+    //                             localStiffnessMatrix[pos] += dCoeff * (mu * (kroen[i][j] * contraction + dN_dX[a][j] * dN_dX[b][i] - (2.0 / 3.0) * dN_dX[a][i] * dN_dX[b][j]) + kappa * dN_dX[a][i] * dN_dX[b][j]) * wJac;
+    //                         else if (divU <= 0)
+    //                             localStiffnessMatrix[pos] += dCoeff * (mu * (kroen[i][j] * contraction + dN_dX[a][j] * dN_dX[b][i] - (2.0 / 3.0) * dN_dX[a][i] * dN_dX[b][j])) * wJac + kappa * dN_dX[a][i] * dN_dX[b][j] * wJac;
+    //                     }
+    //                 }
+    //         delete[] N;
+    //         for (int i = 0; i < numElNodes; i++)
+    //             delete[] dN[i];
+    //         delete[] dN;
+    // }
 
     /*
         Calculating internal forces

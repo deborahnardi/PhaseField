@@ -9,6 +9,7 @@ private:
     int index;
     double poisson, young, shearModulus, lameConstant, griffithCriterion, l0 = 0.;
     PlaneAnalysis planeAnalysis;
+    std::string constitutiveType = "ISOTROPIC";
 
 public:
     Material();
@@ -17,6 +18,7 @@ public:
 
     int getIndex() { return index; };
     std::string getName() { return "Material_" + std::to_string(index + 1); }
+    std::string getConstitutiveType() { return constitutiveType; }
     double getPoisson() { return poisson; }
     double getYoungModulus() { return young; }
     double getShearModulus() { return shearModulus; }
@@ -33,6 +35,7 @@ public:
     void setLameConstant(double _lameConstant) { lameConstant = _lameConstant; }
     void setGriffithCriterion(double _griff) { griffithCriterion = _griff; }
     void setL0(double _l0) { l0 = _l0; }
+    void setConstitutiveType(std::string _constitutiveType) { constitutiveType = _constitutiveType; }
 
     void Lame(const double E[2][2], double S[2][2]);
 };

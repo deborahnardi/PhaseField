@@ -6,6 +6,7 @@ FEM::FEM(const std::string _name)
 {
     MPI_Comm_size(PETSC_COMM_WORLD, &size);
     MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
+    computeConstitutiveTensor();
     setResultsPath();
     deleteResults(true);
     createResultsPath();
