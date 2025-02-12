@@ -396,13 +396,14 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
         ierr = PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK);
         CHKERRQ(ierr);
         break;
-    case EMumps: // Parallel
+    case EMumps: // Parallel - (Multifrontal Massively Parallel Solver), used for large and sparse linear systems
         ierr = PCSetType(pc, PCLU);
         CHKERRQ(ierr);
         ierr = PCFactorSetMatSolverType(pc, MATSOLVERMUMPS);
         CHKERRQ(ierr);
         break;
     case EIterative: // Parallel - faster than MUMPS, however it is harder to converge;
+        // KSPFGMRES is a generalization of the GMRES algorithm that allows for flexible preconditioning (you can set the preconditioner type and other parameters)
         ierr = KSPSetTolerances(ksp, PETSC_DEFAULT, params->getTolEIterative(), PETSC_DEFAULT, params->getMaxIterEIterative());
         CHKERRQ(ierr);
         ierr = KSPSetType(ksp, KSPFGMRES);

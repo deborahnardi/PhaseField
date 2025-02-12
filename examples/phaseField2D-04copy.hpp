@@ -27,7 +27,7 @@ std::vector<BoundaryCondition *> boundaryConditions;
 std::vector<Material *> materials;
 
 double L = 1.0;
-double dL = 2e-4;
+double dL = 1e-4;
 double elSize = 0.1 * L;
 double ubar = 1e-3;
 // double lcar = 0.002;
@@ -223,7 +223,7 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 analysis1->setBoundaryFunction(boundaryFunction);
 analysis1->setPrescribedDamageField(false);
 // //   ********************************** FEM INFORMATION **********************************
-params->setSolverType(ESuiteSparse);
+params->setSolverType(EIterative);
 params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
 params->setReactionDir("X");

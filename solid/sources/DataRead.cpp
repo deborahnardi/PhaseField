@@ -387,6 +387,8 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     ierr = MatSetFromOptions(A);
     CHKERRQ(ierr);
 
+    PetscCall(MatSetOption(A, MAT_SYMMETRIC, PETSC_TRUE)); // or before solving the system
+
     ierr = VecCreate(PETSC_COMM_WORLD, &b);
     CHKERRQ(ierr);
     ierr = VecSetSizes(b, PETSC_DECIDE, mSize);

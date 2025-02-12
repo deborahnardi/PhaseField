@@ -12,7 +12,7 @@ private:
     double tolNR = 1.e-6, tolPSOR = 1.e-6, tolStaggered = 1.e-5;
     double ubar, deltaTime;
     double residStaggered = 1.e30, residPSOR = 1e20;
-    int maxIterEIterative = 1000;
+    int maxIterEIterative = 100000;
     double tolEIterative = 1.e-8;
     std::vector<double> dispByStep;
     SolverType solverType = EMumps;
