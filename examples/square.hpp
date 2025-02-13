@@ -1,7 +1,7 @@
 std::string projectName = "square";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -64,7 +64,7 @@ params->setSolverType(EIterative);
 params->calculateReactionForces(true);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
-analysis1->setPrintMatrix(true);
+analysis1->setPrintMatrix(false);
 analysis1->solveFEMProblem();
 // analysis1->solvePhaseFieldProblem();
 //  analysis1->solveFEMProblemNoPetsc();
