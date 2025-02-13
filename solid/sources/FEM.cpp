@@ -6,7 +6,6 @@ FEM::FEM(const std::string _name)
 {
     MPI_Comm_size(PETSC_COMM_WORLD, &size);
     MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-    computeConstitutiveTensor();
     setResultsPath();
     deleteResults(true);
     createResultsPath();
@@ -332,6 +331,8 @@ PetscErrorCode FEM::assembleProblem()
     }
 
     auto t3 = std::chrono::high_resolution_clock::now();
+    if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
+        printGlobalMatrix(matrix);
     // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
     CHKERRQ(ierr);

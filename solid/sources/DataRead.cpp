@@ -388,6 +388,7 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     CHKERRQ(ierr);
 
     PetscCall(MatSetOption(A, MAT_SYMMETRIC, PETSC_TRUE)); // or before solving the system
+    PetscCall(MatSetOption(A, MAT_SPD, PETSC_TRUE));       // Positive definite matrix
 
     ierr = VecCreate(PETSC_COMM_WORLD, &b);
     CHKERRQ(ierr);

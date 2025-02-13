@@ -64,7 +64,7 @@ params->setSolverType(EIterative);
 params->calculateReactionForces(true);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
-analysis1->setPrintMatrix(false);
+analysis1->setPrintMatrix(true);
 analysis1->solveFEMProblem();
 // analysis1->solvePhaseFieldProblem();
 //  analysis1->solveFEMProblemNoPetsc();

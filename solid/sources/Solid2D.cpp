@@ -52,9 +52,16 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
             [dN3/dx, dN3/dy]             [dN3/dxi, dN3/deta]
     */
     PetscInt numElDOF = numElNodes * 2;                      // = 6
-    PetscReal *localStiffnessMatrix = new PetscScalar[21](); // 6x6 matrix, 21 is the number of elements in the upper triangular part of the matrix
+    PetscReal *localStiffnessMatrix = new PetscScalar[36](); // 6x6 matrix, 21 is the number of elements in the upper triangular part of the matrix
     PetscReal *localRHS = new PetscScalar[numElDOF]();
     PetscInt *idx = new PetscInt[numElDOF]();
+
+    // SETTING idx VALUES CONSIDERING ONLY THE SYMMETRIC PART OF THE MATRIX
+    PetscInt count = 0;
+    for (auto node : elemConnectivity)
+        for (auto dof : node->getDOFs())
+            if (dof->getDOFType() != D)
+                idx[count++] = dof->getIndex();
 
     // COMPUTING THE CONSTITUTIVE TENSOR
     const double c00 = material->getLameConstant() + 2.0 * material->getShearModulus();
@@ -114,27 +121,49 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
         PetscReal dCoeff = pow(1 - damageValue, 2);
 
         // COMPUTING THE LOCAL STIFFNESS MATRIX
-        localStiffnessMatrix[0] = dCoeff * (B[0][0] * B[0][0] * c00 + B[2][0] * B[2][0] * c22) * wJac;
-        localStiffnessMatrix[1] = dCoeff * (B[0][0] * B[1][1] * c01 + B[2][0] * B[2][1] * c22) * wJac;
-        localStiffnessMatrix[2] = dCoeff * (B[0][0] * B[0][2] * c00 + B[2][0] * B[2][2] * c22) * wJac;
-        localStiffnessMatrix[3] = dCoeff * (B[0][0] * B[1][3] * c01 + B[2][0] * B[2][3] * c22) * wJac;
-        localStiffnessMatrix[4] = dCoeff * (B[0][0] * B[0][4] * c00 + B[2][0] * B[2][4] * c22) * wJac;
-        localStiffnessMatrix[5] = dCoeff * (B[0][0] * B[1][5] * c01 + B[2][0] * B[2][5] * c22) * wJac;
-        localStiffnessMatrix[6] = dCoeff * (B[1][1] * B[1][1] * c11 + B[2][1] * B[2][1] * c22) * wJac;
-        localStiffnessMatrix[7] = dCoeff * (B[0][2] * B[1][1] * c10 + B[2][1] * B[2][2] * c22) * wJac;
-        localStiffnessMatrix[8] = dCoeff * (B[1][1] * B[1][3] * c11 + B[2][1] * B[2][3] * c22) * wJac;
-        localStiffnessMatrix[9] = dCoeff * (B[0][4] * B[1][1] * c10 + B[2][1] * B[2][4] * c22) * wJac;
-        localStiffnessMatrix[10] = dCoeff * (B[1][1] * B[1][5] * c11 + B[2][1] * B[2][5] * c22) * wJac;
-        localStiffnessMatrix[11] = dCoeff * (B[0][2] * B[0][2] * c00 + B[2][2] * B[2][2] * c22) * wJac;
-        localStiffnessMatrix[12] = dCoeff * (B[0][2] * B[1][3] * c01 + B[2][2] * B[2][3] * c22) * wJac;
-        localStiffnessMatrix[13] = dCoeff * (B[0][2] * B[0][4] * c00 + B[2][2] * B[2][4] * c22) * wJac;
-        localStiffnessMatrix[14] = dCoeff * (B[0][2] * B[1][5] * c01 + B[2][2] * B[2][5] * c22) * wJac;
-        localStiffnessMatrix[15] = dCoeff * (B[1][3] * B[1][3] * c11 + B[2][3] * B[2][3] * c22) * wJac;
-        localStiffnessMatrix[16] = dCoeff * (B[0][4] * B[1][3] * c10 + B[2][3] * B[2][4] * c22) * wJac;
-        localStiffnessMatrix[17] = dCoeff * (B[1][3] * B[1][5] * c11 + B[2][3] * B[2][5] * c22) * wJac;
-        localStiffnessMatrix[18] = dCoeff * (B[0][4] * B[0][4] * c00 + B[2][4] * B[2][4] * c22) * wJac;
-        localStiffnessMatrix[19] = dCoeff * (B[0][4] * B[1][5] * c01 + B[2][4] * B[2][5] * c22) * wJac;
-        localStiffnessMatrix[20] = dCoeff * (B[1][5] * B[1][5] * c11 + B[2][5] * B[2][5] * c22) * wJac;
+
+        localStiffnessMatrix[0] = dCoeff * (B[0][0] * B[0][0] * c00 + B[1][1] * B[1][1] * c22) * wJac;
+        localStiffnessMatrix[1] = dCoeff * (B[0][0] * B[1][1] * c01 + B[0][0] * B[1][1] * c22) * wJac;
+        localStiffnessMatrix[2] = dCoeff * (B[0][0] * B[0][2] * c00 + B[1][1] * B[1][3] * c22) * wJac;
+        localStiffnessMatrix[3] = dCoeff * (B[0][0] * B[1][3] * c01 + B[0][2] * B[1][1] * c22) * wJac;
+        localStiffnessMatrix[4] = dCoeff * (B[0][0] * B[0][4] * c00 + B[1][1] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[5] = dCoeff * (B[0][0] * B[1][5] * c01 + B[0][4] * B[1][1] * c22) * wJac;
+        localStiffnessMatrix[6] = localStiffnessMatrix[1];
+        localStiffnessMatrix[7] = dCoeff * (B[0][0] * B[0][0] * c22 + B[1][1] * B[1][1] * c11) * wJac;
+        localStiffnessMatrix[8] = dCoeff * (B[0][0] * B[1][3] * c22 + B[0][2] * B[1][1] * c10) * wJac;
+        localStiffnessMatrix[9] = dCoeff * (B[0][0] * B[0][2] * c22 + B[1][1] * B[1][3] * c11) * wJac;
+        localStiffnessMatrix[10] = dCoeff * (B[0][0] * B[1][5] * c22 + B[0][4] * B[1][1] * c10) * wJac;
+        localStiffnessMatrix[11] = dCoeff * (B[0][0] * B[0][4] * c22 + B[1][1] * B[1][5] * c11) * wJac;
+        localStiffnessMatrix[12] = localStiffnessMatrix[2];
+        localStiffnessMatrix[13] = localStiffnessMatrix[7];
+        localStiffnessMatrix[14] = dCoeff * (B[0][2] * B[0][2] * c00 + B[1][3] * B[1][3] * c22) * wJac;
+        localStiffnessMatrix[15] = dCoeff * (B[0][2] * B[1][3] * c01 + B[0][2] * B[1][3] * c22) * wJac;
+        localStiffnessMatrix[16] = dCoeff * (B[0][2] * B[0][4] * c00 + B[1][3] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[17] = dCoeff * (B[0][2] * B[1][5] * c01 + B[0][4] * B[1][3] * c22) * wJac;
+        localStiffnessMatrix[18] = localStiffnessMatrix[3];
+        localStiffnessMatrix[19] = localStiffnessMatrix[8];
+        localStiffnessMatrix[20] = localStiffnessMatrix[12];
+        localStiffnessMatrix[21] = dCoeff * (B[0][2] * B[0][2] * c22 + B[1][3] * B[1][3] * c11) * wJac;
+        localStiffnessMatrix[22] = dCoeff * (B[0][2] * B[1][5] * c22 + B[0][4] * B[1][3] * c10) * wJac;
+        localStiffnessMatrix[23] = dCoeff * (B[0][2] * B[0][4] * c22 + B[1][3] * B[1][5] * c11) * wJac;
+        localStiffnessMatrix[24] = localStiffnessMatrix[4];
+        localStiffnessMatrix[25] = localStiffnessMatrix[9];
+        localStiffnessMatrix[26] = localStiffnessMatrix[13];
+        localStiffnessMatrix[27] = localStiffnessMatrix[16];
+        localStiffnessMatrix[28] = dCoeff * (B[0][4] * B[0][4] * c00 + B[1][5] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[29] = dCoeff * (B[0][4] * B[1][5] * c01 + B[0][4] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[30] = localStiffnessMatrix[5];
+        localStiffnessMatrix[31] = localStiffnessMatrix[10];
+        localStiffnessMatrix[32] = localStiffnessMatrix[14];
+        localStiffnessMatrix[33] = localStiffnessMatrix[17];
+        localStiffnessMatrix[34] = localStiffnessMatrix[19];
+        localStiffnessMatrix[35] = dCoeff * (B[0][4] * B[0][4] * c22 + B[1][5] * B[1][5] * c11) * wJac;
+
+        printf("localStiffnessMatrix:\n");
+        for (PetscInt i = 0; i < 36; i++)
+        {
+            printf("localStiffnessMatrix[%d] = %f\n", i, localStiffnessMatrix[i]);
+        }
 
         delete[] N;
         for (int i = 0; i < numElNodes; i++)
@@ -142,99 +171,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
         delete[] dN;
     }
 
-    //     PetscInt numElDOF = numElNodes * 2;
-    //     PetscReal *localStiffnessMatrix = new PetscScalar[numElDOF * numElDOF]();
-    //     PetscReal *localRHS = new PetscScalar[numElDOF]();
-    //     PetscInt *idx = new PetscInt[numElDOF]();
-
-    //     PetscReal kroen[2][2] = {{1., 0.}, {0., 1.}};
-
-    //     const double G = material->getShearModulus();
-    //     const double lame = material->getLameConstant();
-    //     const double kappa = lame + 2.0 / 3.0 * G;
-    //     const double mu = G;
-
-    //     PetscInt count = 0;
-    //     for (auto node : elemConnectivity)
-    //         for (auto dof : node->getDOFs())
-    //             if (dof->getDOFType() != D)
-    //                 idx[count++] = dof->getIndex();
-
-    //     for (int ih = 0; ih < numHammerPoints; ih++)
-    //     {
-    //         double *xi = coords[ih];
-    //         double weight = weights[ih];
-
-    //         double *N = sF->evaluateShapeFunction(xi);
-    //         double **dN = sF->getShapeFunctionDerivative(xi);
-
-    //         PetscReal dX_dXsi[2][2] = {};
-
-    //         for (PetscInt a = 0; a < 3; a++)
-    //             for (PetscInt i = 0; i < 2; i++)
-    //                 for (PetscInt j = 0; j < 2; j++)
-    //                     dX_dXsi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
-
-    //         PetscReal jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
-    //         PetscReal wJac = weight * jac;
-
-    //         PetscReal dX_dXsiInv[2][2] = {};
-    //         dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
-    //         dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
-    //         dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
-    //         dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
-
-    //         PetscReal dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
-    //         for (PetscInt a = 0; a < numElNodes; a++)
-    //             for (PetscInt i = 0; i < 2; i++)
-    //                 for (PetscInt j = 0; j < 2; j++)
-    //                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
-
-    //         double damageValue = 0.;
-
-    //         // if (negativeLoad)
-    //         //     damageValue = 0.;
-    //         // else
-    //         for (PetscInt a = 0; a < numElNodes; a++)
-    //             damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
-
-    //         PetscReal dCoeff = pow(1 - damageValue, 2);
-
-    //         PetscScalar gradU[2][2] = {};
-    //         for (PetscInt c = 0; c < numElNodes; c++)
-    //             for (PetscInt k = 0; k < 2; k++)
-    //                 for (PetscInt l = 0; l < 2; l++)
-    //                     gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
-
-    //         const PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
-
-    //         for (PetscInt a = 0; a < numElNodes; a++)
-
-    //             for (PetscInt i = 0; i < 2; i++)
-    //                 for (PetscInt b = 0; b < numElNodes; b++)
-    //                 {
-    //                     PetscReal contraction = 0.;
-    //                     for (PetscInt k = 0; k < 2; k++)
-    //                         contraction += dN_dX[a][k] * dN_dX[b][k];
-
-    //                     for (PetscInt j = 0; j < 2; j++)
-    //                     {
-    //                         PetscInt pos = numElDOF * (2 * a + i) + 2 * b + j;
-    //                         if (divU > 0)
-    //                             localStiffnessMatrix[pos] += dCoeff * (mu * (kroen[i][j] * contraction + dN_dX[a][j] * dN_dX[b][i] - (2.0 / 3.0) * dN_dX[a][i] * dN_dX[b][j]) + kappa * dN_dX[a][i] * dN_dX[b][j]) * wJac;
-    //                         else if (divU <= 0)
-    //                             localStiffnessMatrix[pos] += dCoeff * (mu * (kroen[i][j] * contraction + dN_dX[a][j] * dN_dX[b][i] - (2.0 / 3.0) * dN_dX[a][i] * dN_dX[b][j])) * wJac + kappa * dN_dX[a][i] * dN_dX[b][j] * wJac;
-    //                     }
-    //                 }
-    //         delete[] N;
-    //         for (int i = 0; i < numElNodes; i++)
-    //             delete[] dN[i];
-    //         delete[] dN;
-    // }
-
-    /*
-        Calculating internal forces
-    */
+    // ASSEMBLING THE RHS VECTOR
 
     for (PetscInt a = 0; a < numElNodes; a++)
         for (PetscInt i = 0; i < 2; i++)
@@ -246,6 +183,17 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
                     ierr = VecSetValues(rhs, 1, &idx[2 * a + i], &fi, ADD_VALUES);
                     CHKERRQ(ierr);
                 }
+
+    // for (PetscInt i = 0, k = 0; i < 6; i++)
+    // {
+    //     for (PetscInt j = i; j < 6; j++, k++)
+    //     {
+    //         PetscScalar value = localStiffnessMatrix[k];
+    //         PetscCall(MatSetValue(A, idx[i], idx[j], value, INSERT_VALUES)); // Filling the upper triangular part
+    //         if (i != j)
+    //             PetscCall(MatSetValue(A, idx[j], idx[i], value, INSERT_VALUES)); // Filling the lower triangular part based on symmetry
+    //     }
+    // }
 
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localStiffnessMatrix, ADD_VALUES);
     CHKERRQ(ierr);
