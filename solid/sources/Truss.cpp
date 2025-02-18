@@ -128,7 +128,7 @@ Truss::~Truss() {}
 
 //     return ierr;
 // }
-PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad)
+PetscErrorCode Truss::getContribution(Mat &matrix, Vec &rhs, bool negativeLoad, bool _PrescribedDamageField)
 {
     PetscInt numElDOF = 4;
     PetscInt *indx = new PetscInt[4]();

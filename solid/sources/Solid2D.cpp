@@ -23,7 +23,7 @@ Solid2D::~Solid2D() {}
                 Assembling and solving problem with PETSc
 ----------------------------------------------------------------------------------
 */
-PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
+PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, bool _PrescribedDamageField)
 {
     /*
          Ke = int{B^T C B}dOmega_e
@@ -55,6 +55,8 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
     PetscReal *localStiffnessMatrix = new PetscScalar[36](); // 6x6 matrix, 21 is the number of elements in the upper triangular part of the matrix
     PetscReal *localRHS = new PetscScalar[numElDOF]();
     PetscInt *idx = new PetscInt[numElDOF]();
+    PetscScalar mu = material->getShearModulus();
+    PetscScalar kappa = 2.0 / 3.0 * mu + material->getLameConstant();
 
     // SETTING idx VALUES CONSIDERING ONLY THE SYMMETRIC PART OF THE MATRIX
     PetscInt count = 0;
@@ -63,7 +65,22 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
             if (dof->getDOFType() != D)
                 idx[count++] = dof->getIndex();
 
-    // COMPUTING THE CONSTITUTIVE TENSOR
+    double tensorK[3][3] = {};
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++)
+            tensorK[i][j] = 1.0;
+
+    double tensorI[3][3] = {};
+    for (int i = 0; i < 3; i++)
+        tensorI[i][i] = 1.0;
+
+    tensorI[2][2] = 0.5;
+
+    double tensorJ[3][3] = {}; // J = I - 1/3 * K
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            tensorJ[i][j] = tensorI[i][j] - 1.0 / 3.0 * tensorK[i][j];
+
     const double c00 = material->getLameConstant() + 2.0 * material->getShearModulus();
     const double c01 = material->getLameConstant();
     const double c10 = c01;
@@ -103,6 +120,55 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
                 for (PetscInt j = 0; j < 2; j++)
                     dN_dX[a][i] += dN[a][j] * jacobianMatrixInv[j][i];
 
+        // COMPUTING uk,l AND ul,k
+        PetscScalar gradU[2][2] = {};
+        for (PetscInt c = 0; c < numElNodes; c++)
+            for (PetscInt k = 0; k < 2; k++)
+                for (PetscInt l = 0; l < 2; l++)
+                    gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+
+        if (_PrescribedDamageField)
+            for (PetscInt c = 0; c < numElNodes; c++)
+                for (PetscInt k = 0; k < 2; k++)
+                    for (PetscInt l = 0; l < 2; l++)
+                        gradU[k][l] += 0.0 * dN_dX[c][l];
+
+        PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
+
+        // COMPUTING THE DEGRADATION FUNCTION (1-d)^2
+        double damageValue = 0.;
+        for (PetscInt a = 0; a < numElNodes; a++)
+            damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
+
+        PetscReal dCoeff = pow(1 - damageValue, 2);
+
+        // ASSEMBLING CONSTITUTIVE MATRIX CONSIDERING THE ENERGY SPLIT
+
+        // COMPUTING THE CONSTITUTIVE TENSOR
+        double tensorCPlus[3][3] = {};
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                tensorCPlus[i][j] = 2.0 * mu * tensorJ[i][j];
+
+        double tensorCMinus[3][3] = {};
+
+        if (divU > 0)
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    tensorCPlus[i][j] += kappa * tensorK[i][j];
+                    tensorCPlus[i][j] *= dCoeff;
+                }
+        else if (divU <= 0)
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    tensorCMinus[i][j] += kappa * tensorK[i][j];
+
+        double tensorC[3][3] = {};
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+
         // RELATING dN_dX TO THE B MATRIX
         PetscReal B[3][6] = {};
         for (PetscInt a = 0; a < numElNodes; a++)
@@ -113,20 +179,13 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
             B[2][2 * a + 1] = dN_dX[a][0];
         }
 
-        // COMPUTING THE DEGRADATION FUNCTION (1-d)^2
-        double damageValue = 0.;
-        for (PetscInt a = 0; a < numElNodes; a++)
-            damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
-
-        PetscReal dCoeff = pow(1 - damageValue, 2);
-
         // COMPUTING THE LOCAL STIFFNESS MATRIX
 
-        localStiffnessMatrix[0] += dCoeff * (B[0][0] * B[0][0] * c00 + B[1][1] * B[1][1] * c22) * wJac;
+        localStiffnessMatrix[0] += dCoeff * (B[0][0] * B[0][0] * tensorC[0][0] + B[1][1] * B[1][1] * c22) * wJac;
         localStiffnessMatrix[1] += dCoeff * (B[0][0] * B[1][1] * c01 + B[0][0] * B[1][1] * c22) * wJac;
-        localStiffnessMatrix[2] += dCoeff * (B[0][0] * B[0][2] * c00 + B[1][1] * B[1][3] * c22) * wJac;
+        localStiffnessMatrix[2] += dCoeff * (B[0][0] * B[0][2] * tensorC[0][0] + B[1][1] * B[1][3] * c22) * wJac;
         localStiffnessMatrix[3] += dCoeff * (B[0][0] * B[1][3] * c01 + B[0][2] * B[1][1] * c22) * wJac;
-        localStiffnessMatrix[4] += dCoeff * (B[0][0] * B[0][4] * c00 + B[1][1] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[4] += dCoeff * (B[0][0] * B[0][4] * tensorC[0][0] + B[1][1] * B[1][5] * c22) * wJac;
         localStiffnessMatrix[5] += dCoeff * (B[0][0] * B[1][5] * c01 + B[0][4] * B[1][1] * c22) * wJac;
         localStiffnessMatrix[6] = localStiffnessMatrix[1];
         localStiffnessMatrix[7] += dCoeff * (B[0][0] * B[0][0] * c22 + B[1][1] * B[1][1] * c11) * wJac;
@@ -136,9 +195,9 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
         localStiffnessMatrix[11] += dCoeff * (B[0][0] * B[0][4] * c22 + B[1][1] * B[1][5] * c11) * wJac;
         localStiffnessMatrix[12] = localStiffnessMatrix[2];
         localStiffnessMatrix[13] = localStiffnessMatrix[8];
-        localStiffnessMatrix[14] += dCoeff * (B[0][2] * B[0][2] * c00 + B[1][3] * B[1][3] * c22) * wJac;
+        localStiffnessMatrix[14] += dCoeff * (B[0][2] * B[0][2] * tensorC[0][0] + B[1][3] * B[1][3] * c22) * wJac;
         localStiffnessMatrix[15] += dCoeff * (B[0][2] * B[1][3] * c01 + B[0][2] * B[1][3] * c22) * wJac;
-        localStiffnessMatrix[16] += dCoeff * (B[0][2] * B[0][4] * c00 + B[1][3] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[16] += dCoeff * (B[0][2] * B[0][4] * tensorC[0][0] + B[1][3] * B[1][5] * c22) * wJac;
         localStiffnessMatrix[17] += dCoeff * (B[0][2] * B[1][5] * c01 + B[0][4] * B[1][3] * c22) * wJac;
         localStiffnessMatrix[18] = localStiffnessMatrix[3];
         localStiffnessMatrix[19] = localStiffnessMatrix[9];
@@ -150,7 +209,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad)
         localStiffnessMatrix[25] = localStiffnessMatrix[10];
         localStiffnessMatrix[26] = localStiffnessMatrix[16];
         localStiffnessMatrix[27] = localStiffnessMatrix[22];
-        localStiffnessMatrix[28] += dCoeff * (B[0][4] * B[0][4] * c00 + B[1][5] * B[1][5] * c22) * wJac;
+        localStiffnessMatrix[28] += dCoeff * (B[0][4] * B[0][4] * tensorC[0][0] + B[1][5] * B[1][5] * c22) * wJac;
         localStiffnessMatrix[29] += dCoeff * (B[0][4] * B[1][5] * c01 + B[0][4] * B[1][5] * c22) * wJac;
         localStiffnessMatrix[30] = localStiffnessMatrix[5];
         localStiffnessMatrix[31] = localStiffnessMatrix[11];
@@ -199,7 +258,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
     PetscScalar Gc = material->getGriffithCriterion();
     PetscScalar lame = material->getLameConstant();
     PetscScalar G = material->getShearModulus();
-    PetsScalar kappa = 2 / 3 * G + lame;
+    PetscScalar kappa = 2.0 / 3.0 * G + lame;
     std::string PFmodel = params->getPFModel();
 
     PetscInt count = 0;
@@ -299,23 +358,19 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
                 B_dT[i][j] = B_d[j][i];
 
         PetscScalar secondInt[numElNodes] = {};
-        if (PFmodel == "AT2")
+        if (PFmodel == "AT1")
         {
             for (PetscInt a = 0; a < numElNodes; a++)
-            {
-                for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt i = 0; i < 3; i++)
                     for (PetscInt j = 0; j < 2; j++)
-                        secondInt[a] += Gc * (1.0 / l0 * elemConnectivity[a]->getDOFs()[2]->getValue() * N[a] + l0 * B_d[j][i] * B_d[i][j] * elemConnectivity[a]->getDOFs()[2]->getValue()) * wJac;
-            }
+                        secondInt[a] += Gc * (0.375 / l0 * N[a] + 0.75 * l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[a]->getDOFs()[2]->getValue()) * wJac;
         }
-        else if (PFmodel == "AT1")
+        else if (PFmodel == "AT2")
         {
             for (PetscInt a = 0; a < numElNodes; a++)
-            {
-                for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt i = 0; i < 3; i++)
                     for (PetscInt j = 0; j < 2; j++)
-                        secondInt[a] += Gc * (0.375 / l0 * N[a] + 0.75 * l0 * B_d[j][i] * B_d[i][j] * elemConnectivity[a]->getDOFs()[2]->getValue()) * wJac;
-            }
+                        secondInt[a] += Gc * (1.0 / l0 * elemConnectivity[a]->getDOFs()[2]->getValue() * N[a] + l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[a]->getDOFs()[2]->getValue()) * wJac;
         }
 
         for (PetscInt a = 0; a < numElNodes; a++)
@@ -371,134 +426,6 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
 
     return ierr;
 }
-
-// For an initial prescribed damage field
-
-// PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField)
-// {
-//     const PetscInt numNodeDOF = 2;                              // Number of DOFs per node considering displacements only
-//     PetscInt numElDOF = numElNodes;                             // Only one DOF per node when considering only phase field
-//     PetscReal *localQ = new PetscScalar[numElDOF * numElDOF](); // Equivalent to matrix Qlocal in the phase field problem
-//     PetscReal *localRHS = new PetscScalar[numElDOF]();          // Equivalent to vector RHSlocal in the phase field problem
-//     PetscInt *idx = new PetscInt[numElDOF]();
-//     PetscScalar l0 = material->getL0();
-//     PetscScalar Gc = material->getGriffithCriterion();
-//     PetscScalar lame = material->getLameConstant();
-//     PetscScalar G = material->getShearModulus();
-
-//     PetscInt count = 0;
-//     for (auto node : elemConnectivity)
-//         idx[count++] = node->getIndex(); // Phase field DOF has the same index as the node for the local problem
-
-//     for (int ih = 0; ih < numHammerPoints; ih++)
-//     {
-//         double *xi = coords[ih];
-//         double weight = weights[ih];
-
-//         double *N = sF->evaluateShapeFunction(xi);
-//         double **dN = sF->getShapeFunctionDerivative(xi);
-
-//         /*
-//             COMPUTING THE JACOBIAN AND ITS INVERSE
-//         */
-//         PetscReal dX_dXsi[2][2] = {};
-//         for (PetscInt a = 0; a < 3; a++)
-//             for (PetscInt i = 0; i < 2; i++)
-//                 for (PetscInt j = 0; j < 2; j++)
-//                     dX_dXsi[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
-
-//         PetscReal jac = dX_dXsi[0][0] * dX_dXsi[1][1] - dX_dXsi[0][1] * dX_dXsi[1][0];
-//         PetscReal wJac = weight * jac;
-
-//         PetscReal dX_dXsiInv[2][2] = {};
-//         dX_dXsiInv[0][0] = dX_dXsi[1][1] / jac;
-//         dX_dXsiInv[0][1] = -dX_dXsi[0][1] / jac;
-//         dX_dXsiInv[1][0] = -dX_dXsi[1][0] / jac;
-//         dX_dXsiInv[1][1] = dX_dXsi[0][0] / jac;
-
-//         PetscReal dN_dX[numElNodes][2] = {}; // Derivative of shape functions with respect to global coordinates; number of nodes x number of dimensions
-//         for (PetscInt a = 0; a < numElNodes; a++)
-//             for (PetscInt i = 0; i < 2; i++)
-//                 for (PetscInt j = 0; j < 2; j++)
-//                     dN_dX[a][i] += dN[a][j] * dX_dXsiInv[j][i];
-
-//         // Computing uk,l and ul,k
-//         PetscScalar gradU[2][2] = {};
-//         for (PetscInt c = 0; c < numElNodes; c++)
-//             for (PetscInt k = 0; k < 2; k++)
-//                 for (PetscInt l = 0; l < 2; l++)
-//                     gradU[k][l] += 0.0 * dN_dX[c][l];
-
-//         PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
-
-//         // ======================= FIRST DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE ========================
-//         PetscScalar damageValue = 0.;
-//         for (PetscInt c = 0; c < numElNodes; c++)
-//             damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getValue();
-
-//         PetscScalar firstInt[numElNodes] = {};
-//         for (PetscInt a = 0; a < numElNodes; a++)
-//         {
-//             for (PetscInt k = 0; k < 2; k++)
-//                 for (PetscInt l = 0; l < 2; l++)
-//                     firstInt[a] += (1 - damageValue) * N[a] * (G * 0.5 * (gradU[k][l] + gradU[l][k]) * (gradU[k][l] + gradU[l][k])) * wJac;
-
-//             firstInt[a] += (1 - damageValue) * N[a] * lame * divU * divU * wJac;
-//         }
-
-//         PetscScalar secondInt[numElNodes] = {};
-//         for (PetscInt a = 0; a < numElNodes; a++)
-//         {
-//             for (PetscInt c = 0; c < numElNodes; c++)
-//                 for (PetscInt k = 0; k < 2; k++)
-//                     secondInt[a] += Gc * (l0 * elemConnectivity[c]->getDOFs()[2]->getValue() * dN_dX[a][k] * dN_dX[c][k]) * wJac;
-
-//             secondInt[a] += Gc * (1 / l0 * damageValue * N[a]) * wJac;
-//         }
-
-//         for (PetscInt a = 0; a < numElNodes; a++)
-//             localRHS[a] = -firstInt[a] + secondInt[a];
-
-//         ierr = VecSetValues(rhs, numElDOF, idx, localRHS, ADD_VALUES);
-//         CHKERRQ(ierr);
-//         // ======================= SECOND DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE =======================
-//         for (PetscInt a = 0; a < numElNodes; a++)
-//             for (PetscInt b = 0; b < numElNodes; b++)
-//                 for (PetscInt k = 0; k < 2; k++)
-//                     for (PetscInt l = 0; l < 2; l++)
-//                     {
-//                         PetscInt pos = numElDOF * a + b;
-//                         PetscScalar value = N[a] * N[b] * (G * 0.5 * (gradU[k][l] + gradU[l][k]) * (gradU[k][l] + gradU[l][k]) + lame * divU * divU) * wJac;
-//                         localQ[pos] += value; // Integral 1
-//                     }
-
-//         for (PetscInt a = 0; a < numElNodes; a++)
-//             for (PetscInt b = 0; b < numElNodes; b++)
-//             {
-//                 PetscScalar contraction = 0.;
-//                 for (PetscInt k = 0; k < 2; k++)
-//                     contraction += dN_dX[a][k] * dN_dX[b][k];
-
-//                 PetscInt pos = numElDOF * a + b;
-//                 double value = Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac;
-//                 localQ[pos] += Gc * (1 / l0 * N[a] * N[b] + l0 * contraction) * wJac; // Integral 2
-//             }
-
-//         delete[] N;
-//         for (int i = 0; i < numElNodes; i++)
-//             delete[] dN[i];
-//         delete[] dN;
-//     }
-
-//     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
-//     CHKERRQ(ierr);
-
-//     delete[] idx;
-//     delete[] localQ;
-//     delete[] localRHS;
-
-//     return ierr;
-// }
 
 void Solid2D::Test(PetscScalar &integral)
 {

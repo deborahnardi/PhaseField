@@ -292,7 +292,7 @@ PetscErrorCode FEM::assembleProblem()
     // ====================== CALCULATING CONTRIBUTIONS ======================
     auto t1 = std::chrono::high_resolution_clock::now();
     for (int Ii = Istart; Ii < Iend; Ii++)
-        elements[Ii]->getContribution(matrix, rhs, negativeLoad);
+        elements[Ii]->getContribution(matrix, rhs, negativeLoad, prescribedDamageField);
 
     for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
         bdElements[Ii]->getContribution(rhs);
@@ -329,6 +329,7 @@ PetscErrorCode FEM::assembleProblem()
                 CHKERRQ(ierr);
             }
     }
+
     auto t3 = std::chrono::high_resolution_clock::now();
     // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
     ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
