@@ -26,7 +26,7 @@ private:
     int rank, size;
     double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
-    std::vector<std::set<int>> nodeNeighbours;
+    std::vector<std::set<int>> nodeNeighbours; // std::set<int> is a set of integers, the elements are stored in ascending order
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
