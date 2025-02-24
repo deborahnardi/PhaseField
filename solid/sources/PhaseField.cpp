@@ -118,13 +118,6 @@ void FEM::staggeredAlgorithm(int _iStep)
         PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
-    // // write it in a .txt file
-    // if (rank == 0)
-    // {
-    //     std::ofstream file(resultsPath + "iterations.txt", std::ios::app);
-    //     file << _iStep << " " << it << std::endl;
-    //     file.close();
-    // }
 }
 
 void FEM::solveDisplacementField(int _iStep)

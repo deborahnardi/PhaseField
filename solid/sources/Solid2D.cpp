@@ -146,25 +146,31 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, boo
 
         // COMPUTING THE CONSTITUTIVE TENSOR
         double tensorCPlus[3][3] = {};
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                tensorCPlus[i][j] = 2.0 * mu * tensorJ[i][j];
-
         double tensorCMinus[3][3] = {};
+        double tensorC[3][3] = {};
 
-        if (divU >= 0)
+        if (divU > 0)
+        {
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
                 {
-                    tensorCPlus[i][j] += kappa * tensorK[i][j];
-                    tensorCPlus[i][j] *= dCoeff;
+                    tensorCPlus[i][j] = dCoeff * (kappa * tensorK[i][j] + 2.0 * mu * tensorJ[i][j]);
+                    tensorCMinus[i][j] = 0.0;
+                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
                 }
-        else if (divU < 0)
+        }
+        else if (divU <= 0)
+        {
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
-                    tensorCMinus[i][j] += kappa * tensorK[i][j];
+                {
+                    tensorCPlus[i][j] = dCoeff * 2.0 * mu * tensorJ[i][j];
+                    tensorCMinus[i][j] = kappa * tensorK[i][j];
+                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+                }
+        }
 
-        double tensorC[3][3] = {};
+        // double tensorC[3][3] = {};
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
@@ -181,42 +187,42 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, boo
 
         // COMPUTING THE LOCAL STIFFNESS MATRIX
 
-        localStiffnessMatrix[0] += dCoeff * (B[0][0] * B[0][0] * tensorC[0][0] + B[1][1] * B[1][1] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[1] += dCoeff * (B[0][0] * B[1][1] * tensorC[0][1] + B[0][0] * B[1][1] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[2] += dCoeff * (B[0][0] * B[0][2] * tensorC[0][0] + B[1][1] * B[1][3] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[3] += dCoeff * (B[0][0] * B[1][3] * tensorC[0][1] + B[0][2] * B[1][1] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[4] += dCoeff * (B[0][0] * B[0][4] * tensorC[0][0] + B[1][1] * B[1][5] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[5] += dCoeff * (B[0][0] * B[1][5] * tensorC[0][1] + B[0][4] * B[1][1] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[0] += (B[0][0] * B[0][0] * tensorC[0][0] + B[1][1] * B[1][1] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[1] += (B[0][0] * B[1][1] * tensorC[0][1] + B[0][0] * B[1][1] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[2] += (B[0][0] * B[0][2] * tensorC[0][0] + B[1][1] * B[1][3] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[3] += (B[0][0] * B[1][3] * tensorC[0][1] + B[0][2] * B[1][1] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[4] += (B[0][0] * B[0][4] * tensorC[0][0] + B[1][1] * B[1][5] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[5] += (B[0][0] * B[1][5] * tensorC[0][1] + B[0][4] * B[1][1] * tensorC[2][2]) * wJac;
         localStiffnessMatrix[6] = localStiffnessMatrix[1];
-        localStiffnessMatrix[7] += dCoeff * (B[0][0] * B[0][0] * tensorC[2][2] + B[1][1] * B[1][1] * tensorC[1][1]) * wJac;
-        localStiffnessMatrix[8] += dCoeff * (B[0][0] * B[1][3] * tensorC[2][2] + B[0][2] * B[1][1] * tensorC[1][0]) * wJac;
-        localStiffnessMatrix[9] += dCoeff * (B[0][0] * B[0][2] * tensorC[2][2] + B[1][1] * B[1][3] * tensorC[1][1]) * wJac;
-        localStiffnessMatrix[10] += dCoeff * (B[0][0] * B[1][5] * tensorC[2][2] + B[0][4] * B[1][1] * tensorC[1][0]) * wJac;
-        localStiffnessMatrix[11] += dCoeff * (B[0][0] * B[0][4] * tensorC[2][2] + B[1][1] * B[1][5] * tensorC[1][1]) * wJac;
+        localStiffnessMatrix[7] += (B[0][0] * B[0][0] * tensorC[2][2] + B[1][1] * B[1][1] * tensorC[1][1]) * wJac;
+        localStiffnessMatrix[8] += (B[0][0] * B[1][3] * tensorC[2][2] + B[0][2] * B[1][1] * tensorC[1][0]) * wJac;
+        localStiffnessMatrix[9] += (B[0][0] * B[0][2] * tensorC[2][2] + B[1][1] * B[1][3] * tensorC[1][1]) * wJac;
+        localStiffnessMatrix[10] += (B[0][0] * B[1][5] * tensorC[2][2] + B[0][4] * B[1][1] * tensorC[1][0]) * wJac;
+        localStiffnessMatrix[11] += (B[0][0] * B[0][4] * tensorC[2][2] + B[1][1] * B[1][5] * tensorC[1][1]) * wJac;
         localStiffnessMatrix[12] = localStiffnessMatrix[2];
         localStiffnessMatrix[13] = localStiffnessMatrix[8];
-        localStiffnessMatrix[14] += dCoeff * (B[0][2] * B[0][2] * tensorC[0][0] + B[1][3] * B[1][3] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[15] += dCoeff * (B[0][2] * B[1][3] * tensorC[0][1] + B[0][2] * B[1][3] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[16] += dCoeff * (B[0][2] * B[0][4] * tensorC[0][0] + B[1][3] * B[1][5] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[17] += dCoeff * (B[0][2] * B[1][5] * tensorC[0][1] + B[0][4] * B[1][3] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[14] += (B[0][2] * B[0][2] * tensorC[0][0] + B[1][3] * B[1][3] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[15] += (B[0][2] * B[1][3] * tensorC[0][1] + B[0][2] * B[1][3] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[16] += (B[0][2] * B[0][4] * tensorC[0][0] + B[1][3] * B[1][5] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[17] += (B[0][2] * B[1][5] * tensorC[0][1] + B[0][4] * B[1][3] * tensorC[2][2]) * wJac;
         localStiffnessMatrix[18] = localStiffnessMatrix[3];
         localStiffnessMatrix[19] = localStiffnessMatrix[9];
         localStiffnessMatrix[20] = localStiffnessMatrix[15];
-        localStiffnessMatrix[21] += dCoeff * (B[0][2] * B[0][2] * tensorC[2][2] + B[1][3] * B[1][3] * tensorC[1][1]) * wJac;
-        localStiffnessMatrix[22] += dCoeff * (B[0][2] * B[1][5] * tensorC[2][2] + B[0][4] * B[1][3] * tensorC[1][0]) * wJac;
-        localStiffnessMatrix[23] += dCoeff * (B[0][2] * B[0][4] * tensorC[2][2] + B[1][3] * B[1][5] * tensorC[1][1]) * wJac;
+        localStiffnessMatrix[21] += (B[0][2] * B[0][2] * tensorC[2][2] + B[1][3] * B[1][3] * tensorC[1][1]) * wJac;
+        localStiffnessMatrix[22] += (B[0][2] * B[1][5] * tensorC[2][2] + B[0][4] * B[1][3] * tensorC[1][0]) * wJac;
+        localStiffnessMatrix[23] += (B[0][2] * B[0][4] * tensorC[2][2] + B[1][3] * B[1][5] * tensorC[1][1]) * wJac;
         localStiffnessMatrix[24] = localStiffnessMatrix[4];
         localStiffnessMatrix[25] = localStiffnessMatrix[10];
         localStiffnessMatrix[26] = localStiffnessMatrix[16];
         localStiffnessMatrix[27] = localStiffnessMatrix[22];
-        localStiffnessMatrix[28] += dCoeff * (B[0][4] * B[0][4] * tensorC[0][0] + B[1][5] * B[1][5] * tensorC[2][2]) * wJac;
-        localStiffnessMatrix[29] += dCoeff * (B[0][4] * B[1][5] * tensorC[0][1] + B[0][4] * B[1][5] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[28] += (B[0][4] * B[0][4] * tensorC[0][0] + B[1][5] * B[1][5] * tensorC[2][2]) * wJac;
+        localStiffnessMatrix[29] += (B[0][4] * B[1][5] * tensorC[0][1] + B[0][4] * B[1][5] * tensorC[2][2]) * wJac;
         localStiffnessMatrix[30] = localStiffnessMatrix[5];
         localStiffnessMatrix[31] = localStiffnessMatrix[11];
         localStiffnessMatrix[32] = localStiffnessMatrix[17];
         localStiffnessMatrix[33] = localStiffnessMatrix[23];
         localStiffnessMatrix[34] = localStiffnessMatrix[29];
-        localStiffnessMatrix[35] += dCoeff * (B[0][4] * B[0][4] * tensorC[2][2] + B[1][5] * B[1][5] * tensorC[1][1]) * wJac;
+        localStiffnessMatrix[35] += (B[0][4] * B[0][4] * tensorC[2][2] + B[1][5] * B[1][5] * tensorC[1][1]) * wJac;
 
         delete[] N;
         for (int i = 0; i < numElNodes; i++)
@@ -319,9 +325,11 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
         double psiPlus = 0.;
         for (int k = 0; k < 2; k++)
             for (int l = 0; l < 2; l++)
-                psiPlus += G * ((gradU[k][l] * gradU[k][l] + gradU[k][l] * gradU[l][k]) * 0.5 - 1.0 / 3.0 * divU * divU) * wJac;
+                psiPlus += G * ((gradU[k][l] * gradU[k][l] + gradU[k][l] * gradU[l][k]) * 0.5) * wJac;
 
-        if (divU >= 0)
+        psiPlus += -1.0 / 3.0 * G * divU * divU * wJac;
+
+        if (divU > 0)
             psiPlus += kappa * 0.5 * divU * divU * wJac;
 
         PetscScalar damageValue = 0.;
@@ -361,21 +369,21 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
         if (PFmodel == "AT1")
         {
             for (PetscInt a = 0; a < numElNodes; a++)
+            {
                 for (PetscInt i = 0; i < 3; i++)
                     for (PetscInt j = 0; j < 2; j++)
-                        secondInt[a] += Gc * (0.375 / l0 * N[a] + 0.75 * l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[i]->getDOFs()[2]->getValue()) * wJac;
+                        secondInt[a] += Gc * (0.75 * l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[i]->getDOFs()[2]->getValue()) * wJac;
+
+                secondInt[a] += Gc * ((0.375 / l0) * N[a]) * wJac;
+            }
         }
         else if (PFmodel == "AT2")
         {
             for (PetscInt a = 0; a < numElNodes; a++)
             {
-                double valueD = elemConnectivity[a]->getDOFs()[2]->getValue();
                 for (PetscInt i = 0; i < 3; i++)
                     for (PetscInt j = 0; j < 2; j++)
-                    {
-                        double valueSecondInt = Gc * (l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[i]->getDOFs()[2]->getValue()) * wJac;
                         secondInt[a] += Gc * (l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[i]->getDOFs()[2]->getValue()) * wJac;
-                    }
 
                 secondInt[a] += Gc * (1 / l0 * damageValue * N[a]) * wJac;
             }
