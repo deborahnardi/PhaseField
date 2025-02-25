@@ -1,0 +1,4 @@
+build/
+.vscode/
+CMakeCache.txt/
+output/

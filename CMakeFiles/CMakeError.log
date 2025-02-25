@@ -1,0 +1,246 @@
+Performing C SOURCE FILE Test MULTIPASS_TEST_1_petsc_works_minimal failed with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_b49bb/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_b49bb.dir/build.make CMakeFiles/cmTC_b49bb.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b49bb.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_1_petsc_works_minimal -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/petsc/include  -o CMakeFiles/cmTC_b49bb.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc/include/petscvec.h:8,
+                 from /home/deborah/petsc/include/petscmat.h:6,
+                 from /home/deborah/petsc/include/petscpc.h:6,
+                 from /home/deborah/petsc/include/petscksp.h:6,
+                 from /home/deborah/petsc/include/petscsnes.h:6,
+                 from /home/deborah/petsc/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc/include/petscsys.h:65:12: fatal error: mpi.h: No such file or directory
+   65 |   #include <mpi.h>
+      |            ^~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_b49bb.dir/build.make:78: CMakeFiles/cmTC_b49bb.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_b49bb/fast] Error 2
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_3_petsc_works_minimal failed with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_35e22/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_35e22.dir/build.make CMakeFiles/cmTC_35e22.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_35e22.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_3_petsc_works_minimal -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/petsc/include  -o CMakeFiles/cmTC_35e22.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc/include/petscvec.h:8,
+                 from /home/deborah/petsc/include/petscmat.h:6,
+                 from /home/deborah/petsc/include/petscpc.h:6,
+                 from /home/deborah/petsc/include/petscksp.h:6,
+                 from /home/deborah/petsc/include/petscsnes.h:6,
+                 from /home/deborah/petsc/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc/include/petscsys.h:65:12: fatal error: mpi.h: No such file or directory
+   65 |   #include <mpi.h>
+      |            ^~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_35e22.dir/build.make:78: CMakeFiles/cmTC_35e22.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_35e22/fast] Error 2
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_5_petsc_works_minimal failed with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_32938/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_32938.dir/build.make CMakeFiles/cmTC_32938.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_32938.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_5_petsc_works_minimal -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/petsc/include  -o CMakeFiles/cmTC_32938.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc/include/petscvec.h:8,
+                 from /home/deborah/petsc/include/petscmat.h:6,
+                 from /home/deborah/petsc/include/petscpc.h:6,
+                 from /home/deborah/petsc/include/petscksp.h:6,
+                 from /home/deborah/petsc/include/petscsnes.h:6,
+                 from /home/deborah/petsc/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc/include/petscsys.h:65:12: fatal error: mpi.h: No such file or directory
+   65 |   #include <mpi.h>
+      |            ^~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_32938.dir/build.make:78: CMakeFiles/cmTC_32938.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_32938/fast] Error 2
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_7_petsc_works_minimal failed with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_7c790/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_7c790.dir/build.make CMakeFiles/cmTC_7c790.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7c790.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_7_petsc_works_minimal -I/home/deborah/petsc/arch-linux2-c-debug/include -I/home/deborah/petsc/include  -o CMakeFiles/cmTC_7c790.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc/include/petscvec.h:8,
+                 from /home/deborah/petsc/include/petscmat.h:6,
+                 from /home/deborah/petsc/include/petscpc.h:6,
+                 from /home/deborah/petsc/include/petscksp.h:6,
+                 from /home/deborah/petsc/include/petscsnes.h:6,
+                 from /home/deborah/petsc/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc/include/petscsys.h:65:12: fatal error: mpi.h: No such file or directory
+   65 |   #include <mpi.h>
+      |            ^~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_7c790.dir/build.make:78: CMakeFiles/cmTC_7c790.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_7c790/fast] Error 2
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_1_petsc_works_minimal failed with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_82ae2/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_82ae2.dir/build.make CMakeFiles/cmTC_82ae2.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_82ae2.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_1_petsc_works_minimal -I/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include -I/home/deborah/petsc-2/petsc-3.22.0/include  -o CMakeFiles/cmTC_82ae2.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h:8,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscpc.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscksp.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscsnes.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h:66:12: fatal error: mpi.h: No such file or directory
+   66 |   #include <mpi.h>
+      |            ^~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_82ae2.dir/build.make:78: CMakeFiles/cmTC_82ae2.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_82ae2/fast] Error 2
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_3_petsc_works_minimal failed with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_8e5a1/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_8e5a1.dir/build.make CMakeFiles/cmTC_8e5a1.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8e5a1.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_3_petsc_works_minimal -I/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include -I/home/deborah/petsc-2/petsc-3.22.0/include  -o CMakeFiles/cmTC_8e5a1.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c
+In file included from /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h:8,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscpc.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscksp.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscsnes.h:6,
+                 from /home/deborah/petsc-2/petsc-3.22.0/include/petscts.h:7,
+                 from /home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp/src.c:3:
+/home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h:66:12: fatal error: mpi.h: No such file or directory
+   66 |   #include <mpi.h>
+      |            ^~~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_8e5a1.dir/build.make:78: CMakeFiles/cmTC_8e5a1.dir/src.c.o] Error 1
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PhaseField/03PhaseFieldCpp/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_8e5a1/fast] Error 2
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
