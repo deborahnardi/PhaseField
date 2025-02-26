@@ -47,9 +47,9 @@ private:
     double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
 
     std::vector<int> CRSNodeNeighbours, n2nCSRTotal, nodesForEachRankCSR;
-    std::vector<std::set<int>> nodeElementMapping;
+    std::vector<std::set<int>> n2e;
 
-    std::vector<std::set<int>> localRankNodeNeighbours, localRanknodeElementMapping;
+    std::vector<std::set<int>> localRankNodeNeighbours, n2eLocal;
 
     MatrixXd K;
     VectorXd F;

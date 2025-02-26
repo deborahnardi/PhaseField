@@ -293,7 +293,7 @@ void FEM::findNeighbours()
 
         - CRSNodeNeighbours is a vector that stores the neighbours of each node in a CRS format, i.e., the neighbours of node 0 are stored in the first positions of the vector, the neighbours of node 1 are stored in the next positions, and so on;
 
-        - CumulativeLengthNodeNeighbours stores the cumulative length of the neighbours of each node starting from 0;
+        - n2nCSRTotal stores the cumulative length of the neighbours of each node starting from 0;
 
         - nodeElementMapping stores the elements that each node belongs to;
     */
@@ -324,10 +324,10 @@ void FEM::findNeighbours()
         std::cout << std::endl;
     }
 
-    nodeElementMapping.resize(numNodesAux);
+    n2e.resize(numNodesAux);
     for (auto elem : elements)
         for (auto node : elem->getElemConnectivity())
-            nodeElementMapping[node->getIndex()].insert(elem->getIndex()); // Equivalent to n2e Ayrton
+            n2e[node->getIndex()].insert(elem->getIndex()); // Equivalent to n2e Ayrton
 
     MPI_Barrier(PETSC_COMM_WORLD);
 }
@@ -422,30 +422,19 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     for (int i = 1; i <= size; i++)
         nodesForEachRankCSR[i] = nodesForEachRankCSR[i - 1] + numNodesForEachRank[i - 1]; // Equivalent to n2n_csr Ayrton
 
-    // Print nodesForEachRankCompressed
-    MPI_Barrier(PETSC_COMM_WORLD);
-    if (rank == 0)
-    {
-        std::cout << "Compressed number of nodes for each rank: ";
-        for (int i = 0; i < nodesForEachRankCSR.size(); i++)
-            std::cout << nodesForEachRankCSR[i] << " ";
-        std::cout << std::endl;
-        std::cout << "--------------------------------" << std::endl;
-    }
-
     /*
         FROM THIS POINT ON, THE nodeNeighbours and nodeElementMapping VECTORS ARE SETTLED FOR THE LOCAL PARTITION
     */
 
     localRankNodeNeighbours.resize(n);
-    localRanknodeElementMapping.resize(n);
+    n2eLocal.resize(n);
 
     MPI_Barrier(PETSC_COMM_WORLD);
 
     for (int i = start; i < end; i++)
     {
         localRankNodeNeighbours[i - start] = nodeNeighbours[i]; // Equivalent to n2n_symm_mat Ayrton
-        localRanknodeElementMapping[i - start] = nodeElementMapping[i];
+        n2eLocal[i - start] = n2e[i];
     }
 
     // Flattening localRankNodeNeighbours
@@ -487,12 +476,14 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
     /*
         EXPLAINING THE FOLLOWING CODE BLOCK:
-        - n2nDRank is a vector that stores the number of neighbours of each node that are in a rank greater than the current rank;
+        - n2nDRank is a vector that stores the number of neighbours of each node that are in other ranks;
         Ex.:
             - Let's suppose that there are 8 nodes (0 to 7) and 3 ranks;
             - The nodes 0, 1, and 2 are in rank 0;
             - The nodes 3, 4, and 5 are in rank 1;
             - The nodes 6 and 7 are in rank 2;
+
+            CONSIDERING rank = 0:
 
             - localRankNodeNeighbours = [(0, 1, 4), (1, 2, 4, 5, 6), (2, 3, 6)], i.e, the neighbours of node 0, 1 and 2, respectively;
             - numNodesForEachRank = [3, 3, 2], i.e, the number of nodes for each rank;
@@ -528,7 +519,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
         FIRST LOOP:
         - nodesForEachRankCSR[rank] = [0, 3, 6, 8], i.e, the number of nodes for each rank compressed (0-2 for rank 1, 3-5 for rank 2, 6-7 for rank 3);
-            Thus, node1 goes from 0 to 2 for rank 1, from 3 to 5 for rank 2, and from 6 to 7 for rank 3;
+            Thus, node1 goes from 0 to 2 for rank 0, from 3 to 5 for rank 1, and from 6 to 7 for rank 2;
 
         SECOND LOOP:
         - jj goes over the neighbours of EACH NODE, i.e, in n2nCSRLocal we have [0, 3, 6, 8], so the neighbours of node 0 are stored in the positions 0 to 3, the neighbours of node 1 are stored in the positions 3 to 6, and so on;
@@ -539,15 +530,184 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         eSameList is an array of arrays
     */
 
+    std::vector<std::vector<int>> eSameList(localRankNodeNeighboursFlattened.size());
     for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++) // This loops iterates over the nodes of the local partition (size + 1)
     {
-        int node1 = nodesForEachRankCSR[rank] + iNode1;                        // nodesForEachRankCSR[rank] is the first node of the rank
+        int node1 = nodesForEachRankCSR[rank] + iNode1; // nodesForEachRankCSR[rank] is the first node of the rank
+
         for (int jj = n2nCSRLocal[iNode1]; jj < n2nCSRLocal[iNode1 + 1]; jj++) // This loop iterates over the neighbours of each node
         {
+
             int node2 = localRankNodeNeighboursFlattened[jj]; // The neighbour of the node
+
+            std::vector<int> elemsFromNode1(n2e[node1].begin(), n2e[node1].end()); // Elements that node1 belongs to
+            std::vector<int> elemsFromNode2(n2e[node2].begin(), n2e[node2].end()); // Elements that node2 belongs to
+
+            // Couting how many elements are in common between node1 and node2
+            int numSharedElems = 0;
+            for (int i = 0; i < elemsFromNode1.size(); i++)
+            {
+                int elem1 = elemsFromNode1[i];
+                for (int j = 0; j < elemsFromNode2.size(); j++)
+                {
+                    int elem2 = elemsFromNode2[j];
+                    if (elem1 == elem2)
+                        numSharedElems++;
+                }
+            }
+
+            /*
+                3 infos are needed to create the eSharedList array:
+                - The element index;
+                - The local index of node1;
+                - The local index of node2;
+            */
+
+            std::vector<int> eSharedList(3 * numSharedElems, 0);
+            int counter = -1;
+            for (int i = 0; i < elemsFromNode1.size(); i++)
+            {
+                int elem1 = elemsFromNode1[i];
+                for (int j = 0; j < elemsFromNode2.size(); j++)
+                {
+                    int elem2 = elemsFromNode2[j];
+                    if (elem1 == elem2)
+                    {
+                        counter++;
+
+                        // Get the local position of node1 and node2 for the element (from the connectivity)
+                        std::vector<Node *> elemConnectivity = elements[elem1]->getElemConnectivity();
+                        int localNode1 = elemConnectivity[0]->getIndex() == node1   ? 0
+                                         : elemConnectivity[1]->getIndex() == node1 ? 1
+                                         : elemConnectivity[2]->getIndex() == node1 ? 2
+                                                                                    : -1;
+
+                        int localNode2 = elemConnectivity[0]->getIndex() == node2   ? 0
+                                         : elemConnectivity[1]->getIndex() == node2 ? 1
+                                         : elemConnectivity[2]->getIndex() == node2 ? 2
+                                                                                    : -1;
+
+                        eSharedList[3 * counter] = elem1;
+                        eSharedList[3 * counter + 1] = localNode1;
+                        eSharedList[3 * counter + 2] = localNode2;
+                    }
+                }
+            }
+
+            eSameList[jj] = eSharedList;
         }
     }
 
+    // Print eSameList
+    MPI_Barrier(PETSC_COMM_WORLD);
+    if (rank == 0)
+    {
+        for (int i = 0; i < eSameList.size(); i++)
+        {
+            std::vector<int> eSharedList = eSameList[i];
+            std::cout << "Tuple " << i << " shared elements: ";
+            for (int j = 0; j < eSharedList.size(); j++)
+                std::cout << eSharedList[j] << " ";
+            std::cout << std::endl;
+        }
+        std::cout << "--------------------------------" << std::endl;
+    }
+
+    // TOTAL NUMBER OF NONZERO (UPPER TRIANGULAR PART ONLY) ONLY FOR THE LOCAL PARTITION
+
+    int totalNnz = 0;
+    int nDOF = 2;
+    for (int i = 0; i < numNodesForEachRank[rank]; i++)
+    {
+        std::set<int> neighbours = localRankNodeNeighbours[i];
+        int numFriends = neighbours.size();
+        totalNnz += nDOF * nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
+    }
+
+    if (rank == 0)
+        std::cout << "Total number of nonzeros for the local partition: " << totalNnz << std::endl;
+
+    MPI_Barrier(PETSC_COMM_WORLD);
+
+    // PREALLOCATION OF THE MPI MATRIX
+    int m = numNodesForEachRank[rank] * nDOF; // Number of local lines at the rank. Ex.: 3 nodes at the local partition * 2 DOFs = 6 lines
+    int nn = numNodes * nDOF;                 // Number of local columns at the rank. Ex.: 8 nodes * 2 DOFs = 16 columns
+
+    d_nnz = new PetscInt[m]();
+    o_nnz = new PetscInt[m]();
+
+    for (int ii = 0; ii < numNodesForEachRank[rank]; ii++)
+        for (int iDOF = 0; iDOF < nDOF; iDOF++)
+        {
+            d_nnz[nDOF * ii + iDOF] = nDOF * localRankNodeNeighbours[ii].size() - n2nDRank[ii] * nDOF - iDOF; // (n2nDRank[ii] * nDOF - iDOF) removes the DOFs that do not belong to the local partition
+            o_nnz[nDOF * ii + iDOF] = n2nDRank[ii] * nDOF;
+        }
+
+    std::vector<int> val(totalNnz, 0);
+    int kkn2n = 0, kk = 0;
+    for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++)
+    {
+        int n1 = nodesForEachRankCSR[rank] + iNode1;
+        std::vector<int> friendNodes(localRankNodeNeighbours[iNode1].begin(), localRankNodeNeighbours[iNode1].end());
+        int numFriends = friendNodes.size();
+        int iFriendCount = 0;
+
+        for (auto n2 : friendNodes)
+        {
+            std::vector<int> elems = eSameList[kkn2n];
+
+            /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
+                IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
+                CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
+             */
+
+            if (n1 != n2)
+            { // idof = 0,       jdof = 0
+                int p1 = kk;
+                // idof = 0,       jdof = 1
+                int p2 = kk + 1;
+                // idof = 1,       jdof = 0
+                int p3 = kk + numFriends * nDOF - 1;
+                // idof = 1,       jdof = 1
+                int p4 = kk + numFriends * nDOF + 0;
+
+                val[p1] += 1;
+                val[p2] += 1;
+                val[p3] += 1;
+                val[p4] += 1;
+            }
+            else
+            {
+                // idof = 0,       jdof = 0
+                int p1 = kk;
+                // idof = 0,       jdof = 1
+                int p2 = kk + 1;
+                // idof = 1,       jdof = 1
+                int p3 = kk + numFriends * nDOF;
+
+                val[p1] += 1;
+                val[p2] += 1;
+                val[p3] += 1;
+            }
+
+            iFriendCount++;
+            kkn2n++;
+            kk += nDOF;
+        }
+
+        kk += nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
+    }
+
+    // Print val
+    MPI_Barrier(PETSC_COMM_WORLD);
+    if (rank == 0)
+    {
+        for (int i = 0; i < val.size(); i++)
+            std::cout << val[i] << " ";
+        std::cout << std::endl;
+    }
+
+    MPI_Barrier(PETSC_COMM_WORLD);
     MPI_Abort(MPI_COMM_WORLD, 1);
 
     return ierr;
@@ -555,22 +715,22 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
 PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
 {
-    int rankLocalDOFs = end - start; // Number of nodes in the local partition
+    // int rankLocalDOFs = end - start; // Number of nodes in the local partition
 
-    d_nnz = new PetscInt[rankLocalDOFs]();
-    o_nnz = new PetscInt[rankLocalDOFs]();
+    // d_nnz = new PetscInt[rankLocalDOFs]();
+    // o_nnz = new PetscInt[rankLocalDOFs]();
 
-    for (auto node1 : discritizedNodes)
-        for (auto dof1 : node1->getDOFs()) // Rows of the matrix
-            if (dof1->getDOFType() != D)
-                if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
-                    for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
-                        for (auto dof2 : discritizedNodes[node2]->getDOFs())
-                            if (dof2->getDOFType() != D)
-                                if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
-                                    d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
-                                else
-                                    o_nnz[dof1->getIndex() - IIIstart]++;
+    // for (auto node1 : discritizedNodes)
+    //     for (auto dof1 : node1->getDOFs()) // Rows of the matrix
+    //         if (dof1->getDOFType() != D)
+    //             if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
+    //                 for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
+    //                     for (auto dof2 : discritizedNodes[node2]->getDOFs())
+    //                         if (dof2->getDOFType() != D)
+    //                             if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
+    //                                 d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
+    //                             else
+    //                                 o_nnz[dof1->getIndex() - IIIstart]++;
 
     return ierr;
 }
