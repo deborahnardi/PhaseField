@@ -253,6 +253,187 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, boo
     return ierr;
 }
 
+double Solid2D::stiffnessValue(const int localPos1, const int localPos2, Tensor &tensorC, const PetscReal B[3][6])
+{
+    double value = 0.0;
+
+    return value;
+}
+
+std::vector<double> Solid2D::getStiffnessII(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
+{
+    /*
+        THIS METHOD IS USED TO COMPUTE THE CONTRIBUTION OF A SPECIFIC ELEMENT TO THE GLOBAL MATRIX AND RHS VECTOR
+
+        elemInfo: Vector containing the information of the element to be computed. All the elements that one node is connected to are stored in elemInfo.
+                  elemInfo.size() = 3 * numSharedElements = 3 * [elemIndex, localNode1Index, localNode2Index];
+                  For example, if a node is connected to 4 elements, elemInfo.size() = 12.
+                  Consider the example below: [0, 1, 1, 1, 0, 0, 2, 0, 0, 3, 0, 0] -> 0, 1, 1: element 0, local node 1, local node 2
+                                                                                   1, 0, 0: element 1, local node 0, local node 0
+                                                                                   2, 0, 0: element 2, local node 0, local node 0
+                                                                                   3, 0, 0: element 3, local node 0, local node 0
+
+        THE METHOD RETURNS THE STIFFNESS CONTRIBUTION VALUE OF THE GLOBAL NODE, ALREADY SUMMING ALL THE ELEMENTS THAT THE NODE IS CONNECTED TO, I.E, ALL THE LOCAL CONTRIBUTIONS
+
+        -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+         Ke = int{B^T C B}dOmega_e
+         B^T C B IS HEREIN DEFINED THROUGH AN ANALYTICAL EXPRESSION
+         ONLY THE UPPER TRIANGULAR PART OF THE MATRIX IS COMPUTED (21 ELEMENTS DUE TO SYMMETRY)
+         ONLY ISOTROPIC MATERIALS ARE CONSIDERED (SEE CONSTITUTIVE TENSOR)
+
+         B = [dN1/dx, 0, dN2/dx, 0, dN3/dx, 0]
+                [0, dN1/dy, 0, dN2/dy, 0, dN3/dy]
+                [dN1/dy, dN1/dx, dN2/dy, dN2/dx, dN3/dy, dN3/dx]
+
+            dN/dx = dN/dxi * dxi/dx + dN/deta * deta/dx
+            dN/dy = dN/dxi * dxi/dy + dN/deta * deta/dy
+
+        Jacobian matrix:
+            J = [dx/dxi, dy/dxi]
+                [dx/deta, dy/deta]
+
+        Inverse of the Jacobian matrix:
+            J^-1 = 1/det(J) * [dy/deta, -dy/dxi]
+                              [-dx/deta, dx/dxi]
+
+        Derivative of the shape functions with respect to global coordinates:
+            [dN1/dx, dN1/dy]             [dN1/dxi, dN1/deta]
+            [dN2/dx, dN2/dy](3x2)   =    [dN2/dxi, dN2/deta](3x2)  * [J^-1](2x2)
+            [dN3/dx, dN3/dy]             [dN3/dxi, dN3/deta]
+    */
+
+    PetscScalar mu = material->getShearModulus();
+    PetscScalar kappa = 2.0 / 3.0 * mu + material->getLameConstant();
+    Tensor tensorK = tensors[0];
+    Tensor tensorI = tensors[1];
+    Tensor tensorJ = tensors[2];
+    int nDOF = 2;
+
+    for (int ih = 0; ih < numHammerPoints; ih++)
+    {
+        double *xi = coords[ih];
+        double weight = weights[ih];
+
+        double *N = sF->evaluateShapeFunction(xi);
+        double **dN = sF->getShapeFunctionDerivative(xi);
+
+        // COMPUTING THE JACOBIAN MATRIX
+        PetscReal jacobianMatrix[2][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    jacobianMatrix[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+        // COMPUTING THE JACOBIAN FOR 2D SPACE
+        PetscReal jac = jacobianMatrix[0][0] * jacobianMatrix[1][1] - jacobianMatrix[0][1] * jacobianMatrix[1][0];
+        PetscReal wJac = weight * jac;
+
+        // COMPUTING THE INVERSE OF THE JACOBIAN MATRIX
+        PetscReal jacobianMatrixInv[2][2] = {};
+        jacobianMatrixInv[0][0] = jacobianMatrix[1][1] / jac;
+        jacobianMatrixInv[0][1] = -jacobianMatrix[0][1] / jac;
+        jacobianMatrixInv[1][0] = -jacobianMatrix[1][0] / jac;
+        jacobianMatrixInv[1][1] = jacobianMatrix[0][0] / jac;
+
+        // COMPUTING THE DERIVATIVE OF THE SHAPE FUNCTIONS WITH RESPECT TO GLOBAL COORDINATES (3x2 matrix - nNodes x nDirections)
+        PetscReal dN_dX[numElNodes][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * jacobianMatrixInv[j][i];
+
+        // COMPUTING uk,l AND ul,k
+        PetscScalar gradU[2][2] = {};
+        for (PetscInt c = 0; c < numElNodes; c++)
+            for (PetscInt k = 0; k < 2; k++)
+                for (PetscInt l = 0; l < 2; l++)
+                    gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+
+        PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
+
+        // COMPUTING THE DEGRADATION FUNCTION (1-d)^2
+        double damageValue = 0.;
+        for (PetscInt a = 0; a < numElNodes; a++)
+            damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
+
+        PetscReal dCoeff = pow(1 - damageValue, 2);
+
+        // ASSEMBLING CONSTITUTIVE MATRIX CONSIDERING THE ENERGY SPLIT
+
+        // COMPUTING THE CONSTITUTIVE TENSOR
+        double tensorCPlus[3][3] = {};
+        double tensorCMinus[3][3] = {};
+        double tensorC[3][3] = {};
+
+        if (divU > 0)
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    tensorCPlus[i][j] = dCoeff * (kappa * tensorK[i][j] + 2.0 * mu * tensorJ[i][j]);
+                    tensorCMinus[i][j] = 0.0;
+                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+                }
+        }
+        else if (divU <= 0)
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    tensorCPlus[i][j] = dCoeff * 2.0 * mu * tensorJ[i][j];
+                    tensorCMinus[i][j] = kappa * tensorK[i][j];
+                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+                }
+        }
+
+        // double tensorC[3][3] = {};
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+
+        // RELATING dN_dX TO THE B MATRIX
+        PetscReal B[3][6] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            B[0][2 * a] = dN_dX[a][0];
+            B[1][2 * a + 1] = dN_dX[a][1];
+            B[2][2 * a] = dN_dX[a][1];
+            B[2][2 * a + 1] = dN_dX[a][0];
+        }
+
+        /*
+            COMPUTE ONLY THE NEEDED VALUES - THIS INFORMATION COMES FROM idxLocalNode1 AND idxLocalNode2
+            For II only 3 values are needed;
+        */
+
+        int count = 0;
+        std::vector<double> values(3, 0.0);
+
+        /*
+                Note that if idxLocalNode1 = 0 and idxLocalNode2 = 0, for example, we need to compute Ke_00, Ke_01, Ke_11
+                if idxLocalNode1 = 0 and idxLocalNode2 = 1, for example, we need to compute Ke_02, Ke_03, Ke_12 and Ke_13
+        */
+
+        // COMPUTE B^T C B -> Ke_kl = B_ki C_ij B_lj
+        if (idxLocalNode1 == idxLocalNode2) // Only symmetric part is assembled
+            for (int iDir = 0; iDir < nDOF; iDir++)
+                for (int jDir = iDir; jDir < nDOF; jDir++)
+                {
+                    values[count] = 0.0;
+                    int localRow = nDOF * idxLocalNode1 + iDir;
+                    int localCol = nDOF * idxLocalNode2 + jDir;
+
+                    
+                }
+
+        delete[] N;
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
+    }
+}
+
 PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField)
 {
     const PetscInt numNodeDOF = 2;                              // Number of DOFs per node considering displacements only

@@ -159,6 +159,29 @@ void FEM::deleteResults(bool deleteFiles)
                 Assembling and solving problem PETSc
 ----------------------------------------------------------------------------------
 */
+std::array<Tensor, 3> FEM::computeConstitutiveTensors()
+{
+    Tensor tensorK = {};
+    Tensor tensorI = {};
+    Tensor tensorJ = {};
+
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < 2; j++)
+            tensorK[i][j] = 1.0;
+
+    for (int i = 0; i < 3; i++)
+        tensorI[i][i] = 1.0;
+
+    tensorI[2][2] = 0.5;
+
+    // J = I - 1/3 * K
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            tensorJ[i][j] = tensorI[i][j] - 1.0 / 3.0 * tensorK[i][j];
+
+    return {tensorK, tensorI, tensorJ};
+}
+
 double FEM::computeNorm(const double *vec1, const double *vec2, const int &size)
 {
     double norm = 0.0;

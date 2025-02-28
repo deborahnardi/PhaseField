@@ -19,6 +19,8 @@
 
 #include "../../enumclass.hpp"
 
+using Tensor = std::array<std::array<double, 3>, 3>;
+
 class FEM
 {
 private:
@@ -101,7 +103,7 @@ public:
     PetscErrorCode printMemoryUsage(const int &iStep);
     PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
-
+    std::array<Tensor, 3> computeConstitutiveTensors();
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods
     ------------------------------------------------------------------------------------

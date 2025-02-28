@@ -643,18 +643,23 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
             o_nnz[nDOF * ii + iDOF] = n2nDRank[ii] * nDOF;
         }
 
-    std::vector<int> val(totalNnz, 0);
+    // -------------------------------------------------------------------------------------------------
+
+    std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
+
+    std::vector<int> val(totalNnz, 0), idxRows(totalNnz, 0), idxCols(totalNnz, 0);
     int kkn2n = 0, kk = 0;
     for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++)
     {
-        int n1 = nodesForEachRankCSR[rank] + iNode1;
+        const int n1 = nodesForEachRankCSR[rank] + iNode1;
         std::vector<int> friendNodes(localRankNodeNeighbours[iNode1].begin(), localRankNodeNeighbours[iNode1].end());
-        int numFriends = friendNodes.size();
+        const int numFriends = friendNodes.size();
         int iFriendCount = 0;
 
         for (auto n2 : friendNodes)
         {
-            std::vector<int> elems = eSameList[kkn2n];
+            std::vector<int> elemInfo = eSameList[kkn2n];
+            const int numLocalElems = elemInfo.size() / 3;
 
             /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
                 IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
@@ -671,10 +676,28 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
                 // idof = 1,       jdof = 1
                 int p4 = kk + numFriends * nDOF + 0;
 
-                val[p1] += 1;
-                val[p2] += 1;
-                val[p3] += 1;
-                val[p4] += 1;
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIJ(idxLocalNode1, idxLocalNode2);
+
+                    val[p1] += localStiffValue[0];
+                    val[p2] += localStiffValue[1];
+                    val[p3] += localStiffValue[3];
+                    val[p4] += localStiffValue[2];
+                }
+
+                idxRows[p1] = nDOF * n1;     // First DOF
+                idxRows[p2] = nDOF * n1;     // First DOF
+                idxRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+                idxRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                idxCols[p1] = nDOF * n2;
+                idxCols[p2] = nDOF * n2 + 1;
+                idxCols[p3] = nDOF * n2;
+                idxCols[p4] = nDOF * n2 + 1;
             }
             else
             {
@@ -685,9 +708,27 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
                 // idof = 1,       jdof = 1
                 int p3 = kk + numFriends * nDOF;
 
-                val[p1] += 1;
-                val[p2] += 1;
-                val[p3] += 1;
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessII(tensors, idxLocalNode1, idxLocalNode2);
+
+                    val[p1] += localStiffValue[0];
+                    val[p2] += localStiffValue[1];
+                    val[p3] += localStiffValue[3];
+                }
+
+                idxRows[p1] = nDOF * n1;
+                idxRows[p2] = nDOF * n1;
+                idxRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                idxCols[p1] = nDOF * n2;
+                idxCols[p2] = nDOF * n2 + 1;
+                idxCols[p3] = nDOF * n2 + 1;
+
+                // There is no p4 due to symmetry
             }
 
             iFriendCount++;

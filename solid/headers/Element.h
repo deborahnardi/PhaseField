@@ -8,6 +8,8 @@
 #include "../../enumclass.hpp"
 #include "AnalysisParameters.h"
 
+using Tensor = std::array<std::array<double, 3>, 3>;
+
 class Element
 {
 protected:
@@ -45,7 +47,9 @@ public:
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
 
     virtual PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) {};
-    // virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs) {};
+    virtual std::vector<double> getStiffnessII(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField = false) {};
+    virtual std::vector<double> getStiffnessIJ(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField = false) {};
+    virtual double stiffnessValue(const int localPos1, const int localPos2, Tensor &tensorC, const PetscReal B[3][6]) {};
     virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField = false) {};
     virtual void getContribution() {};
     virtual void Test(PetscScalar &integral) {};
@@ -114,7 +118,9 @@ public:
 
     MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) override;
-    // PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs) override;
+    std::vector<double> getStiffnessII(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField = false) override;
+    std::vector<double> getStiffnessIJ(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField = false) override {};
+    double stiffnessValue(const int localPos1, const int localPos2, Tensor &tensorC, const PetscReal B[3][6]) override;
     PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField = false) override;
     void getContribution() override;
     void Test(PetscScalar &integral) override;
