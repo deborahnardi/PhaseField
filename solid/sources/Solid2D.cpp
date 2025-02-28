@@ -260,7 +260,7 @@ double Solid2D::stiffnessValue(const int localPos1, const int localPos2, Tensor 
     return value;
 }
 
-std::vector<double> Solid2D::getStiffnessII(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
+std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
 {
     /*
         THIS METHOD IS USED TO COMPUTE THE CONTRIBUTION OF A SPECIFIC ELEMENT TO THE GLOBAL MATRIX AND RHS VECTOR
@@ -309,6 +309,12 @@ std::vector<double> Solid2D::getStiffnessII(std::array<Tensor, 3> tensors, const
     Tensor tensorI = tensors[1];
     Tensor tensorJ = tensors[2];
     int nDOF = 2;
+
+    std::vector<double> values;
+    if (idxLocalNode1 == idxLocalNode2)
+        values.resize(3, 0.0);
+    else
+        values.resize(4, 0.0);
 
     for (int ih = 0; ih < numHammerPoints; ih++)
     {
@@ -408,7 +414,6 @@ std::vector<double> Solid2D::getStiffnessII(std::array<Tensor, 3> tensors, const
         */
 
         int count = 0;
-        std::vector<double> values(3, 0.0);
 
         /*
                 Note that if idxLocalNode1 = 0 and idxLocalNode2 = 0, for example, we need to compute Ke_00, Ke_01, Ke_11
@@ -420,11 +425,27 @@ std::vector<double> Solid2D::getStiffnessII(std::array<Tensor, 3> tensors, const
             for (int iDir = 0; iDir < nDOF; iDir++)
                 for (int jDir = iDir; jDir < nDOF; jDir++)
                 {
-                    values[count] = 0.0;
+                    int localRow = nDOF * idxLocalNode1 + iDir; // k
+                    int localCol = nDOF * idxLocalNode2 + jDir; // l
+
+                    for (int i = 0; i < 3; i++)
+                        for (int j = i; j < 3; j++)
+                            values[count] += B[i][localRow] * tensorC[i][j] * B[j][localCol] * wJac;
+
+                    count++;
+                }
+        else if (idxLocalNode1 != idxLocalNode2)
+            for (int iDir = 0; iDir < nDOF; iDir++)
+                for (int jDir = 0; jDir < nDOF; jDir++)
+                {
                     int localRow = nDOF * idxLocalNode1 + iDir;
                     int localCol = nDOF * idxLocalNode2 + jDir;
 
-                    
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            values[count] += B[i][localRow] * tensorC[i][j] * B[j][localCol] * wJac;
+
+                    count++;
                 }
 
         delete[] N;
@@ -432,6 +453,8 @@ std::vector<double> Solid2D::getStiffnessII(std::array<Tensor, 3> tensors, const
             delete[] dN[i];
         delete[] dN;
     }
+
+    return values;
 }
 
 PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField)

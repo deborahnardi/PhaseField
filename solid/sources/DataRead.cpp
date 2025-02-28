@@ -681,12 +681,12 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
                     const int elemIndex = elemInfo[3 * iElem];
                     const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                     const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIJ(idxLocalNode1, idxLocalNode2);
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
 
                     val[p1] += localStiffValue[0];
                     val[p2] += localStiffValue[1];
-                    val[p3] += localStiffValue[3];
-                    val[p4] += localStiffValue[2];
+                    val[p3] += localStiffValue[2];
+                    val[p4] += localStiffValue[3];
                 }
 
                 idxRows[p1] = nDOF * n1;     // First DOF
@@ -713,11 +713,11 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
                     const int elemIndex = elemInfo[3 * iElem];
                     const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                     const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessII(tensors, idxLocalNode1, idxLocalNode2);
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
 
                     val[p1] += localStiffValue[0];
                     val[p2] += localStiffValue[1];
-                    val[p3] += localStiffValue[3];
+                    val[p3] += localStiffValue[2];
                 }
 
                 idxRows[p1] = nDOF * n1;
@@ -739,12 +739,17 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         kk += nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
     }
 
-    // Print val
-    MPI_Barrier(PETSC_COMM_WORLD);
+    // Print val, idxRows, and idxCols
     if (rank == 0)
     {
         for (int i = 0; i < val.size(); i++)
             std::cout << val[i] << " ";
+        std::cout << std::endl;
+        for (int i = 0; i < idxRows.size(); i++)
+            std::cout << idxRows[i] << " ";
+        std::cout << std::endl;
+        for (int i = 0; i < idxCols.size(); i++)
+            std::cout << idxCols[i] << " ";
         std::cout << std::endl;
     }
 
