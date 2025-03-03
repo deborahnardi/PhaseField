@@ -25,7 +25,7 @@ class FEM
 {
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
-    int rank, size;
+    int rank, size, nDOF = 2;
     double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
     std::vector<std::set<int>> nodeNeighbours; // std::set<int> is a set of integers, the elements are stored in ascending order
@@ -38,6 +38,7 @@ private:
     AnalysisParameters *params;
     bool negativeLoad = false, prescribedDamageField = false, showMatrix = false;
     PetscLogDouble bytes = 0.0;
+    PetscInt totalNnz = 0;
 
     Mat matrix, matrixPF, matrixCopy;
     Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
@@ -48,10 +49,11 @@ private:
     double *PA;
     double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
 
-    std::vector<int> CRSNodeNeighbours, n2nCSRTotal, nodesForEachRankCSR;
+    std::vector<int> CRSNodeNeighbours, n2nCSRTotal, nodesForEachRankCSR, numNodesForEachRank, n2nDRank, n2nCSRLocal;
     std::vector<std::set<int>> n2e;
 
     std::vector<std::set<int>> localRankNodeNeighbours, n2eLocal;
+    std::vector<std::vector<int>> eSameList;
 
     MatrixXd K;
     VectorXd F;
@@ -131,6 +133,7 @@ public:
     PetscErrorCode printGlobalMatrix(Mat &A);
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
     PetscErrorCode assembleBetweenProcesses(Mat &A, Vec &b);
+    PetscErrorCode assembleSymmStiffMatrix(Mat &A);
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------

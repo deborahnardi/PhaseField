@@ -277,6 +277,7 @@ void FEM::readGeometry(const std::string &_filename)
     decomposeElements(rhs, solution);
     matrixPreAllocation(IIIstart, IIIend);
     createPETScVariables(matrix, rhs, solution, nDOFs, true);
+    assembleSymmStiffMatrix(matrix);
 }
 
 void FEM::findNeighbours()
@@ -393,7 +394,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     int numNodesByRank = numNodes / size; // Decomposing the nodes among the processors
     int remainderNodes = numNodes % size; // Remainder of the division
 
-    std::vector<int> numNodesForEachRank; // Array that stores the number of nodes for each processor
+    // This array stores the number of nodes for each processor
     for (int i = 0; i < size; i++)
         numNodesForEachRank.push_back(numNodesByRank); // Filling the array with the number of nodes for each processor
 
@@ -459,20 +460,9 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         std::cout << "--------------------------------" << std::endl;
     }
 
-    std::vector<int> n2nCSRLocal;
     n2nCSRLocal.push_back(0);
     for (int i = 0; i < localRankNodeNeighbours.size(); i++)
         n2nCSRLocal.push_back(n2nCSRLocal[i] + localRankNodeNeighbours[i].size()); // Equivalent to n2n_csr Ayrton
-
-    // Print n2nCSRLocal
-    if (rank == 0)
-    {
-        std::cout << "n2n_CSR:" << std::endl;
-        for (int i = 0; i < n2nCSRLocal.size(); i++)
-            std::cout << n2nCSRLocal[i] << " ";
-        std::cout << std::endl;
-        std::cout << "--------------------------------" << std::endl;
-    }
 
     /*
         EXPLAINING THE FOLLOWING CODE BLOCK:
@@ -492,27 +482,16 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
     */
 
-    std::vector<int> n2nDRank(numNodesForEachRank[rank], 0); // For ex., if rank = 1, numNodesForEachRank[1] = 3, then n2nDrank.size() = 3
+    n2nDRank.resize(numNodesForEachRank[rank], 0); // For ex., if rank = 1, numNodesForEachRank[1] = 3, then n2nDrank.size() = 3
     for (int i = 0; i < numNodesForEachRank[rank]; i++)
     {
         std::set<int> neighbours = localRankNodeNeighbours[i];
         int greaterThanRankCounter = 0;
         for (auto n : neighbours)
-            if (n > n2nCSRLocal[rank + 1] - 1) // -1 because the vector starts at 0
+            if (n > nodesForEachRankCSR[rank + 1] - 1) // -1 because the vector starts at 0
                 greaterThanRankCounter++;
         n2nDRank[i] = greaterThanRankCounter;
     }
-
-    // Print n2nDRank
-    MPI_Barrier(PETSC_COMM_WORLD);
-    if (rank == 0)
-    {
-        for (int i = 0; i < n2nDRank.size(); i++)
-            std::cout << n2nDRank[i] << " ";
-        std::cout << std::endl;
-        std::cout << "--------------------------------" << std::endl;
-    }
-    MPI_Barrier(PETSC_COMM_WORLD);
 
     /*
         EXPALINING THE FOLLOWING CODE BLOCK:
@@ -530,7 +509,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         eSameList is an array of arrays
     */
 
-    std::vector<std::vector<int>> eSameList(localRankNodeNeighboursFlattened.size());
+    eSameList.resize(localRankNodeNeighboursFlattened.size());
     for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++) // This loops iterates over the nodes of the local partition (size + 1)
     {
         int node1 = nodesForEachRankCSR[rank] + iNode1; // nodesForEachRankCSR[rank] is the first node of the rank
@@ -598,36 +577,19 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         }
     }
 
-    // Print eSameList
-    MPI_Barrier(PETSC_COMM_WORLD);
-    if (rank == 0)
-    {
-        for (int i = 0; i < eSameList.size(); i++)
-        {
-            std::vector<int> eSharedList = eSameList[i];
-            std::cout << "Tuple " << i << " shared elements: ";
-            for (int j = 0; j < eSharedList.size(); j++)
-                std::cout << eSharedList[j] << " ";
-            std::cout << std::endl;
-        }
-        std::cout << "--------------------------------" << std::endl;
-    }
+    return ierr;
+}
 
+PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
+{
     // TOTAL NUMBER OF NONZERO (UPPER TRIANGULAR PART ONLY) ONLY FOR THE LOCAL PARTITION
 
-    int totalNnz = 0;
-    int nDOF = 2;
     for (int i = 0; i < numNodesForEachRank[rank]; i++)
     {
         std::set<int> neighbours = localRankNodeNeighbours[i];
         int numFriends = neighbours.size();
         totalNnz += nDOF * nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
     }
-
-    if (rank == 0)
-        std::cout << "Total number of nonzeros for the local partition: " << totalNnz << std::endl;
-
-    MPI_Barrier(PETSC_COMM_WORLD);
 
     // PREALLOCATION OF THE MPI MATRIX
     int m = numNodesForEachRank[rank] * nDOF; // Number of local lines at the rank. Ex.: 3 nodes at the local partition * 2 DOFs = 6 lines
@@ -643,11 +605,112 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
             o_nnz[nDOF * ii + iDOF] = n2nDRank[ii] * nDOF;
         }
 
+    // int rankLocalDOFs = end - start; // Number of nodes in the local partition
+
+    // d_nnz = new PetscInt[rankLocalDOFs]();
+    // o_nnz = new PetscInt[rankLocalDOFs]();
+
+    // for (auto node1 : discritizedNodes)
+    //     for (auto dof1 : node1->getDOFs()) // Rows of the matrix
+    //         if (dof1->getDOFType() != D)
+    //             if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
+    //                 for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
+    //                     for (auto dof2 : discritizedNodes[node2]->getDOFs())
+    //                         if (dof2->getDOFType() != D)
+    //                             if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
+    //                                 d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
+    //                             else
+    //                                 o_nnz[dof1->getIndex() - IIIstart]++;
+
+    return ierr;
+}
+
+PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
+{
+    PetscLogDouble bytes;
+
+    // (size == 1)
+    //     ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nnz, &A)
+    //     : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nnz, NULL, o_nnz, &A);
+    // CHKERRQ(ierr);
+
+    PetscCall(MatCreate(PETSC_COMM_SELF, &A));
+    PetscCall(MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize));
+    PetscCall(MatSetType(A, MATSEQBAIJ));
+    PetscCall(MatSetFromOptions(A));
+
+    PetscCall(MatSeqBAIJSetPreallocation(A, 1, 0, d_nnz)); // bs=1, and 0 is ignored bc of nnz
+    PetscCall(MatSetUp(A));
+
+    // Vectors b and x
+    ierr = VecCreate(PETSC_COMM_WORLD, &b);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(b, PETSC_DECIDE, mSize);
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(b);
+    CHKERRQ(ierr);
+    ierr = VecDuplicate(b, &x);
+    CHKERRQ(ierr);
+
+    if (showInfo && rank == 0)
+    {
+        ierr = PetscMemoryGetCurrentUsage(&bytes);
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
+        CHKERRQ(ierr);
+        ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
+        CHKERRQ(ierr);
+    }
+
+    delete[] d_nnz;
+    delete[] o_nnz;
+
+    if (params->getCalculateReactionForces())
+    {
+        ierr = VecDuplicate(b, &nodalForces);
+        CHKERRQ(ierr);
+    }
+
+    return ierr;
+}
+
+PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
+{
     // -------------------------------------------------------------------------------------------------
 
     std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
 
-    std::vector<int> val(totalNnz, 0), idxRows(totalNnz, 0), idxCols(totalNnz, 0);
+    // std::vector<int> val(totalNnz, 0), idxRows(totalNnz, 0), idxCols(totalNnz, 0);
+    // PetscScalar *val = new PetscScalar[totalNnz]();
+    // PetscInt *idxRows = new PetscInt[totalNnz]();
+    // PetscInt *idxCols = new PetscInt[totalNnz]();
+
+    /*
+        NOTE OF THE PRESENT DEVELOPER FOR THE FUTURE DEVELOPER:
+
+        For some reason, when using BAIJ matrix, the code crashes when setting the values considering pointers for val, idxRows, and idxCols
+        The code works fine when using the arrays directly.A
+
+        IT WON'T WORK:
+        ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES);
+        CHKERRQ(ierr);
+
+        THIS WILL WORK:
+        for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)
+        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES));
+
+    */
+
+    if (!val || !idxRows || !idxCols)
+    {
+        std::cerr << "Memory allocation failed!" << std::endl;
+        return -1;
+    }
+
+    PetscScalar val[totalNnz] = {0};
+    PetscInt idxRows[totalNnz] = {0};
+    PetscInt idxCols[totalNnz] = {0};
+
     int kkn2n = 0, kk = 0;
     for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++)
     {
@@ -742,87 +805,35 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     // Print val, idxRows, and idxCols
     if (rank == 0)
     {
-        for (int i = 0; i < val.size(); i++)
+        for (int i = 0; i < totalNnz; i++)
             std::cout << val[i] << " ";
         std::cout << std::endl;
-        for (int i = 0; i < idxRows.size(); i++)
+
+        for (int i = 0; i < totalNnz; i++)
             std::cout << idxRows[i] << " ";
         std::cout << std::endl;
-        for (int i = 0; i < idxCols.size(); i++)
+
+        for (int i = 0; i < totalNnz; i++)
             std::cout << idxCols[i] << " ";
         std::cout << std::endl;
     }
 
+    // MPI_Barrier(PETSC_COMM_WORLD);
+    // ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES); THIS DOES NOT WORK
+    // CHKERRQ(ierr); THIS DOES NOT WORK
+
+    for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
+        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
+
+    PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
+
+    PetscCall(MatSetOption(A, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
+
+    PetscCall(MatView(A, PETSC_VIEWER_STDOUT_WORLD));
+
     MPI_Barrier(PETSC_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD, 1);
-
-    return ierr;
-}
-
-PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
-{
-    // int rankLocalDOFs = end - start; // Number of nodes in the local partition
-
-    // d_nnz = new PetscInt[rankLocalDOFs]();
-    // o_nnz = new PetscInt[rankLocalDOFs]();
-
-    // for (auto node1 : discritizedNodes)
-    //     for (auto dof1 : node1->getDOFs()) // Rows of the matrix
-    //         if (dof1->getDOFType() != D)
-    //             if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
-    //                 for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
-    //                     for (auto dof2 : discritizedNodes[node2]->getDOFs())
-    //                         if (dof2->getDOFType() != D)
-    //                             if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
-    //                                 d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
-    //                             else
-    //                                 o_nnz[dof1->getIndex() - IIIstart]++;
-
-    return ierr;
-}
-
-PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
-{
-    PetscLogDouble bytes;
-
-    (size == 1)
-        ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nnz, &A)
-        : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nnz, NULL, o_nnz, &A);
-    CHKERRQ(ierr);
-
-    ierr = MatSetFromOptions(A);
-    CHKERRQ(ierr);
-
-    PetscCall(MatSetOption(A, MAT_SYMMETRIC, PETSC_TRUE)); // or before solving the system
-    PetscCall(MatSetOption(A, MAT_SPD, PETSC_TRUE));       // Positive definite matrix
-
-    ierr = VecCreate(PETSC_COMM_WORLD, &b);
-    CHKERRQ(ierr);
-    ierr = VecSetSizes(b, PETSC_DECIDE, mSize);
-    CHKERRQ(ierr);
-    ierr = VecSetFromOptions(b);
-    CHKERRQ(ierr);
-    ierr = VecDuplicate(b, &x);
-    CHKERRQ(ierr);
-
-    if (showInfo && rank == 0)
-    {
-        ierr = PetscMemoryGetCurrentUsage(&bytes);
-        CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD, "Memory used by each processor to store problem data: %f Mb\n", bytes / (1024 * 1024));
-        CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD, "Matrix and vectors created...\n");
-        CHKERRQ(ierr);
-    }
-
-    delete[] d_nnz;
-    delete[] o_nnz;
-
-    if (params->getCalculateReactionForces())
-    {
-        ierr = VecDuplicate(b, &nodalForces);
-        CHKERRQ(ierr);
-    }
+    exit(0);
 
     return ierr;
 }
