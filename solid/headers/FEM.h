@@ -28,7 +28,6 @@ private:
     int rank, size, nDOF = 2;
     double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
-    std::vector<std::set<int>> nodeNeighbours; // std::set<int> is a set of integers, the elements are stored in ascending order
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
     std::vector<Element *> elements, partitionedElements, partitionedBoundaryElements;
@@ -43,17 +42,18 @@ private:
     Mat matrix, matrixPF, matrixCopy;
     Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
     PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
-    PetscInt *d_nnz, *o_nnz, *dirichletBC;
+    PetscInt *d_nnz, *o_nnz, *d_nz, *o_nz, *dirichletBC;
     PetscErrorCode ierr;
     int *JC, *IR, nzQ = 0;
     double *PA;
     double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
 
-    std::vector<int> CRSNodeNeighbours, n2nCSRTotal, nodesForEachRankCSR, numNodesForEachRank, n2nDRank, n2nCSRLocal;
-    std::vector<std::set<int>> n2e;
-
-    std::vector<std::set<int>> localRankNodeNeighbours, n2eLocal;
+    std::vector<int> n2nUpperTotal, n2nCSRUpperTotal, nodesForEachRankCSR, numNodesForEachRank, n2nDRankUpper, n2nDRankLower, n2nCSRUpper;
+    std::vector<std::set<int>> n2nUpperMatTotal, n2e, n2nMat, n2nUpperMat, n2nLowerMat;
     std::vector<std::vector<int>> eSameList;
+
+    std::vector<std::set<int>> n2nMatTotal, n2nLowerMatTotal;
+    std::vector<int> n2nTotal, n2nLowerTotal;
 
     MatrixXd K;
     VectorXd F;
@@ -148,8 +148,8 @@ public:
 
     /*----------------------------------------------------------------------------------
                                 POST PROCESSING METHODS
-------------------------------------------------------------------------------------
-*/
+  ------------------------------------------------------------------------------------
+  */
     void postProc();
     void computeNodalStress();
     void computeTractions();

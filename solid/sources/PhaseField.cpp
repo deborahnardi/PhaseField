@@ -13,7 +13,7 @@ void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
     {
         DOF *damageDOF0 = node->getDOFs()[2];
         if (damageDOF0->getIndex() >= IstartPF && damageDOF0->getIndex() < IendPF)
-            for (auto node2 : nodeNeighbours[node->getIndex()])
+            for (auto node2 : n2nMatTotal[node->getIndex()])
             {
                 DOF *damageDOF1 = discritizedNodes[node2]->getDOFs()[2];
                 if (damageDOF1->getIndex() >= IstartPF && damageDOF1->getIndex() < IendPF)

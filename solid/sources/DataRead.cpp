@@ -282,55 +282,76 @@ void FEM::readGeometry(const std::string &_filename)
 
 void FEM::findNeighbours()
 {
-    int numNodesAux = nodes.size();
-    nodeNeighbours.resize(numNodesAux);
-
     /*
         std::vector<std::set<int>> nodeNeighbours declared in the private section of the class FEM;
         set is a data structure in c++ that is used to store unique elements;
         Insert the node itself and its neighbours, the insert method does not allow repeated elements.
 
-        - nodeNeighbours contains the node itself and its neighbours, the insert method does not allow repeated elements, the elements are stored in ascending order and if i < j, then the node is not inserted in the set of neighbours of node j (due to symmetry of the matrix);
+        - n2nUpperMatTotal contains the node itself and its neighbours, the insert method does not allow repeated elements, the elements are stored in ascending order and if i < j, then the node is not inserted in the set of neighbours of node j (due to symmetry of the matrix);
 
-        - CRSNodeNeighbours is a vector that stores the neighbours of each node in a CRS format, i.e., the neighbours of node 0 are stored in the first positions of the vector, the neighbours of node 1 are stored in the next positions, and so on;
+        - n2nUpperTotal is a vector that stores the neighbours of each node in a CRS format, i.e., the neighbours of node 0 are stored in the first positions of the vector, the neighbours of node 1 are stored in the next positions, and so on;
 
-        - n2nCSRTotal stores the cumulative length of the neighbours of each node starting from 0;
+        - n2nCSRUpperTotal stores the cumulative length of the neighbours of each node starting from 0;
 
-        - nodeElementMapping stores the elements that each node belongs to;
+        - n2e stores the elements that each node belongs to;
     */
 
+    // NODE TO NODE RELATIONS REGARDLESS OF THE INDEXES (COMPLETE MATRIX)
+    n2nMatTotal.resize(nodes.size());
+    for (auto elem : elements)
+        for (auto node : elem->getElemConnectivity())
+            for (auto node2 : elem->getElemConnectivity())
+                n2nMatTotal[node->getIndex()].insert(node2->getIndex()); // Equivalent to n2n_mat_total Ayrton
+
+    for (int i = 0; i < n2nMatTotal.size(); i++)
+    {
+        std::set<int> neighbours = n2nMatTotal[i];
+        for (auto n : neighbours)
+            n2nTotal.push_back(n); // Equivalent to n2n_total Ayrton
+    }
+    // ===========================================================================================================================
+
+    // NODE TO NODE RELATIONS CONSIDERING ONLY HIGHER OR EQUAL INDEXES (UPPER TRIANGULAR PART)
+    n2nUpperMatTotal.resize(nodes.size());
     for (auto elem : elements)
         for (auto node : elem->getElemConnectivity())
             for (auto node2 : elem->getElemConnectivity())
                 if (node2->getIndex() >= node->getIndex())
-                    nodeNeighbours[node->getIndex()].insert(node2->getIndex()); // Equivalent to n2n_symm_mat_total Ayrton
+                    n2nUpperMatTotal[node->getIndex()].insert(node2->getIndex()); // Equivalent to n2n_upper_mat_total Ayrton
 
-    for (int i = 0; i < nodeNeighbours.size(); i++)
+    for (int i = 0; i < n2nUpperMatTotal.size(); i++)
     {
-        std::set<int> neighbours = nodeNeighbours[i];
+        std::set<int> neighbours = n2nUpperMatTotal[i];
         for (auto n : neighbours)
-            CRSNodeNeighbours.push_back(n); // Equivalent to n2n_symm_total Ayrton
+            n2nUpperTotal.push_back(n); // Equivalent to n2n_upper_total Ayrton
     }
+    // ===========================================================================================================================
 
-    n2nCSRTotal.push_back(0);
-    for (int i = 0; i < nodeNeighbours.size(); i++)
-        n2nCSRTotal.push_back(n2nCSRTotal[i] + nodeNeighbours[i].size()); // Equivalent to n2n_csr_total Ayrton
+    // NODE TO NODE RELATIONS CONSIDERING ONLY LOWER OR EQUAL INDEXES (LOWER TRIANGULAR PART)
+    n2nLowerMatTotal.resize(nodes.size());
+    for (auto elem : elements)
+        for (auto node : elem->getElemConnectivity())
+            for (auto node2 : elem->getElemConnectivity())
+                if (node2->getIndex() <= node->getIndex())
+                    n2nLowerMatTotal[node->getIndex()].insert(node2->getIndex()); // Equivalent to n2n_lower_mat_total Ayrton
 
-    // Print CumulativeNodeNeighbours
-    MPI_Barrier(PETSC_COMM_WORLD);
-    if (rank == 0)
+    for (int i = 0; i < n2nLowerMatTotal.size(); i++)
     {
-        for (int i = 0; i < n2nCSRTotal.size(); i++)
-            std::cout << n2nCSRTotal[i] << " ";
-        std::cout << std::endl;
+        std::set<int> neighbours = n2nLowerMatTotal[i];
+        for (auto n : neighbours)
+            n2nLowerTotal.push_back(n); // Equivalent to n2n_lower_total Ayrton
     }
 
-    n2e.resize(numNodesAux);
+    // ===========================================================================================================================
+
+    n2nCSRUpperTotal.push_back(0);
+    for (int i = 0; i < n2nUpperMatTotal.size(); i++)
+        n2nCSRUpperTotal.push_back(n2nCSRUpperTotal[i] + n2nUpperMatTotal[i].size()); // Equivalent to n2n_csr_upper_total Ayrton
+
+    n2e.resize(nodes.size());
     for (auto elem : elements)
         for (auto node : elem->getElemConnectivity())
             n2e[node->getIndex()].insert(elem->getIndex()); // Equivalent to n2e Ayrton
-
-    MPI_Barrier(PETSC_COMM_WORLD);
 }
 
 PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
@@ -338,42 +359,6 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     MPI_Barrier(PETSC_COMM_WORLD); // Synchronizes all processes with PETSc communicator
     PetscPrintf(PETSC_COMM_WORLD, "Decomposing elements...\n");
 
-    // ----------------------------------------------------------------
-    // PARTIONING DOMAIN ELEMENTS
-    ierr = VecCreate(PETSC_COMM_WORLD, &x);
-    CHKERRQ(ierr);
-    ierr = VecSetSizes(x, PETSC_DECIDE, elements.size());
-    CHKERRQ(ierr);
-    ierr = VecSetFromOptions(x);
-    CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(x, &Istart, &Iend);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&x);
-    CHKERRQ(ierr);
-    // ----------------------------------------------------------------
-    // PARTIONING BOUNDARY ELEMENTS (FOR NEUMANN CONDITIONS)
-    ierr = VecCreate(PETSC_COMM_WORLD, &x);
-    CHKERRQ(ierr);
-    ierr = VecSetSizes(x, PETSC_DECIDE, bdElements.size());
-    CHKERRQ(ierr);
-    ierr = VecSetFromOptions(x);
-    CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(x, &IIstart, &IIend);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&x);
-    CHKERRQ(ierr);
-    // ----------------------------------------------------------------
-    // PARTIONING GLOBAL DOFs
-    ierr = VecCreate(PETSC_COMM_WORLD, &x);
-    CHKERRQ(ierr);
-    ierr = VecSetSizes(x, PETSC_DECIDE, nDOFs);
-    CHKERRQ(ierr);
-    ierr = VecSetFromOptions(x);
-    CHKERRQ(ierr);
-    ierr = VecGetOwnershipRange(x, &IIIstart, &IIIend);
-    CHKERRQ(ierr);
-    ierr = VecDestroy(&x);
-    CHKERRQ(ierr);
     // ----------------------------------------------------------------
     // PARTIONING PHASE FIELD DOFs (damage DOFs)
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
@@ -389,8 +374,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
     // ----------------------------------------------------------------
     // PARTIONING NODES
-    // size = 0;
-    // rank = 0;
+
     int numNodesByRank = numNodes / size; // Decomposing the nodes among the processors
     int remainderNodes = numNodes % size; // Remainder of the division
 
@@ -408,9 +392,8 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         end += numNodesForEachRank[i];
     }
 
+    // ===========================================================================================================================
     PetscInt n = end - start;
-
-    // Create vector with the number of elements specific to the rank
     PetscCall(VecCreate(PETSC_COMM_WORLD, &x));
     PetscCall(VecSetSizes(x, n, numNodes)); // Use end-start for local size, not total size
     PetscCall(VecSetFromOptions(x));
@@ -418,6 +401,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     int Istart, Iend;
     PetscCall(VecGetOwnershipRange(x, &Istart, &Iend));
     PetscCall(VecDestroy(&x));
+    // ===========================================================================================================================
 
     nodesForEachRankCSR.resize(size + 1, 0); // size + 1 because it starts at 0; 0 is the value assigned to all the elements of the vector
     for (int i = 1; i <= size; i++)
@@ -427,42 +411,42 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         FROM THIS POINT ON, THE nodeNeighbours and nodeElementMapping VECTORS ARE SETTLED FOR THE LOCAL PARTITION
     */
 
-    localRankNodeNeighbours.resize(n);
-    n2eLocal.resize(n);
-
-    MPI_Barrier(PETSC_COMM_WORLD);
-
+    // COMPLETE MATRIX
+    n2nMat.resize(n);
     for (int i = start; i < end; i++)
-    {
-        localRankNodeNeighbours[i - start] = nodeNeighbours[i]; // Equivalent to n2n_symm_mat Ayrton
-        n2eLocal[i - start] = n2e[i];
-    }
+        n2nMat[i - start] = n2nMatTotal[i];
 
-    // Flattening localRankNodeNeighbours
-    std::vector<int> localRankNodeNeighboursFlattened;
-    for (int i = 0; i < localRankNodeNeighbours.size(); i++)
+    // UPPER TRIANGULAR PART
+    n2nUpperMat.resize(n);
+    for (int i = start; i < end; i++)
+        n2nUpperMat[i - start] = n2nUpperMatTotal[i]; // localRankNodeNeighbours = n2nUpperMat
+
+    // Flattening n2nUpper (localRankNodeNeighbours)
+    std::vector<int> n2nUpper;
+    for (int i = 0; i < n2nUpperMat.size(); i++)
     {
-        std::set<int> neighbours = localRankNodeNeighbours[i];
+        std::set<int> neighbours = n2nUpperMat[i];
         for (auto n : neighbours)
-            localRankNodeNeighboursFlattened.push_back(n); // Equivalent to n2n_symm Ayrton
-    }
-    // Print localRankNodeNeighbours
-    if (rank == 0)
-    {
-        for (int i = 0; i < localRankNodeNeighbours.size(); i++)
-        {
-            std::set<int> neighbours = localRankNodeNeighbours[i];
-            std::cout << "Node " << i << " neighbours: ";
-            for (auto n : neighbours)
-                std::cout << n << " ";
-            std::cout << std::endl;
-        }
-        std::cout << "--------------------------------" << std::endl;
+            n2nUpper.push_back(n); // localRankNodeNeighboursFlattened = n2nUpper
     }
 
-    n2nCSRLocal.push_back(0);
-    for (int i = 0; i < localRankNodeNeighbours.size(); i++)
-        n2nCSRLocal.push_back(n2nCSRLocal[i] + localRankNodeNeighbours[i].size()); // Equivalent to n2n_csr Ayrton
+    // LOWER TRIANGULAR PART
+    n2nLowerMat.resize(n);
+    for (int i = start; i < end; i++)
+        n2nLowerMat[i - start] = n2nLowerMatTotal[i];
+
+    // Flattening n2nLower
+    std::vector<int> n2nLower;
+    for (int i = 0; i < n2nLowerMat.size(); i++)
+    {
+        std::set<int> neighbours = n2nLowerMat[i];
+        for (auto n : neighbours)
+            n2nLower.push_back(n);
+    }
+
+    n2nCSRUpper.push_back(0);
+    for (int i = 0; i < n2nUpperMat.size(); i++)
+        n2nCSRUpper.push_back(n2nCSRUpper[i] + n2nUpperMat[i].size());
 
     /*
         EXPLAINING THE FOLLOWING CODE BLOCK:
@@ -482,15 +466,23 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
     */
 
-    n2nDRank.resize(numNodesForEachRank[rank], 0); // For ex., if rank = 1, numNodesForEachRank[1] = 3, then n2nDrank.size() = 3
+    n2nDRankUpper.resize(numNodesForEachRank[rank], 0); // For ex., if rank = 1, numNodesForEachRank[1] = 3, then n2nDrank.size() = 3
+    n2nDRankLower.resize(numNodesForEachRank[rank], 0);
     for (int i = 0; i < numNodesForEachRank[rank]; i++)
     {
-        std::set<int> neighbours = localRankNodeNeighbours[i];
+        std::set<int> neighbours = n2nMat[i];
         int greaterThanRankCounter = 0;
+        int smallerThanRankCounter = 0;
         for (auto n : neighbours)
+        {
             if (n > nodesForEachRankCSR[rank + 1] - 1) // -1 because the vector starts at 0
                 greaterThanRankCounter++;
-        n2nDRank[i] = greaterThanRankCounter;
+            if (n < nodesForEachRankCSR[rank] - 0)
+                smallerThanRankCounter++;
+        }
+
+        n2nDRankUpper[i] = greaterThanRankCounter;
+        n2nDRankLower[i] = smallerThanRankCounter;
     }
 
     /*
@@ -509,15 +501,15 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         eSameList is an array of arrays
     */
 
-    eSameList.resize(localRankNodeNeighboursFlattened.size());
-    for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++) // This loops iterates over the nodes of the local partition (size + 1)
+    eSameList.resize(n2nUpper.size());
+    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++) // This loops iterates over the nodes of the local partition (size + 1)
     {
         int node1 = nodesForEachRankCSR[rank] + iNode1; // nodesForEachRankCSR[rank] is the first node of the rank
 
-        for (int jj = n2nCSRLocal[iNode1]; jj < n2nCSRLocal[iNode1 + 1]; jj++) // This loop iterates over the neighbours of each node
+        for (int jj = n2nCSRUpper[iNode1]; jj < n2nCSRUpper[iNode1 + 1]; jj++) // This loop iterates over the neighbours of each node
         {
 
-            int node2 = localRankNodeNeighboursFlattened[jj]; // The neighbour of the node
+            int node2 = n2nUpper[jj]; // The neighbour of the node
 
             std::vector<int> elemsFromNode1(n2e[node1].begin(), n2e[node1].end()); // Elements that node1 belongs to
             std::vector<int> elemsFromNode2(n2e[node2].begin(), n2e[node2].end()); // Elements that node2 belongs to
@@ -577,6 +569,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         }
     }
 
+    PetscPrintf(PETSC_COMM_WORLD, "Elements decomposed!\n");
     return ierr;
 }
 
@@ -586,7 +579,7 @@ PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
 
     for (int i = 0; i < numNodesForEachRank[rank]; i++)
     {
-        std::set<int> neighbours = localRankNodeNeighbours[i];
+        std::set<int> neighbours = n2nUpperMat[i];
         int numFriends = neighbours.size();
         totalNnz += nDOF * nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
     }
@@ -595,14 +588,22 @@ PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
     int m = numNodesForEachRank[rank] * nDOF; // Number of local lines at the rank. Ex.: 3 nodes at the local partition * 2 DOFs = 6 lines
     int nn = numNodes * nDOF;                 // Number of local columns at the rank. Ex.: 8 nodes * 2 DOFs = 16 columns
 
+    // _nnz: only the nonzero terms of the upper triangular part of the matrix
     d_nnz = new PetscInt[m]();
     o_nnz = new PetscInt[m]();
+
+    // _nz: the nonzero terms of the complete matrix
+    d_nz = new PetscInt[m]();
+    o_nz = new PetscInt[m]();
 
     for (int ii = 0; ii < numNodesForEachRank[rank]; ii++)
         for (int iDOF = 0; iDOF < nDOF; iDOF++)
         {
-            d_nnz[nDOF * ii + iDOF] = nDOF * localRankNodeNeighbours[ii].size() - n2nDRank[ii] * nDOF - iDOF; // (n2nDRank[ii] * nDOF - iDOF) removes the DOFs that do not belong to the local partition
-            o_nnz[nDOF * ii + iDOF] = n2nDRank[ii] * nDOF;
+            d_nnz[nDOF * ii + iDOF] = nDOF * n2nUpperMat[ii].size() - n2nDRankUpper[ii] * nDOF - iDOF; // (n2nDRank[ii] * nDOF - iDOF) removes the DOFs that do not belong to the local partition
+            o_nnz[nDOF * ii + iDOF] = n2nDRankUpper[ii] * nDOF;
+
+            d_nz[nDOF * ii + iDOF] = (n2nMat[ii].size() - n2nDRankUpper[ii] - n2nDRankLower[ii]) * nDOF;
+            o_nz[nDOF * ii + iDOF] = (n2nDRankUpper[ii] + n2nDRankLower[ii]) * nDOF;
         }
 
     // int rankLocalDOFs = end - start; // Number of nodes in the local partition
@@ -641,6 +642,8 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
 
     PetscCall(MatSeqBAIJSetPreallocation(A, 1, 0, d_nnz)); // bs=1, and 0 is ignored bc of nnz
     PetscCall(MatSetUp(A));
+
+    // ONLY SEQ MATRIX WORKING SO FAR -> IMPLEMENT PARALLEL MATRIX WITH MPIBAIJ
 
     // Vectors b and x
     ierr = VecCreate(PETSC_COMM_WORLD, &b);
@@ -689,9 +692,9 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
         NOTE OF THE PRESENT DEVELOPER FOR THE FUTURE DEVELOPER:
 
         For some reason, when using BAIJ matrix, the code crashes when setting the values considering pointers for val, idxRows, and idxCols
-        The code works fine when using the arrays directly.A
+        The code works fine when using the arrays directly.
 
-        IT WON'T WORK:
+        THIS WON'T WORK:
         ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES);
         CHKERRQ(ierr);
 
@@ -701,21 +704,15 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 
     */
 
-    if (!val || !idxRows || !idxCols)
-    {
-        std::cerr << "Memory allocation failed!" << std::endl;
-        return -1;
-    }
-
     PetscScalar val[totalNnz] = {0};
     PetscInt idxRows[totalNnz] = {0};
     PetscInt idxCols[totalNnz] = {0};
 
     int kkn2n = 0, kk = 0;
-    for (int iNode1 = 0; iNode1 < n2nCSRLocal.size() - 1; iNode1++)
+    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
     {
         const int n1 = nodesForEachRankCSR[rank] + iNode1;
-        std::vector<int> friendNodes(localRankNodeNeighbours[iNode1].begin(), localRankNodeNeighbours[iNode1].end());
+        std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
         const int numFriends = friendNodes.size();
         int iFriendCount = 0;
 
