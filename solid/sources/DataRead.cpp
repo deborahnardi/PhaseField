@@ -275,9 +275,8 @@ void FEM::readGeometry(const std::string &_filename)
 
     findNeighbours();
     decomposeElements(rhs, solution);
-    matrixPreAllocation(IIIstart, IIIend);
+    matrixPreAllocation(Istart, Iend);
     createPETScVariables(matrix, rhs, solution, nDOFs, true);
-    assembleSymmStiffMatrix(matrix);
 }
 
 void FEM::findNeighbours()
@@ -359,6 +358,18 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     MPI_Barrier(PETSC_COMM_WORLD); // Synchronizes all processes with PETSc communicator
     PetscPrintf(PETSC_COMM_WORLD, "Decomposing elements...\n");
 
+    // PARTIONING BOUNDARY ELEMENTS (FOR NEUMANN CONDITIONS)
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, bdElements.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &IstartBD, &IendBD);
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+
     // ----------------------------------------------------------------
     // PARTIONING PHASE FIELD DOFs (damage DOFs)
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
@@ -398,7 +409,6 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     PetscCall(VecSetSizes(x, n, numNodes)); // Use end-start for local size, not total size
     PetscCall(VecSetFromOptions(x));
 
-    int Istart, Iend;
     PetscCall(VecGetOwnershipRange(x, &Istart, &Iend));
     PetscCall(VecDestroy(&x));
     // ===========================================================================================================================
@@ -631,24 +641,48 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     PetscLogDouble bytes;
 
     // (size == 1)
-    //     ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nnz, &A)
-    //     : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nnz, NULL, o_nnz, &A);
+    //     ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nz, &A)
+    //     : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nz, NULL, o_nz, &A);
     // CHKERRQ(ierr);
 
-    PetscCall(MatCreate(PETSC_COMM_SELF, &A));
-    PetscCall(MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize));
-    PetscCall(MatSetType(A, MATSEQBAIJ));
-    PetscCall(MatSetFromOptions(A));
+    int m = numNodesForEachRank[rank] * nDOF;
 
-    PetscCall(MatSeqBAIJSetPreallocation(A, 1, 0, d_nnz)); // bs=1, and 0 is ignored bc of nnz
-    PetscCall(MatSetUp(A));
+    MPI_Barrier(PETSC_COMM_WORLD);
 
-    // ONLY SEQ MATRIX WORKING SO FAR -> IMPLEMENT PARALLEL MATRIX WITH MPIBAIJ
+    if (size == 1)
+    {
+        PetscCall(MatCreate(PETSC_COMM_SELF, &A));
+        PetscCall(MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize));
+        PetscCall(MatSetType(A, MATSEQAIJ));
+        PetscCall(MatSetFromOptions(A));
+
+        PetscCall(MatSeqAIJSetPreallocation(A, 0, d_nz));
+        PetscCall(MatSetUp(A));
+    }
+    else
+    {
+        PetscInt m = nDOF * (Iend - Istart);
+        PetscCall(MatCreate(PETSC_COMM_WORLD, &A));
+        PetscCall(MatSetSizes(A, m, m, mSize, mSize));
+        PetscCall(MatSetType(A, MATMPIAIJ));
+        PetscCall(MatSetFromOptions(A));
+
+        PetscCall(MatMPIAIJSetPreallocation(A, 0, d_nz, 0, o_nz));
+        PetscCall(MatSetUp(A));
+    }
+
+    // PetscCall(MatCreate(PETSC_COMM_SELF, &A));
+    // PetscCall(MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize));
+    // PetscCall(MatSetType(A, MATSEQBAIJ));
+    // PetscCall(MatSetFromOptions(A));
+
+    // PetscCall(MatSeqBAIJSetPreallocation(A, 1, 0, d_nnz)); // bs=1, and 0 is ignored bc of nnz
+    // PetscCall(MatSetUp(A));
 
     // Vectors b and x
     ierr = VecCreate(PETSC_COMM_WORLD, &b);
     CHKERRQ(ierr);
-    ierr = VecSetSizes(b, PETSC_DECIDE, mSize);
+    ierr = VecSetSizes(b, m, mSize); // CHANGE PETSC DECIDE TO m
     CHKERRQ(ierr);
     ierr = VecSetFromOptions(b);
     CHKERRQ(ierr);
@@ -673,164 +707,6 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         ierr = VecDuplicate(b, &nodalForces);
         CHKERRQ(ierr);
     }
-
-    return ierr;
-}
-
-PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
-{
-    // -------------------------------------------------------------------------------------------------
-
-    std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
-
-    // std::vector<int> val(totalNnz, 0), idxRows(totalNnz, 0), idxCols(totalNnz, 0);
-    // PetscScalar *val = new PetscScalar[totalNnz]();
-    // PetscInt *idxRows = new PetscInt[totalNnz]();
-    // PetscInt *idxCols = new PetscInt[totalNnz]();
-
-    /*
-        NOTE OF THE PRESENT DEVELOPER FOR THE FUTURE DEVELOPER:
-
-        For some reason, when using BAIJ matrix, the code crashes when setting the values considering pointers for val, idxRows, and idxCols
-        The code works fine when using the arrays directly.
-
-        THIS WON'T WORK:
-        ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES);
-        CHKERRQ(ierr);
-
-        THIS WILL WORK:
-        for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)
-        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES));
-
-    */
-
-    PetscScalar val[totalNnz] = {0};
-    PetscInt idxRows[totalNnz] = {0};
-    PetscInt idxCols[totalNnz] = {0};
-
-    int kkn2n = 0, kk = 0;
-    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
-    {
-        const int n1 = nodesForEachRankCSR[rank] + iNode1;
-        std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
-        const int numFriends = friendNodes.size();
-        int iFriendCount = 0;
-
-        for (auto n2 : friendNodes)
-        {
-            std::vector<int> elemInfo = eSameList[kkn2n];
-            const int numLocalElems = elemInfo.size() / 3;
-
-            /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
-                IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
-                CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
-             */
-
-            if (n1 != n2)
-            { // idof = 0,       jdof = 0
-                int p1 = kk;
-                // idof = 0,       jdof = 1
-                int p2 = kk + 1;
-                // idof = 1,       jdof = 0
-                int p3 = kk + numFriends * nDOF - 1;
-                // idof = 1,       jdof = 1
-                int p4 = kk + numFriends * nDOF + 0;
-
-                for (int iElem = 0; iElem < numLocalElems; iElem++)
-                {
-                    const int elemIndex = elemInfo[3 * iElem];
-                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
-                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
-
-                    val[p1] += localStiffValue[0];
-                    val[p2] += localStiffValue[1];
-                    val[p3] += localStiffValue[2];
-                    val[p4] += localStiffValue[3];
-                }
-
-                idxRows[p1] = nDOF * n1;     // First DOF
-                idxRows[p2] = nDOF * n1;     // First DOF
-                idxRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
-                idxRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
-
-                idxCols[p1] = nDOF * n2;
-                idxCols[p2] = nDOF * n2 + 1;
-                idxCols[p3] = nDOF * n2;
-                idxCols[p4] = nDOF * n2 + 1;
-            }
-            else
-            {
-                // idof = 0,       jdof = 0
-                int p1 = kk;
-                // idof = 0,       jdof = 1
-                int p2 = kk + 1;
-                // idof = 1,       jdof = 1
-                int p3 = kk + numFriends * nDOF;
-
-                for (int iElem = 0; iElem < numLocalElems; iElem++)
-                {
-                    const int elemIndex = elemInfo[3 * iElem];
-                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
-                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
-
-                    val[p1] += localStiffValue[0];
-                    val[p2] += localStiffValue[1];
-                    val[p3] += localStiffValue[2];
-                }
-
-                idxRows[p1] = nDOF * n1;
-                idxRows[p2] = nDOF * n1;
-                idxRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
-
-                idxCols[p1] = nDOF * n2;
-                idxCols[p2] = nDOF * n2 + 1;
-                idxCols[p3] = nDOF * n2 + 1;
-
-                // There is no p4 due to symmetry
-            }
-
-            iFriendCount++;
-            kkn2n++;
-            kk += nDOF;
-        }
-
-        kk += nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
-    }
-
-    // Print val, idxRows, and idxCols
-    if (rank == 0)
-    {
-        for (int i = 0; i < totalNnz; i++)
-            std::cout << val[i] << " ";
-        std::cout << std::endl;
-
-        for (int i = 0; i < totalNnz; i++)
-            std::cout << idxRows[i] << " ";
-        std::cout << std::endl;
-
-        for (int i = 0; i < totalNnz; i++)
-            std::cout << idxCols[i] << " ";
-        std::cout << std::endl;
-    }
-
-    // MPI_Barrier(PETSC_COMM_WORLD);
-    // ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES); THIS DOES NOT WORK
-    // CHKERRQ(ierr); THIS DOES NOT WORK
-
-    for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
-        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
-
-    PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-
-    PetscCall(MatSetOption(A, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
-
-    PetscCall(MatView(A, PETSC_VIEWER_STDOUT_WORLD));
-
-    MPI_Barrier(PETSC_COMM_WORLD);
-    exit(0);
 
     return ierr;
 }

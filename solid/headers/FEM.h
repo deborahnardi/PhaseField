@@ -41,7 +41,7 @@ private:
 
     Mat matrix, matrixPF, matrixCopy;
     Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
-    PetscInt Istart, Iend, IIstart, IIend, IIIstart, IIIend, IstartPF, IendPF;
+    PetscInt Istart, Iend, IstartBD, IendBD, IstartPF, IendPF;
     PetscInt *d_nnz, *o_nnz, *d_nz, *o_nz, *dirichletBC;
     PetscErrorCode ierr;
     int *JC, *IR, nzQ = 0;
@@ -134,6 +134,7 @@ public:
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
     PetscErrorCode assembleBetweenProcesses(Mat &A, Vec &b);
     PetscErrorCode assembleSymmStiffMatrix(Mat &A);
+    PetscErrorCode updateRHS(Mat &A, Vec &b);
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------

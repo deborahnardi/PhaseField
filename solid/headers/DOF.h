@@ -37,7 +37,7 @@ public:
     double getDirichletValue() const { return vDirichlet; }
 
     void setNeumann() { bNeumann = true; }
-    void setNeumannValue(const double &_value) { vNeumann = _value, value = _value; }
+    void setNeumannValue(const double &_value) { vNeumann = _value; }
     bool isNeumann() const { return bNeumann; }
     double getNeumannValue() const { return vNeumann; }
     double getReactionForce() const { return reactionForce; }

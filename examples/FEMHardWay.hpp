@@ -72,6 +72,7 @@ lineLoops.push_back(geo1->addLineLoop({lines[15], lines[16], lines[17]}));
 planeSurfaces.push_back(geo1->addPlaneSurface({lineLoops[5]}));
 
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[0], DIRICHLET, {{X, 0.}, {Y, 0.}}));
+boundaryConditions.push_back(geo1->addBoundaryCondition(points[3], DIRICHLET, {{X, 1.}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[3], DIRICHLET, {{Y, 0.}}));
 boundaryConditions.push_back(geo1->addBoundaryCondition(points[7], NEUMANN, {{Y, -1.}}));
 

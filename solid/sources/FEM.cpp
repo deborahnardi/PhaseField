@@ -314,22 +314,28 @@ PetscErrorCode FEM::assembleProblem()
 
     // ====================== CALCULATING CONTRIBUTIONS ======================
     auto t1 = std::chrono::high_resolution_clock::now();
-    for (int Ii = Istart; Ii < Iend; Ii++)
-        elements[Ii]->getContribution(matrix, rhs, negativeLoad, prescribedDamageField);
 
-    for (int Ii = IIstart; Ii < IIend; Ii++) // Neumann boundary conditions
-        bdElements[Ii]->getContribution(rhs);
+    assembleSymmStiffMatrix(matrix);
 
     auto t2 = std::chrono::high_resolution_clock::now();
     // ====================== ASSEMBLING MATRIX AND VECTOR ======================
-    ierr = VecAssemblyBegin(rhs);
-    CHKERRQ(ierr);
-    ierr = VecAssemblyEnd(rhs);
-    CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY);
-    CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY);
-    CHKERRQ(ierr);
+
+    PetscCall(MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
+
+    // ASSEMBLING THE RHS VECTOR: multiply column i of the stiffness matrix by the prescribed displacement of node i and set it to the right-hand side vector
+    updateRHS(matrix, rhs);
+
+    for (int Ii = IstartBD; Ii < IendBD; Ii++) // Neumann boundary conditions
+        bdElements[Ii]->getContribution(rhs);
+
+    PetscCall(VecAssemblyBegin(rhs));
+    PetscCall(VecAssemblyEnd(rhs));
+
+    PetscCall(VecView(rhs, PETSC_VIEWER_STDOUT_WORLD));
+    exit(0);
+    PetscCall(MatView(matrix, PETSC_VIEWER_STDOUT_WORLD));
 
     if (params->getCalculateReactionForces())
     {
@@ -355,14 +361,148 @@ PetscErrorCode FEM::assembleProblem()
 
     auto t3 = std::chrono::high_resolution_clock::now();
     // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
-    ierr = MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs); // Apply Dirichlet boundary conditions
-    CHKERRQ(ierr);
+    PetscCall(MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs)); // Apply Dirichlet boundary conditions
+
     auto t4 = std::chrono::high_resolution_clock::now();
+
+    MPI_Barrier(PETSC_COMM_WORLD);
+    exit(0);
 
     if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
         printGlobalMatrix(matrix);
 
     PetscPrintf(PETSC_COMM_WORLD, "Assembling (s) %f %f %f\n", elapsedTime(t1, t2), elapsedTime(t2, t3), elapsedTime(t3, t4));
+
+    return ierr;
+}
+
+PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
+{
+    // -------------------------------------------------------------------------------------------------
+
+    std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
+
+    // std::vector<int> val(totalNnz, 0), idxRows(totalNnz, 0), idxCols(totalNnz, 0);
+    // PetscScalar *val = new PetscScalar[totalNnz]();
+    // PetscInt *idxRows = new PetscInt[totalNnz]();
+    // PetscInt *idxCols = new PetscInt[totalNnz]();
+
+    /*
+        NOTE OF THE PRESENT DEVELOPER FOR THE FUTURE DEVELOPER:
+
+        For some reason, when using BAIJ matrix, the code crashes when setting the values considering pointers for val, idxRows, and idxCols
+        The code works fine when using the arrays directly.
+
+        THIS WON'T WORK:
+        ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES);
+        CHKERRQ(ierr);
+
+        THIS WILL WORK:
+        for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)
+        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES));
+
+    */
+
+    PetscScalar val[totalNnz] = {0};
+    PetscInt idxRows[totalNnz] = {0};
+    PetscInt idxCols[totalNnz] = {0};
+
+    int kkn2n = 0, kk = 0;
+    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
+    {
+        const int n1 = nodesForEachRankCSR[rank] + iNode1;
+        std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
+        const int numFriends = friendNodes.size();
+        int iFriendCount = 0;
+
+        for (auto n2 : friendNodes)
+        {
+            std::vector<int> elemInfo = eSameList[kkn2n];
+            const int numLocalElems = elemInfo.size() / 3;
+
+            /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
+                IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
+                CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
+             */
+
+            if (n1 != n2)
+            { // idof = 0,       jdof = 0
+                int p1 = kk;
+                // idof = 0,       jdof = 1
+                int p2 = kk + 1;
+                // idof = 1,       jdof = 0
+                int p3 = kk + numFriends * nDOF - 1;
+                // idof = 1,       jdof = 1
+                int p4 = kk + numFriends * nDOF + 0;
+
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
+
+                    val[p1] += localStiffValue[0];
+                    val[p2] += localStiffValue[1];
+                    val[p3] += localStiffValue[2];
+                    val[p4] += localStiffValue[3];
+                }
+
+                idxRows[p1] = nDOF * n1;     // First DOF
+                idxRows[p2] = nDOF * n1;     // First DOF
+                idxRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+                idxRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                idxCols[p1] = nDOF * n2;
+                idxCols[p2] = nDOF * n2 + 1;
+                idxCols[p3] = nDOF * n2;
+                idxCols[p4] = nDOF * n2 + 1;
+            }
+            else
+            {
+                // idof = 0,       jdof = 0
+                int p1 = kk;
+                // idof = 0,       jdof = 1
+                int p2 = kk + 1;
+                // idof = 1,       jdof = 1
+                int p3 = kk + numFriends * nDOF;
+
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
+
+                    val[p1] += localStiffValue[0];
+                    val[p2] += localStiffValue[1];
+                    val[p3] += localStiffValue[2];
+                }
+
+                idxRows[p1] = nDOF * n1;
+                idxRows[p2] = nDOF * n1;
+                idxRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                idxCols[p1] = nDOF * n2;
+                idxCols[p2] = nDOF * n2 + 1;
+                idxCols[p3] = nDOF * n2 + 1;
+
+                // There is no p4 due to symmetry
+            }
+
+            iFriendCount++;
+            kkn2n++;
+            kk += nDOF;
+        }
+
+        kk += nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
+    }
+
+    for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
+        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
+
+    for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++) // Setting the lower triangular part of the matrix
+        PetscCall(MatSetValue(A, idxCols[i], idxRows[i], val[i], INSERT_VALUES));
 
     return ierr;
 }
@@ -459,17 +599,17 @@ void FEM::updateVariables(Vec &x, bool _hasConverged)
 {
     // Set the solution to the final coordinates of the nodes
     double *finalDisplacements = new double[globalDOFs.size()];
-    int rankLocalDOFs = IIIend - IIIstart;
+    int rankLocalDOFs = Iend - Istart;
     double *localDisplacements = new double[rankLocalDOFs];
 
-    for (int i = IIIstart; i < IIIend; i++)
+    for (int i = Istart; i < Iend; i++)
     {
         DOF *dof = globalDOFs[i];
         PetscScalar retrieved;
         PetscInt index = dof->getIndex();
         VecGetValues(x, 1, &index, &retrieved);
 
-        localDisplacements[i - IIIstart] = retrieved;
+        localDisplacements[i - Istart] = retrieved;
     }
 
     // Transfering data between processes
@@ -535,6 +675,37 @@ PetscErrorCode FEM::computeReactionForces()
         file << sumDisp << " " << force[1] << std::endl;
 
     file.close();
+
+    return ierr;
+}
+
+PetscErrorCode FEM::updateRHS(Mat &A, Vec &b)
+{
+    PetscInt n = (Iend - Istart) * nDOF;
+
+    PetscInt Jstart, Jend, Rstart, Rend;
+    MatGetOwnershipRange(A, &Rstart, &Rend);
+    MatGetOwnershipRangeColumn(A, &Jstart, &Jend);
+
+    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as linhas de %d a %d\n", rank, Rstart, Rend - 1);
+    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as colunas de %d a %d\n", rank, Jstart, Jend - 1);
+
+    for (int line = Rstart; line < Rend; line++)
+    {
+
+        for (int j = 0; j < nDOFs; j++)
+        {
+            DOF *dof = globalDOFs[j];
+            PetscInt jdx = dof->getIndex();
+            PetscScalar dofValue = dof->getValue();
+            PetscScalar value = 0.;
+
+            PetscScalar product = 0.;
+            PetscCall(MatGetValue(A, line, jdx, &value)); // MatGetValue access any value in the matrix, since the line idx is in the range of the process. PETSc allows each process to access any column (you can have access to any column of the matrix, but only to the lines that belong to the process)
+            product = -value * dofValue;
+            PetscCall(VecSetValues(b, 1, &line, &product, ADD_VALUES));
+        }
+    }
 
     return ierr;
 }
