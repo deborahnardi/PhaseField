@@ -239,13 +239,16 @@ PetscErrorCode FEM::solveFEMProblem()
         it = 0;
         res = 1.;
 
+        stepAUX = iStep;
+
         do
         {
             it++;
+            itAUX = it;
             PetscPrintf(PETSC_COMM_WORLD, "\n------- Iteration %d -------\n", it);
-            assembleProblem();
+            assembleProblem(it);
             solveLinearSystem(matrix, rhs, solution);
-            updateVariables(solution);
+            updateVariables(matrix, solution);
             res = res / norm;
             PetscPrintf(PETSC_COMM_WORLD, "Residual: %e\n", res);
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
@@ -295,22 +298,13 @@ void FEM::updateBoundaryFunction(double _time)
                 boundaryFunction(node->getInitialCoordinates(), _time, dof, load);
 }
 
-PetscErrorCode FEM::assembleProblem()
+PetscErrorCode FEM::assembleProblem(int it)
 {
     MPI_Barrier(PETSC_COMM_WORLD);
 
-    ierr = MatZeroEntries(matrix);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(rhs);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(solution);
-    CHKERRQ(ierr);
-
-    if (params->getCalculateReactionForces())
-    {
-        ierr = VecZeroEntries(nodalForces);
-        CHKERRQ(ierr);
-    }
+    PetscCall(MatZeroEntries(matrix));
+    PetscCall(VecZeroEntries(rhs));
+    PetscCall(VecZeroEntries(solution));
 
     // ====================== CALCULATING CONTRIBUTIONS ======================
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -333,43 +327,34 @@ PetscErrorCode FEM::assembleProblem()
     PetscCall(VecAssemblyBegin(rhs));
     PetscCall(VecAssemblyEnd(rhs));
 
-    PetscCall(VecView(rhs, PETSC_VIEWER_STDOUT_WORLD));
-    exit(0);
-    PetscCall(MatView(matrix, PETSC_VIEWER_STDOUT_WORLD));
-
     if (params->getCalculateReactionForces())
     {
-        ierr = VecAssemblyBegin(nodalForces);
-        CHKERRQ(ierr);
-        ierr = VecAssemblyEnd(nodalForces);
-        CHKERRQ(ierr);
-    }
+        PetscCall(VecAssemblyBegin(nodalForces));
+        PetscCall(VecAssemblyEnd(nodalForces));
+        PetscCall(VecZeroEntries(nodalForces));
 
-    if (params->getCalculateReactionForces())
-    {
-        for (auto dof : globalDOFs)
-            if (dof->getDOFType() != D)
-            {
-                PetscScalar value = 0.;
-                PetscInt idx = dof->getIndex();
-                ierr = VecGetValues(rhs, 1, &idx, &value);
-                CHKERRQ(ierr);
-                ierr = VecSetValues(nodalForces, 1, &idx, &value, INSERT_VALUES);
-                CHKERRQ(ierr);
-            }
+        PetscInt localStart = Istart * nDOF;
+        PetscInt localEnd = Iend * nDOF;
+
+        for (int i = localStart; i < localEnd; i++)
+        {
+            DOF *dof = globalDOFs[i];
+            PetscScalar retrieved;
+            PetscInt index = dof->getIndex();
+            PetscCall(VecGetValues(rhs, 1, &index, &retrieved));
+            PetscCall(VecSetValues(nodalForces, 1, &index, &retrieved, INSERT_VALUES));
+        }
     }
 
     auto t3 = std::chrono::high_resolution_clock::now();
     // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
     PetscCall(MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs)); // Apply Dirichlet boundary conditions
-
     auto t4 = std::chrono::high_resolution_clock::now();
-
-    MPI_Barrier(PETSC_COMM_WORLD);
-    exit(0);
 
     if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
         printGlobalMatrix(matrix);
+
+    PetscCall(VecView(rhs, PETSC_VIEWER_STDOUT_WORLD));
 
     PetscPrintf(PETSC_COMM_WORLD, "Assembling (s) %f %f %f\n", elapsedTime(t1, t2), elapsedTime(t2, t3), elapsedTime(t3, t4));
 
@@ -507,6 +492,42 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
     return ierr;
 }
 
+PetscErrorCode FEM::updateRHS(Mat &A, Vec &b)
+{
+    PetscInt n = (Iend - Istart) * nDOF;
+
+    PetscInt Jstart, Jend, Rstart, Rend;
+    MatGetOwnershipRange(A, &Rstart, &Rend);
+    MatGetOwnershipRangeColumn(A, &Jstart, &Jend);
+
+    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as linhas de %d a %d\n", rank, Rstart, Rend - 1);
+    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as colunas de %d a %d\n", rank, Jstart, Jend - 1);
+
+    for (int line = Rstart; line < Rend; line++)
+    {
+
+        for (int j = 0; j < nDOFs; j++)
+        {
+            DOF *dof = globalDOFs[j];
+            PetscInt jdx = dof->getIndex();
+            PetscScalar dofValue = dof->getValue();
+            PetscScalar value = 0.;
+
+            PetscScalar product = 0.;
+            PetscCall(MatGetValue(A, line, jdx, &value)); // MatGetValue access any value in the matrix, since the line idx is in the range of the process. PETSc allows each process to access any column (you can have access to any column of the matrix, but only to the lines that belong to the process)
+            product = -value * dofValue;
+
+            // if (stepAUX == 1 && itAUX == 2 && rank == 0)
+            // {
+            //     std::cout << "matrixValue: " << value << " dofValue: " << dofValue << std::endl;
+            // }
+            PetscCall(VecSetValues(b, 1, &line, &product, ADD_VALUES));
+        }
+    }
+
+    return ierr;
+}
+
 PetscErrorCode FEM::printGlobalMatrix(Mat &A)
 {
     PetscInt i, j, rows, cols;
@@ -595,51 +616,31 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     return ierr;
 }
 
-void FEM::updateVariables(Vec &x, bool _hasConverged)
+PetscErrorCode FEM::updateVariables(Mat A, Vec &x, bool _hasConverged)
 {
-    // Set the solution to the final coordinates of the nodes
-    double *finalDisplacements = new double[globalDOFs.size()];
-    int rankLocalDOFs = Iend - Istart;
-    double *localDisplacements = new double[rankLocalDOFs];
+    PetscInt Rstart, Rend;
+    MatGetOwnershipRange(A, &Rstart, &Rend);
 
-    for (int i = Istart; i < Iend; i++)
+    Vec All;
+    VecScatter ctx;
+
+    // Gathers the solution vector to the master process
+    PetscCall(VecScatterCreateToAll(x, &ctx, &All));
+    PetscCall(VecScatterBegin(ctx, x, All, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(ctx, x, All, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterDestroy(&ctx));
+
+    for (auto dof : globalDOFs)
     {
-        DOF *dof = globalDOFs[i];
-        PetscScalar retrieved;
-        PetscInt index = dof->getIndex();
-        VecGetValues(x, 1, &index, &retrieved);
-
-        localDisplacements[i - Istart] = retrieved;
+        PetscInt Ii = dof->getIndex();
+        PetscScalar val;
+        PetscCall(VecGetValues(All, 1, &Ii, &val));
+        dof->incrementValue(val);
     }
 
-    // Transfering data between processes
-    int *numEachProcess = new int[size];
-    // Collecting the number of local DOFs from all processes
-    MPI_Allgather(&rankLocalDOFs, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
+    PetscCall(VecDestroy(&All));
 
-    int *globalBuffer = new int[size];
-    globalBuffer[0] = 0;
-    for (int i = 1; i < size; i++)
-        globalBuffer[i] = globalBuffer[i - 1] + numEachProcess[i - 1];
-
-    // Collecting the displacements from all processes to the root process
-    MPI_Gatherv(localDisplacements, rankLocalDOFs, MPI_DOUBLE, finalDisplacements, numEachProcess, globalBuffer, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
-    // Broadcasting the final displacements to all processes
-    MPI_Bcast(finalDisplacements, nDOFs, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
-
-    for (auto node : nodes)
-        for (auto dof : node->getDOFs())
-            if (dof->getDOFType() != D)
-            {
-                double value = finalDisplacements[dof->getIndex()];
-                dof->incrementValue(value);
-            }
-
-    // Erase the memory
-    delete[] localDisplacements;
-    delete[] numEachProcess;
-    delete[] globalBuffer;
-    delete[] finalDisplacements;
+    return ierr;
 }
 
 PetscErrorCode FEM::computeReactionForces()
@@ -675,37 +676,6 @@ PetscErrorCode FEM::computeReactionForces()
         file << sumDisp << " " << force[1] << std::endl;
 
     file.close();
-
-    return ierr;
-}
-
-PetscErrorCode FEM::updateRHS(Mat &A, Vec &b)
-{
-    PetscInt n = (Iend - Istart) * nDOF;
-
-    PetscInt Jstart, Jend, Rstart, Rend;
-    MatGetOwnershipRange(A, &Rstart, &Rend);
-    MatGetOwnershipRangeColumn(A, &Jstart, &Jend);
-
-    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as linhas de %d a %d\n", rank, Rstart, Rend - 1);
-    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as colunas de %d a %d\n", rank, Jstart, Jend - 1);
-
-    for (int line = Rstart; line < Rend; line++)
-    {
-
-        for (int j = 0; j < nDOFs; j++)
-        {
-            DOF *dof = globalDOFs[j];
-            PetscInt jdx = dof->getIndex();
-            PetscScalar dofValue = dof->getValue();
-            PetscScalar value = 0.;
-
-            PetscScalar product = 0.;
-            PetscCall(MatGetValue(A, line, jdx, &value)); // MatGetValue access any value in the matrix, since the line idx is in the range of the process. PETSc allows each process to access any column (you can have access to any column of the matrix, but only to the lines that belong to the process)
-            product = -value * dofValue;
-            PetscCall(VecSetValues(b, 1, &line, &product, ADD_VALUES));
-        }
-    }
 
     return ierr;
 }

@@ -26,6 +26,7 @@ class FEM
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size, nDOF = 2;
+    int itAUX, stepAUX;
     double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
     std::vector<Material *> materials;
@@ -127,12 +128,13 @@ public:
     PetscErrorCode decomposeElements(Vec &b, Vec &x);
     PetscErrorCode matrixPreAllocation(PetscInt start, PetscInt end);
     PetscErrorCode solveFEMProblem();
-    PetscErrorCode assembleProblem();
+    PetscErrorCode assembleProblem(int it);
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
     PetscErrorCode assembleBetweenProcesses(Mat &A, Vec &b);
+    PetscErrorCode updateVariables(Mat A, Vec &x, bool _hasConverged = true);
     PetscErrorCode assembleSymmStiffMatrix(Mat &A);
     PetscErrorCode updateRHS(Mat &A, Vec &b);
     /*----------------------------------------------------------------------------------
@@ -141,7 +143,6 @@ public:
     */
     void showResults(int _nStep);
     void setPrintMatrix(const bool &_showMatrix) { showMatrix = _showMatrix; }
-    void updateVariables(Vec &x, bool _hasConverged = true);
     void deleteFromString(std::string &fullStr, std::string removeStr);
     void writeInHDF5(hid_t &file, std::fstream &output_v, herr_t &status, hid_t &dataset, hid_t &dataspace, std::string AttributeName, std::string AttributeType, double *valueVector, hsize_t valueVectorDims[], std::string s1);
 

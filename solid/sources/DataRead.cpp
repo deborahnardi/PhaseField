@@ -640,11 +640,6 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
 {
     PetscLogDouble bytes;
 
-    // (size == 1)
-    //     ? ierr = MatCreateSeqAIJ(PETSC_COMM_SELF, mSize, mSize, NULL, d_nz, &A)
-    //     : ierr = MatCreateAIJ(PETSC_COMM_WORLD, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize, NULL, d_nz, NULL, o_nz, &A);
-    // CHKERRQ(ierr);
-
     int m = numNodesForEachRank[rank] * nDOF;
 
     MPI_Barrier(PETSC_COMM_WORLD);
@@ -670,14 +665,6 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
         PetscCall(MatMPIAIJSetPreallocation(A, 0, d_nz, 0, o_nz));
         PetscCall(MatSetUp(A));
     }
-
-    // PetscCall(MatCreate(PETSC_COMM_SELF, &A));
-    // PetscCall(MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, mSize, mSize));
-    // PetscCall(MatSetType(A, MATSEQBAIJ));
-    // PetscCall(MatSetFromOptions(A));
-
-    // PetscCall(MatSeqBAIJSetPreallocation(A, 1, 0, d_nnz)); // bs=1, and 0 is ignored bc of nnz
-    // PetscCall(MatSetUp(A));
 
     // Vectors b and x
     ierr = VecCreate(PETSC_COMM_WORLD, &b);

@@ -141,9 +141,9 @@ void FEM::solveDisplacementField(int _iStep)
             break; // Get out of second loop
     }
 
-    assembleProblem();
+    assembleProblem(0);
     solveLinearSystem(matrix, rhs, solution);
-    updateVariables(solution);
+    updateVariables(matrix, solution);
 }
 
 PetscErrorCode FEM::solvePhaseField()

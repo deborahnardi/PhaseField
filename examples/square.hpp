@@ -1,7 +1,7 @@
 std::string projectName = "square";
 Geometry *geo1 = new Geometry(projectName); // true if has inclusions
 FEM *analysis1 = new FEM(projectName);
-bool visualizeMesh = true;
+bool visualizeMesh = false;
 
 PetscPrintf(PETSC_COMM_WORLD, "Running %s example...\n", projectName.c_str());
 
@@ -62,6 +62,7 @@ analysis1->setBoundaryFunction(boundaryFunction);
 params->setNSteps(100);
 params->setSolverType(EIterative);
 params->calculateReactionForces(true);
+params->setReactionDir("X");
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);
