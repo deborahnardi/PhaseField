@@ -17,10 +17,10 @@ int main(int argc, char **argv)
 
   PetscInitialize(&argc, &argv, (char *)0, help); // Starts main program invoking PETSc
 
-// DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
-// #include "examples/pointerAndReference.hpp"
-// #include "examples/Ex01Inclusions.hpp"
-#include "examples/square.hpp"
+  // DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES
+  // #include "examples/pointerAndReference.hpp"
+  // #include "examples/Ex01Inclusions.hpp"
+  // #include "examples/square.hpp"
   //    #include "examples/squareEllipse.hpp"
   //           #include "examples/Ex02NumericalIntegration.hpp"
   //   #include "examples/Ex03Truss.hpp"
@@ -42,9 +42,9 @@ int main(int argc, char **argv)
   // #include "examples/phaseField1D.hpp"
   //       #include "examples/phaseField2D-01.hpp"
   //      #include "examples/phaseField2D-02.hpp"
-  // #include "examples/phaseField2D-03.hpp"
-  //            #include "examples/phaseField2D-04.hpp"
-  // #include "examples/phaseField2D-04copy.hpp"
+#include "examples/phaseField2D-03.hpp"
+  //             #include "examples/phaseField2D-04.hpp"
+  //  #include "examples/phaseField2D-04copy.hpp"
   // #include "examples/FEMHardWay.hpp"
   PetscFinalize(); // Finalize main program
   //    return ierr;

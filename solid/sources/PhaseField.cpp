@@ -1,37 +1,78 @@
 #include "../headers/FEM.h"
 
-void FEM::matrixPreAllocationPF(PetscInt start, PetscInt end)
+void FEM::matrixPreAllocationPF(int nDOF)
 {
-    int rankLocalDOFs = end - start; // Number of nodes in the local partition
+    // TOTAL NUMBER OF NONZERO (UPPER TRIANGULAR PART ONLY) ONLY FOR THE LOCAL PARTITION
 
-    d_nnz = new PetscInt[rankLocalDOFs]();
-    o_nnz = new PetscInt[rankLocalDOFs]();
-
-    // In the phase-field problem, there is only one DOF
-
-    for (auto node : discritizedNodes)
+    for (int i = 0; i < numNodesForEachRank[rank]; i++)
     {
-        DOF *damageDOF0 = node->getDOFs()[2];
-        if (damageDOF0->getIndex() >= IstartPF && damageDOF0->getIndex() < IendPF)
-            for (auto node2 : n2nMatTotal[node->getIndex()])
-            {
-                DOF *damageDOF1 = discritizedNodes[node2]->getDOFs()[2];
-                if (damageDOF1->getIndex() >= IstartPF && damageDOF1->getIndex() < IendPF)
-                    d_nnz[damageDOF0->getIndex() - IstartPF]++;
-                else
-                    o_nnz[damageDOF0->getIndex() - IstartPF]++;
-            }
+        std::set<int> neighbours = n2nUpperMat[i];
+        int numFriends = neighbours.size();
+        totalNnzPF += nDOF * nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
     }
+
+    // PREALLOCATION OF THE MPI MATRIX
+    int m = numNodesForEachRank[rank] * nDOF; // Number of local lines at the rank. Ex.: 3 nodes at the local partition * 2 DOFs = 6 lines
+    int nn = numNodes * nDOF;                 // Number of local columns at the rank. Ex.: 8 nodes * 2 DOFs = 16 columns
+
+    // _nnz: only the nonzero terms of the upper triangular part of the matrix
+    d_nnz = new PetscInt[m]();
+    o_nnz = new PetscInt[m]();
+
+    // _nz: the nonzero terms of the complete matrix
+    d_nz = new PetscInt[m]();
+    o_nz = new PetscInt[m]();
+
+    for (int ii = 0; ii < numNodesForEachRank[rank]; ii++)
+        for (int iDOF = 0; iDOF < nDOF; iDOF++)
+        {
+            d_nnz[nDOF * ii + iDOF] = nDOF * n2nUpperMat[ii].size() - n2nDRankUpper[ii] * nDOF - iDOF; // (n2nDRank[ii] * nDOF - iDOF) removes the DOFs that do not belong to the local partition
+            o_nnz[nDOF * ii + iDOF] = n2nDRankUpper[ii] * nDOF;
+
+            d_nz[nDOF * ii + iDOF] = (n2nMat[ii].size() - n2nDRankUpper[ii] - n2nDRankLower[ii]) * nDOF;
+            o_nz[nDOF * ii + iDOF] = (n2nDRankUpper[ii] + n2nDRankLower[ii]) * nDOF;
+        }
 
     // Total number of non-zero elements in the matrix, stores it in nzQ
     int localNzQ = 0;
     nzQ = 0;
 
-    for (int i = 0; i < rankLocalDOFs; i++)
-        localNzQ += d_nnz[i] + o_nnz[i];
+    for (int i = 0; i < numNodesForEachRank[rank]; i++)
+        localNzQ += d_nz[i] + o_nz[i];
 
     MPI_Reduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, 0, PETSC_COMM_WORLD);
     MPI_Allreduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, PETSC_COMM_WORLD);
+
+    // int rankLocalDOFs = end - start; // Number of nodes in the local partition
+
+    // d_nnz = new PetscInt[rankLocalDOFs]();
+    // o_nnz = new PetscInt[rankLocalDOFs]();
+
+    // // In the phase-field problem, there is only one DOF
+
+    // for (auto node : discritizedNodes)
+    // {
+    //     DOF *damageDOF0 = node->getDOFs()[2];
+    //     if (damageDOF0->getIndex() >= IstartPF && damageDOF0->getIndex() < IendPF)
+    //         for (auto node2 : n2nMatTotal[node->getIndex()])
+    //         {
+    //             DOF *damageDOF1 = discritizedNodes[node2]->getDOFs()[2];
+    //             if (damageDOF1->getIndex() >= IstartPF && damageDOF1->getIndex() < IendPF)
+    //                 d_nnz[damageDOF0->getIndex() - IstartPF]++;
+    //             else
+    //                 o_nnz[damageDOF0->getIndex() - IstartPF]++;
+    //         }
+    // }
+
+    // // Total number of non-zero elements in the matrix, stores it in nzQ
+    // int localNzQ = 0;
+    // nzQ = 0;
+
+    // for (int i = 0; i < rankLocalDOFs; i++)
+    //     localNzQ += d_nnz[i] + o_nnz[i];
+
+    // MPI_Reduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, 0, PETSC_COMM_WORLD);
+    // MPI_Allreduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, PETSC_COMM_WORLD);
 }
 // --------------------------------------------------------------------------------------------------
 void FEM::solvePhaseFieldProblem() // Called by the main program
@@ -42,18 +83,13 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
         norm += n->getInitialCoordinates()[0] * n->getInitialCoordinates()[0] + n->getInitialCoordinates()[1] * n->getInitialCoordinates()[1];
     norm = sqrt(norm);
 
-    matrixPreAllocationPF(IstartPF, IendPF);
+    matrixPreAllocationPF(nDOFPF);
 
     params->setCalculateReactionForces(false);
-    createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
+    createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, nDOFPF, true);
     params->setCalculateReactionForces(true);
 
     Ddk = new double[numNodes]{}; // Damage field at the current iteration
-    // totalMatrixQ = new double *[numNodes] {};
-    // totalVecq = new double[numNodes]{};
-
-    // for (int i = 0; i < numNodes; i++)
-    //     totalMatrixQ[i] = new double[numNodes]{};
 
     if (prescribedDamageField)
         updateFieldDistribution();
@@ -99,8 +135,7 @@ void FEM::staggeredAlgorithm(int _iStep)
         it++;
         PetscPrintf(PETSC_COMM_WORLD, "\n------- Stag Iteration %d -------\n", it);
         solveDisplacementField(_iStep); // Obtains ustag
-
-        solvePhaseField(); // Obtains dstag
+        solvePhaseField();              // Obtains dstag
 
         // Compute the norm of the difference between the previous and current displacement fields
         double normU = 0.0;
@@ -128,18 +163,6 @@ void FEM::solveDisplacementField(int _iStep)
     double entry = double(_iStep) * params->getDeltaTime();
     if (boundaryFunction)                                                // 0 is false, any non zero value is true;
         updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); //
-
-    for (auto node : discritizedNodes)
-    {
-        for (auto dof : node->getDOFs())
-            if (dof->isControlledDOF() && dof->getValue() < 0.)
-            {
-                negativeLoad = true;
-                break; // Get out of first loop
-            }
-        if (negativeLoad)
-            break; // Get out of second loop
-    }
 
     assembleProblem(0);
     solveLinearSystem(matrix, rhs, solution);
@@ -195,8 +218,10 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     ierr = VecZeroEntries(solutionPF);
     CHKERRQ(ierr);
 
-    for (int Ii = Istart; Ii < Iend; Ii++)
-        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+    // for (int Ii = Istart; Ii < Iend; Ii++)
+    //     elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+
+    assembleQMatrix(matrixPF, rhsPF);
 
     ierr = VecAssemblyBegin(rhsPF);
     CHKERRQ(ierr);
@@ -249,6 +274,88 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
         ierr = VecDestroy(&Dn);
         CHKERRQ(ierr);
     }
+
+    return ierr;
+}
+
+PetscErrorCode FEM::assembleQMatrix(Mat &A, Vec &b)
+{
+    std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
+
+    PetscScalar val[totalNnzPF] = {0};
+    PetscInt idxRows[totalNnzPF] = {0};
+    PetscInt idxCols[totalNnzPF] = {0};
+
+    int kkn2n = 0, kk = 0;
+    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
+    {
+        const int n1 = nodesForEachRankCSR[rank] + iNode1;
+        std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
+        const int numFriends = friendNodes.size();
+        int iFriendCount = 0;
+
+        for (auto n2 : friendNodes)
+        {
+            std::vector<int> elemInfo = eSameList[kkn2n];
+            const int numLocalElems = elemInfo.size() / 3;
+
+            /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
+                IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
+                CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
+             */
+
+            if (n1 != n2)
+            {
+                int p1 = kk;
+
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    // std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
+                    double Qvalue = elements[elemIndex]->getQValue(idxLocalNode1, idxLocalNode2);
+
+                    val[p1] += 1; // localStiffValue[0];
+                }
+
+                idxRows[p1] = nDOFPF * n1; // First DOF
+
+                idxCols[p1] = nDOFPF * n2;
+            }
+            else
+            {
+                // idof = 0,       jdof = 0
+                int p1 = kk;
+
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    double Qvalue = elements[elemIndex]->getQValue(idxLocalNode1, idxLocalNode2);
+
+                    val[p1] += 1; // localStiffValue[0];
+                }
+
+                idxRows[p1] = nDOFPF * n1;
+
+                idxCols[p1] = nDOFPF * n2;
+            }
+
+            iFriendCount++;
+            kkn2n++;
+            kk += nDOFPF;
+        }
+
+        // kk += nDOFPF * numFriends - (nDOFPF * nDOFPF - (nDOFPF * (nDOFPF + 1)) / 2.0);
+    }
+
+    // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
+    //     PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
+
+    // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++) // Setting the lower triangular part of the matrix
+    //     PetscCall(MatSetValue(A, idxCols[i], idxRows[i], val[i], INSERT_VALUES));
 
     return ierr;
 }
@@ -311,7 +418,6 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 
     } while (resPSOR > tolPSOR && itPSOR < maxPSORIt);
 
-    // Update the solution vector (solution vector is Delta_d)
     delete[] JC;
     delete[] IR;
     delete[] PA;
@@ -388,6 +494,17 @@ PetscErrorCode FEM::assembleBetweenProcesses(Mat &A, Vec &b)
     for (int i = 0; i < numNodes; i++)
         for (int j = 0; j < numNodes; j++)
             totalMatrixQ[i][j] = totalMatrixQVecFormat[i * numNodes + j];
+
+    // Print the totalMatrixQ
+    std::cout << "Number of nodes: " << numNodes << std::endl;
+    for (int i = 0; i < numNodes; i++)
+    {
+        for (int j = 0; j < numNodes; j++)
+            std::cout << totalMatrixQ[i][j] << " ";
+        std::cout << std::endl;
+    }
+
+    exit(0);
 
     // Erase the Memory
     delete[] totalMatrixQVecFormat;
@@ -491,19 +608,6 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
                 damageDOF->setDamageValue(dtol);
         }
     }
-
-    // Print the damage field
-    // if (_hasConverged)
-    //     if (rank == 0)
-    //     {
-    //         for (auto node : nodes)
-    //         {
-    //             DOF *damageDOF = node->getDOFs()[2];
-    //             // std::cout << "Damage field at node " << node->getIndex() << ": " << damageDOF->getDamageValue() << std::endl;
-    //             std::cout << node->getX() << " " << damageDOF->getDamageValue() << std::endl;
-    //         }
-    //         std::cout << std::endl;
-    //     }
 
     return ierr;
 }

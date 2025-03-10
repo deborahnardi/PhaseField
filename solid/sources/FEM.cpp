@@ -204,8 +204,8 @@ PetscErrorCode FEM::solveFEMProblem()
     if (prescribedDamageField)
     {
         params->setCalculateReactionForces(false);
-        matrixPreAllocationPF(IstartPF, IendPF);
-        createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, true);
+        matrixPreAllocationPF(nDOFPF);
+        createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, nDOFPF, true);
 
         DdkMinus1 = new double[numNodes]{}; // Damage field at the previous iteration
         Ddk = new double[numNodes]{};       // Damage field at the current iteration
@@ -353,8 +353,6 @@ PetscErrorCode FEM::assembleProblem(int it)
 
     if (showMatrix && rank == 0) // Print the global stiffness matrix on the terminal
         printGlobalMatrix(matrix);
-
-    PetscCall(VecView(rhs, PETSC_VIEWER_STDOUT_WORLD));
 
     PetscPrintf(PETSC_COMM_WORLD, "Assembling (s) %f %f %f\n", elapsedTime(t1, t2), elapsedTime(t2, t3), elapsedTime(t3, t4));
 

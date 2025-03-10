@@ -25,7 +25,7 @@ class FEM
 {
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
-    int rank, size, nDOF = 2;
+    int rank, size, nDOF = 2, nDOFPF = 1;
     int itAUX, stepAUX;
     double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
@@ -38,7 +38,7 @@ private:
     AnalysisParameters *params;
     bool negativeLoad = false, prescribedDamageField = false, showMatrix = false;
     PetscLogDouble bytes = 0.0;
-    PetscInt totalNnz = 0;
+    PetscInt totalNnz = 0.0, totalNnzPF = 0.0;
 
     Mat matrix, matrixPF, matrixCopy;
     Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
@@ -111,7 +111,7 @@ public:
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
     */
-    void matrixPreAllocationPF(PetscInt start, PetscInt end);
+    void matrixPreAllocationPF(int nDOF);
     void solveDisplacementField(int _iStep);
     PetscErrorCode solvePhaseField();
     PetscErrorCode assemblePhaseFieldProblem();
@@ -126,10 +126,10 @@ public:
     ------------------------------------------------------------------------------------
     */
     PetscErrorCode decomposeElements(Vec &b, Vec &x);
-    PetscErrorCode matrixPreAllocation(PetscInt start, PetscInt end);
+    PetscErrorCode matrixPreAllocation();
     PetscErrorCode solveFEMProblem();
     PetscErrorCode assembleProblem(int it);
-    PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo);
+    PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, int _nDOF, bool showInfo);
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
@@ -137,6 +137,7 @@ public:
     PetscErrorCode updateVariables(Mat A, Vec &x, bool _hasConverged = true);
     PetscErrorCode assembleSymmStiffMatrix(Mat &A);
     PetscErrorCode updateRHS(Mat &A, Vec &b);
+    PetscErrorCode assembleQMatrix(Mat &A, Vec &b);
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------

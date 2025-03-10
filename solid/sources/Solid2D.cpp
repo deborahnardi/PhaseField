@@ -457,6 +457,10 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
     return values;
 }
 
+double Solid2D::getQValue(const int idxLocalNode1, const int idxLocalNode2)
+{
+}
+
 PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField)
 {
     const PetscInt numNodeDOF = 2;                              // Number of DOFs per node considering displacements only

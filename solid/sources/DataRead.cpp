@@ -275,8 +275,8 @@ void FEM::readGeometry(const std::string &_filename)
 
     findNeighbours();
     decomposeElements(rhs, solution);
-    matrixPreAllocation(Istart, Iend);
-    createPETScVariables(matrix, rhs, solution, nDOFs, true);
+    matrixPreAllocation();
+    createPETScVariables(matrix, rhs, solution, nDOFs, nDOF, true);
 }
 
 void FEM::findNeighbours()
@@ -583,7 +583,7 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     return ierr;
 }
 
-PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
+PetscErrorCode FEM::matrixPreAllocation()
 {
     // TOTAL NUMBER OF NONZERO (UPPER TRIANGULAR PART ONLY) ONLY FOR THE LOCAL PARTITION
 
@@ -616,31 +616,14 @@ PetscErrorCode FEM::matrixPreAllocation(PetscInt start, PetscInt end)
             o_nz[nDOF * ii + iDOF] = (n2nDRankUpper[ii] + n2nDRankLower[ii]) * nDOF;
         }
 
-    // int rankLocalDOFs = end - start; // Number of nodes in the local partition
-
-    // d_nnz = new PetscInt[rankLocalDOFs]();
-    // o_nnz = new PetscInt[rankLocalDOFs]();
-
-    // for (auto node1 : discritizedNodes)
-    //     for (auto dof1 : node1->getDOFs()) // Rows of the matrix
-    //         if (dof1->getDOFType() != D)
-    //             if (dof1->getIndex() >= IIIstart && dof1->getIndex() < IIIend)
-    //                 for (auto node2 : nodeNeighbours[node1->getIndex()]) // Columns of the matrix
-    //                     for (auto dof2 : discritizedNodes[node2]->getDOFs())
-    //                         if (dof2->getDOFType() != D)
-    //                             if (dof2->getIndex() >= IIIstart && dof2->getIndex() < IIIend)
-    //                                 d_nnz[dof1->getIndex() - IIIstart]++; // - IIIstart to get the local index
-    //                             else
-    //                                 o_nnz[dof1->getIndex() - IIIstart]++;
-
     return ierr;
 }
 
-PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
+PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, int _nDOF, bool showInfo) // mSize stands for matrix size, mSize = DOFs = rows = cols
 {
     PetscLogDouble bytes;
 
-    int m = numNodesForEachRank[rank] * nDOF;
+    int m = numNodesForEachRank[rank] * _nDOF;
 
     MPI_Barrier(PETSC_COMM_WORLD);
 
@@ -656,7 +639,7 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, bool
     }
     else
     {
-        PetscInt m = nDOF * (Iend - Istart);
+        PetscInt m = _nDOF * (Iend - Istart);
         PetscCall(MatCreate(PETSC_COMM_WORLD, &A));
         PetscCall(MatSetSizes(A, m, m, mSize, mSize));
         PetscCall(MatSetType(A, MATMPIAIJ));
