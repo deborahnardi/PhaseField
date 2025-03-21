@@ -358,6 +358,18 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     MPI_Barrier(PETSC_COMM_WORLD); // Synchronizes all processes with PETSc communicator
     PetscPrintf(PETSC_COMM_WORLD, "Decomposing elements...\n");
 
+    // PARTIONING DOMAIN ELEMENTS
+    ierr = VecCreate(PETSC_COMM_WORLD, &x);
+    CHKERRQ(ierr);
+    ierr = VecSetSizes(x, PETSC_DECIDE, elements.size());
+    CHKERRQ(ierr);
+    ierr = VecSetFromOptions(x);
+    CHKERRQ(ierr);
+    ierr = VecGetOwnershipRange(x, &DStart, &DEnd); // Dstands for domain
+    CHKERRQ(ierr);
+    ierr = VecDestroy(&x);
+    CHKERRQ(ierr);
+    // ----------------------------------------------------------------
     // PARTIONING BOUNDARY ELEMENTS (FOR NEUMANN CONDITIONS)
     ierr = VecCreate(PETSC_COMM_WORLD, &x);
     CHKERRQ(ierr);
@@ -369,7 +381,6 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
     CHKERRQ(ierr);
     ierr = VecDestroy(&x);
     CHKERRQ(ierr);
-
     // ----------------------------------------------------------------
     // PARTIONING PHASE FIELD DOFs (damage DOFs)
     ierr = VecCreate(PETSC_COMM_WORLD, &x);

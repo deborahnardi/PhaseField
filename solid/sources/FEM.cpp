@@ -492,62 +492,68 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 
 PetscErrorCode FEM::updateRHS(Mat &A, Vec &b)
 {
-    PetscInt n = (Iend - Istart) * nDOF;
+    Vec KTimesU, U;
+    PetscCall(VecDuplicate(b, &KTimesU));
+    PetscCall(VecDuplicate(b, &U));
+    PetscCall(VecZeroEntries(KTimesU));
+    PetscCall(VecZeroEntries(U));
 
-    PetscInt Jstart, Jend, Rstart, Rend;
-    MatGetOwnershipRange(A, &Rstart, &Rend);
-    MatGetOwnershipRangeColumn(A, &Jstart, &Jend);
-
-    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as linhas de %d a %d\n", rank, Rstart, Rend - 1);
-    // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as colunas de %d a %d\n", rank, Jstart, Jend - 1);
-
-    for (int line = Rstart; line < Rend; line++)
+    for (int j = 0; j < nDOFs; j++)
     {
-
-        for (int j = 0; j < nDOFs; j++)
-        {
-            DOF *dof = globalDOFs[j];
-            PetscInt jdx = dof->getIndex();
-            PetscScalar dofValue = dof->getValue();
-            PetscScalar value = 0.;
-
-            PetscScalar product = 0.;
-            PetscCall(MatGetValue(A, line, jdx, &value)); // MatGetValue access any value in the matrix, since the line idx is in the range of the process. PETSc allows each process to access any column (you can have access to any column of the matrix, but only to the lines that belong to the process)
-            product = -value * dofValue;
-
-            // if (stepAUX == 1 && itAUX == 2 && rank == 0)
-            // {
-            //     std::cout << "matrixValue: " << value << " dofValue: " << dofValue << std::endl;
-            // }
-            PetscCall(VecSetValues(b, 1, &line, &product, ADD_VALUES));
-        }
+        DOF *dof = globalDOFs[j];
+        PetscInt idx = dof->getIndex();
+        PetscScalar dofValue = dof->getValue();
+        PetscCall(VecSetValues(U, 1, &idx, &dofValue, INSERT_VALUES));
     }
 
-    return ierr;
-}
+    // std::cout << "======================" << std::endl;
+    // for (int i = 0; i < numNodes; i++)
+    //     for (auto dof : nodes[i]->getDOFs())
+    //         if (dof->getDOFType() != D)
+    //         {
+    //             PetscScalar value = dof->getValue();
+    //             PetscInt idx = dof->getIndex();
+    //             std::cout << "idx: " << idx << " value: " << value << std::endl;
+    //             PetscCall(VecSetValues(Uaux, 1, &idx, &value, INSERT_VALUES));
+    //         }
 
-PetscErrorCode FEM::printGlobalMatrix(Mat &A)
-{
-    PetscInt i, j, rows, cols;
-    PetscScalar value;
-    const int width = 10; // Columns width
+    PetscCall(VecAssemblyBegin(KTimesU));
+    PetscCall(VecAssemblyEnd(KTimesU));
+    PetscCall(VecAssemblyBegin(U));
+    PetscCall(VecAssemblyEnd(U));
 
-    ierr = MatGetSize(A, &rows, &cols);
-    CHKERRQ(ierr);
+    PetscCall(MatMult(A, U, KTimesU));
+    PetscCall(VecAXPY(b, -1.0, KTimesU)); // rhs = rhs - KTimesU
 
-    std::cout << "Global stiffness matrix:" << std::endl;
+    PetscCall(VecDestroy(&KTimesU));
+    PetscCall(VecDestroy(&U));
 
-    for (i = 0; i < rows; i++)
-    {
-        for (j = 0; j < cols; j++)
-        {
-            ierr = MatGetValue(A, i, j, &value);
-            CHKERRQ(ierr);
-            // std::cout << std::setw(width) << std::fixed << std::setprecision(0) << value << " ";
-            std::cout << value << " ";
-        }
-        std::cout << std::endl;
-    }
+    // PetscInt n = (Iend - Istart) * nDOF;
+
+    // PetscInt Jstart, Jend, Rstart, Rend;
+    // MatGetOwnershipRange(A, &Rstart, &Rend);
+    // MatGetOwnershipRangeColumn(A, &Jstart, &Jend);
+
+    // // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as linhas de %d a %d\n", rank, Rstart, Rend - 1);
+    // // PetscPrintf(PETSC_COMM_SELF, "Processo %d possui as colunas de %d a %d\n", rank, Jstart, Jend - 1);
+
+    // for (int line = Rstart; line < Rend; line++)
+    // {
+
+    //     for (int j = 0; j < nDOFs; j++)
+    //     {
+    //         DOF *dof = globalDOFs[j];
+    //         PetscInt jdx = dof->getIndex();
+    //         PetscScalar dofValue = dof->getValue();
+    //         PetscScalar value = 0.;
+
+    //         PetscScalar product = 0.;
+    //         PetscCall(MatGetValue(A, line, jdx, &value)); // MatGetValue access any value in the matrix, since the line idx is in the range of the process. PETSc allows each process to access any column (you can have access to any column of the matrix, but only to the lines that belong to the process)
+    //         product = -value * dofValue;
+
+    //         PetscCall(VecSetValues(b, 1, &line, &product, ADD_VALUES));
+    //     }
+    // }
 
     return ierr;
 }
@@ -559,57 +565,45 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     PetscInt its;
     PetscReal residual_norm = 0.;
 
-    ierr = KSPCreate(PETSC_COMM_WORLD, &ksp);
-    CHKERRQ(ierr);
-    ierr = KSPSetOperators(ksp, A, A);
-    CHKERRQ(ierr);
-    ierr = KSPSetFromOptions(ksp);
-    CHKERRQ(ierr);
-    ierr = KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT);
-    CHKERRQ(ierr);
-    ierr = KSPGetPC(ksp, &pc);
-    CHKERRQ(ierr);
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    PetscCall(KSPSetOperators(ksp, A, A));
+    PetscCall(KSPSetFromOptions(ksp));
+    PetscCall(KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
+    PetscCall(KSPGetPC(ksp, &pc));
 
     switch (params->getSolverType())
     {
     case ESuiteSparse: // Sequential
-        ierr = PCSetType(pc, PCLU);
-        CHKERRQ(ierr);
-        ierr = PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK);
-        CHKERRQ(ierr);
+        PetscCall(PCSetType(pc, PCLU));
+        PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK));
         break;
-    case EMumps: // Parallel - (Multifrontal Massively Parallel Solver), used for large and sparse linear systems
-        ierr = PCSetType(pc, PCLU);
-        CHKERRQ(ierr);
-        ierr = PCFactorSetMatSolverType(pc, MATSOLVERMUMPS);
-        CHKERRQ(ierr);
+    case EMumps: // Parallel - (Multifrontal Massively Parallel Solver), used for large and sparse linear systems (MUMPS is a direct solver)
+        PetscCall(PCSetType(pc, PCLU));
+        PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
         break;
     case EIterative: // Parallel - faster than MUMPS, however it is harder to converge;
         // KSPFGMRES is a generalization of the GMRES algorithm that allows for flexible preconditioning (you can set the preconditioner type and other parameters)
-        ierr = KSPSetTolerances(ksp, PETSC_DEFAULT, params->getTolEIterative(), PETSC_DEFAULT, params->getMaxIterEIterative());
-        CHKERRQ(ierr);
-        ierr = KSPSetType(ksp, KSPFGMRES);
-        CHKERRQ(ierr);
-        ierr = PCSetType(pc, PCBJACOBI); // PCBJACOBI can be modified to other preconditioners
-        CHKERRQ(ierr);
+        PetscCall(KSPSetTolerances(ksp, PETSC_DEFAULT, params->getTolEIterative(), PETSC_DEFAULT, params->getMaxIterEIterative()));
+        PetscCall(KSPSetType(ksp, KSPFGMRES));
+        PetscCall(PCSetType(pc, PCBJACOBI)); // PCBJACOBI can be modified to other preconditioners
+        break;
+    case ECholesky:
+        PetscCall(KSPSetType(ksp, KSPPREONLY));
+        PetscCall(PCSetType(pc, PCCHOLESKY));
+        PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
         break;
     }
 
-    ierr = KSPSolve(ksp, b, x);
-    CHKERRQ(ierr);
-    ierr = KSPGetIterationNumber(ksp, &its); // Gets the number of iterations
-    CHKERRQ(ierr);
+    PetscCall(KSPSolve(ksp, b, x));
+    PetscCall(KSPGetIterationNumber(ksp, &its)); // Gets the number of iterations
 
     if (params->getSolverType() == EIterative)
     {
-        ierr = KSPGetResidualNorm(ksp, &residual_norm);
-        CHKERRQ(ierr);
-        ierr = PetscPrintf(PETSC_COMM_WORLD, "EIterative(%d) residual norm: %e\n", its, (double)residual_norm);
-        CHKERRQ(ierr);
+        PetscCall(KSPGetResidualNorm(ksp, &residual_norm));
+        PetscCall(PetscPrintf(PETSC_COMM_WORLD, "EIterative(%d) residual norm: %e\n", its, (double)residual_norm));
     }
 
-    ierr = KSPDestroy(&ksp);
-    CHKERRQ(ierr);
+    PetscCall(KSPDestroy(&ksp));
 
     return ierr;
 }
@@ -674,6 +668,32 @@ PetscErrorCode FEM::computeReactionForces()
         file << sumDisp << " " << force[1] << std::endl;
 
     file.close();
+
+    return ierr;
+}
+
+PetscErrorCode FEM::printGlobalMatrix(Mat &A)
+{
+    PetscInt i, j, rows, cols;
+    PetscScalar value;
+    const int width = 10; // Columns width
+
+    ierr = MatGetSize(A, &rows, &cols);
+    CHKERRQ(ierr);
+
+    std::cout << "Global stiffness matrix:" << std::endl;
+
+    for (i = 0; i < rows; i++)
+    {
+        for (j = 0; j < cols; j++)
+        {
+            ierr = MatGetValue(A, i, j, &value);
+            CHKERRQ(ierr);
+            // std::cout << std::setw(width) << std::fixed << std::setprecision(0) << value << " ";
+            std::cout << value << " ";
+        }
+        std::cout << std::endl;
+    }
 
     return ierr;
 }

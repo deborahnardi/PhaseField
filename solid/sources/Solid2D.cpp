@@ -457,8 +457,280 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
     return values;
 }
 
-double Solid2D::getQValue(const int idxLocalNode1, const int idxLocalNode2)
+double Solid2D::getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
 {
+    const PetscInt numNodeDOF = 2;  // Number of DOFs per node considering displacements only
+    const PetscInt nDOFPF = 1;      // Number of DOFs per node considering phase field only
+    PetscInt numElDOF = numElNodes; // Only one DOF per node when considering only phase field
+    PetscScalar l0 = material->getL0();
+    PetscScalar Gc = material->getGriffithCriterion();
+    PetscScalar lame = material->getLameConstant();
+    PetscScalar G = material->getShearModulus();
+    PetscScalar kappa = 2.0 / 3.0 * G + lame;
+    std::string PFmodel = params->getPFModel();
+    double QValue = 0.0;
+
+    for (int ih = 0; ih < numHammerPoints; ih++)
+    {
+        double *xi = coords[ih];
+        double weight = weights[ih];
+
+        double *N = sF->evaluateShapeFunction(xi);
+        double **dN = sF->getShapeFunctionDerivative(xi);
+
+        // COMPUTING THE JACOBIAN MATRIX
+        PetscReal jacobianMatrix[2][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    jacobianMatrix[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+        // COMPUTING THE JACOBIAN FOR 2D SPACE
+        PetscReal jac = jacobianMatrix[0][0] * jacobianMatrix[1][1] - jacobianMatrix[0][1] * jacobianMatrix[1][0];
+        PetscReal wJac = weight * jac;
+
+        // COMPUTING THE INVERSE OF THE JACOBIAN MATRIX
+        PetscReal jacobianMatrixInv[2][2] = {};
+        jacobianMatrixInv[0][0] = jacobianMatrix[1][1] / jac;
+        jacobianMatrixInv[0][1] = -jacobianMatrix[0][1] / jac;
+        jacobianMatrixInv[1][0] = -jacobianMatrix[1][0] / jac;
+        jacobianMatrixInv[1][1] = jacobianMatrix[0][0] / jac;
+
+        // COMPUTING THE DERIVATIVE OF THE SHAPE FUNCTIONS WITH RESPECT TO GLOBAL COORDINATES (3x2 matrix - nNodes x nDirections)
+        PetscReal dN_dX[numElNodes][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * jacobianMatrixInv[j][i];
+
+        // ======================= FIRST DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE ========================
+
+        // COMPUTING uk,l AND ul,k
+        PetscScalar gradU[2][2] = {};
+        for (PetscInt c = 0; c < numElNodes; c++)
+            for (PetscInt k = 0; k < 2; k++)
+                for (PetscInt l = 0; l < 2; l++)
+                    gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+
+        if (_PrescribedDamageField)
+            for (PetscInt c = 0; c < numElNodes; c++)
+                for (PetscInt k = 0; k < 2; k++)
+                    for (PetscInt l = 0; l < 2; l++)
+                        gradU[k][l] += 0.0 * dN_dX[c][l];
+
+        PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
+
+        // COMPUTING \psi^+(\epsilon): ELASTIC ENERGY DENSITY (POSITIVE PART) - DRIVING FORCE
+        double psiPlus = 0.;
+        for (int k = 0; k < 2; k++)
+            for (int l = 0; l < 2; l++)
+                psiPlus += G * ((gradU[k][l] * gradU[k][l] + gradU[k][l] * gradU[l][k]) * 0.5) * wJac;
+
+        psiPlus += -1.0 / 3.0 * G * divU * divU * wJac;
+
+        if (divU > 0)
+            psiPlus += kappa * 0.5 * divU * divU * wJac;
+
+        PetscScalar damageValue = 0.;
+        for (PetscInt c = 0; c < numElNodes; c++)
+            damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getValue(); // dn
+
+        const PetscScalar dCoeff = -2 * (1 - damageValue);
+
+        /*
+            AT1 OR AT2 PHASE FIELD MODEL:
+            The second integral of the first derivative with respect to the field variable is different for AT1 and AT2 models.
+
+            RELATING dN_dX TO THE B_d MATRIX (B_d is the derivative of the B matrix with respect to the field variable = B_d(2x3))
+            B_d = [dN1/dx, dN2/dx, dN3/dx]
+                  [dN1/dy, dN2/dy, dN3/dy]
+        */
+
+        // ASSEMBLING B_d MATRIX
+        PetscReal B_d[2][3] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            B_d[0][a] = dN_dX[a][0];
+            B_d[1][a] = dN_dX[a][1];
+        }
+
+        // ======================= SECOND DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE =======================
+        QValue += 2 * N[idxLocalNode1] * N[idxLocalNode2] * psiPlus; // Integral 1 is the same for AT1 and AT2
+
+        /*
+            AT1 OR AT2 PHASE FIELD MODEL:
+            The second integral of the second derivative with respect to the field variable is different for AT1 and AT2 models.
+        */
+
+        if (PFmodel == "AT2")
+        {
+            QValue += Gc * (1.0 / l0) * N[idxLocalNode1] * N[idxLocalNode2] * wJac;
+
+            for (int i = 0; i < 2; i++)
+                QValue += Gc * l0 * B_d[i][idxLocalNode1] * B_d[i][idxLocalNode2] * wJac;
+        }
+        else if (PFmodel == "AT1")
+        {
+            for (int i = 0; i < 2; i++)
+                QValue += Gc * 0.75 * l0 * B_d[i][idxLocalNode1] * B_d[i][idxLocalNode2] * wJac;
+        }
+
+        delete[] N;
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
+    }
+
+    return QValue;
+}
+
+PetscErrorCode Solid2D::getqContribution(Vec &rhs, bool _PrescribedDamageField)
+{
+    const PetscScalar lame = material->getLameConstant();
+    const PetscScalar G = material->getShearModulus();
+    const PetscScalar kappa = 2.0 / 3.0 * G + lame;
+    PetscScalar l0 = material->getL0();
+    PetscScalar Gc = material->getGriffithCriterion();
+    std::string PFmodel = params->getPFModel();
+
+    PetscScalar *localRHS = new PetscScalar[numElNodes]();
+    PetscInt *idx = new PetscInt[numElNodes]();
+
+    PetscInt count = 0;
+    for (auto node : elemConnectivity)
+        idx[count++] = node->getIndex(); // Phase field DOF has the same index as the node for the local problem
+
+    for (int ih = 0; ih < numHammerPoints; ih++)
+    {
+        double *xi = coords[ih];
+        double weight = weights[ih];
+
+        double *N = sF->evaluateShapeFunction(xi);
+        double **dN = sF->getShapeFunctionDerivative(xi);
+
+        // COMPUTING THE JACOBIAN MATRIX
+        PetscReal jacobianMatrix[2][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    jacobianMatrix[i][j] += dN[a][j] * elemConnectivity[a]->getInitialCoordinates()[i];
+
+        // COMPUTING THE JACOBIAN FOR 2D SPACE
+        PetscReal jac = jacobianMatrix[0][0] * jacobianMatrix[1][1] - jacobianMatrix[0][1] * jacobianMatrix[1][0];
+        PetscReal wJac = weight * jac;
+
+        // COMPUTING THE INVERSE OF THE JACOBIAN MATRIX
+        PetscReal jacobianMatrixInv[2][2] = {};
+        jacobianMatrixInv[0][0] = jacobianMatrix[1][1] / jac;
+        jacobianMatrixInv[0][1] = -jacobianMatrix[0][1] / jac;
+        jacobianMatrixInv[1][0] = -jacobianMatrix[1][0] / jac;
+        jacobianMatrixInv[1][1] = jacobianMatrix[0][0] / jac;
+
+        // COMPUTING THE DERIVATIVE OF THE SHAPE FUNCTIONS WITH RESPECT TO GLOBAL COORDINATES (3x2 matrix - nNodes x nDirections)
+        PetscReal dN_dX[numElNodes][2] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            for (PetscInt i = 0; i < 2; i++)
+                for (PetscInt j = 0; j < 2; j++)
+                    dN_dX[a][i] += dN[a][j] * jacobianMatrixInv[j][i];
+
+        // COMPUTING uk,l AND ul,k
+        PetscScalar gradU[2][2] = {};
+        for (PetscInt c = 0; c < numElNodes; c++)
+            for (PetscInt k = 0; k < 2; k++)
+                for (PetscInt l = 0; l < 2; l++)
+                    gradU[k][l] += elemConnectivity[c]->getDOFs()[k]->getValue() * dN_dX[c][l];
+
+        if (_PrescribedDamageField)
+            for (PetscInt c = 0; c < numElNodes; c++)
+                for (PetscInt k = 0; k < 2; k++)
+                    for (PetscInt l = 0; l < 2; l++)
+                        gradU[k][l] += 0.0 * dN_dX[c][l];
+
+        PetscScalar divU = gradU[0][0] + gradU[1][1]; // uk,k and ul,l are the same
+
+        // COMPUTING \psi^+(\epsilon): ELASTIC ENERGY DENSITY (POSITIVE PART) - DRIVING FORCE
+        double psiPlus = 0.;
+        for (int k = 0; k < 2; k++)
+            for (int l = 0; l < 2; l++)
+                psiPlus += G * ((gradU[k][l] * gradU[k][l] + gradU[k][l] * gradU[l][k]) * 0.5) * wJac;
+
+        psiPlus += -1.0 / 3.0 * G * divU * divU * wJac;
+
+        if (divU > 0)
+            psiPlus += kappa * 0.5 * divU * divU * wJac;
+
+        PetscScalar damageValue = 0.;
+        for (PetscInt c = 0; c < numElNodes; c++)
+            damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getValue(); // dn
+
+        const PetscScalar dCoeff = -2 * (1 - damageValue);
+
+        PetscScalar firstInt[numElNodes] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+            firstInt[a] += dCoeff * N[a] * psiPlus;
+
+        /*
+            AT1 OR AT2 PHASE FIELD MODEL:
+            The second integral of the first derivative with respect to the field variable is different for AT1 and AT2 models.
+
+            RELATING dN_dX TO THE B_d MATRIX (B_d is the derivative of the B matrix with respect to the field variable = B_d(2x3))
+            B_d = [dN1/dx, dN2/dx, dN3/dx]
+                  [dN1/dy, dN2/dy, dN3/dy]
+        */
+
+        // ASSEMBLING B_d MATRIX
+        PetscReal B_d[2][3] = {};
+        for (PetscInt a = 0; a < numElNodes; a++)
+        {
+            B_d[0][a] = dN_dX[a][0];
+            B_d[1][a] = dN_dX[a][1];
+        }
+
+        // ASSEMBLING B_d^T
+        PetscReal B_dT[3][2] = {};
+        for (PetscInt i = 0; i < 3; i++)
+            for (PetscInt j = 0; j < 2; j++)
+                B_dT[i][j] = B_d[j][i];
+
+        PetscScalar secondInt[numElNodes] = {};
+        if (PFmodel == "AT1")
+        {
+            for (PetscInt a = 0; a < numElNodes; a++)
+            {
+                for (PetscInt i = 0; i < 3; i++)
+                    for (PetscInt j = 0; j < 2; j++)
+                        secondInt[a] += Gc * (0.75 * l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[i]->getDOFs()[2]->getValue()) * wJac;
+
+                secondInt[a] += Gc * ((0.375 / l0) * N[a]) * wJac;
+            }
+        }
+        else if (PFmodel == "AT2")
+        {
+            for (PetscInt a = 0; a < numElNodes; a++)
+            {
+                for (PetscInt i = 0; i < 3; i++)
+                    for (PetscInt j = 0; j < 2; j++)
+                        secondInt[a] += Gc * (l0 * B_dT[a][j] * B_d[j][i] * elemConnectivity[i]->getDOFs()[2]->getValue()) * wJac;
+
+                secondInt[a] += Gc * (1 / l0 * damageValue * N[a]) * wJac;
+            }
+        }
+
+        for (PetscInt a = 0; a < numElNodes; a++)
+            localRHS[a] = firstInt[a] + secondInt[a];
+
+        PetscCall(VecSetValues(rhs, numElNodes, idx, localRHS, ADD_VALUES));
+
+        delete[] N;
+        for (int i = 0; i < numElNodes; i++)
+            delete[] dN[i];
+        delete[] dN;
+    }
+
+    delete[] localRHS;
+    delete[] idx;
+
+    return ierr;
 }
 
 PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField)

@@ -178,107 +178,33 @@ PetscErrorCode FEM::solvePhaseField()
     return ierr;
 }
 
-PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed damage field is setted
-{
-    MPI_Barrier(PETSC_COMM_WORLD);
-
-    ierr = MatZeroEntries(matrixPF);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(rhsPF);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(solutionPF);
-    CHKERRQ(ierr);
-
-    for (int Ii = Istart; Ii < Iend; Ii++)
-        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF, true);
-
-    ierr = VecAssemblyBegin(rhsPF);
-    CHKERRQ(ierr);
-    ierr = VecAssemblyEnd(rhsPF);
-    CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY);
-    CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY);
-    CHKERRQ(ierr);
-
-    solveSystemByPSOR(matrixPF, rhsPF, solutionPF); // Solves Ddk
-    updateFieldVariables(solutionPF, true);         // d = dn + delta_d, where dn is the damage field from the PREVIOUS STEP
-
-    return ierr;
-}
-
 PetscErrorCode FEM::assemblePhaseFieldProblem()
 {
     MPI_Barrier(PETSC_COMM_WORLD);
 
-    ierr = MatZeroEntries(matrixPF);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(rhsPF);
-    CHKERRQ(ierr);
-    ierr = VecZeroEntries(solutionPF);
-    CHKERRQ(ierr);
+    PetscCall(MatZeroEntries(matrixPF));
+    PetscCall(VecZeroEntries(rhsPF));
+    PetscCall(VecZeroEntries(solutionPF));
 
-    // for (int Ii = Istart; Ii < Iend; Ii++)
-    //     elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+    // assembleQMatrix(matrixPF);
 
-    assembleQMatrix(matrixPF, rhsPF);
+    // for (int Ii = DStart; Ii < DEnd; Ii++)
+    //     elements[Ii]->getqContribution(rhsPF, prescribedDamageField);
 
-    ierr = VecAssemblyBegin(rhsPF);
-    CHKERRQ(ierr);
-    ierr = VecAssemblyEnd(rhsPF);
-    CHKERRQ(ierr);
-    ierr = MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY);
-    CHKERRQ(ierr);
-    ierr = MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY);
-    CHKERRQ(ierr);
+    for (int Ii = DStart; Ii < DEnd; Ii++)
+        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
 
-    if (elemDim == 1)
-    {
-        // Performing the multiplication of matrixPF by dn and adding to rhsPF - solutionPF is equal Ddk
-        Vec QDotDd, Dn;
-        ierr = VecDuplicate(rhsPF, &QDotDd);
-        CHKERRQ(ierr);
-        ierr = VecDuplicate(rhsPF, &Dn);
-        CHKERRQ(ierr);
-        ierr = VecZeroEntries(QDotDd);
-        CHKERRQ(ierr);
-        ierr = VecZeroEntries(Dn);
-        CHKERRQ(ierr);
+    PetscCall(VecAssemblyBegin(rhsPF));
+    PetscCall(VecAssemblyEnd(rhsPF));
+    PetscCall(MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY));
 
-        for (int i = 0; i < numNodes; i++)
-        {
-            DOF *damageDOF = discritizedNodes[i]->getDOFs()[2];
-            PetscScalar value = damageDOF->getValue(); // dn, converge value from the last step
-            ierr = VecSetValues(Dn, 1, &i, &value, INSERT_VALUES);
-            CHKERRQ(ierr);
-        }
-
-        ierr = VecAssemblyBegin(QDotDd);
-        CHKERRQ(ierr);
-        ierr = VecAssemblyEnd(QDotDd);
-        CHKERRQ(ierr);
-
-        ierr = VecAssemblyBegin(Dn);
-        CHKERRQ(ierr);
-        ierr = VecAssemblyEnd(Dn);
-        CHKERRQ(ierr);
-
-        ierr = MatMult(matrixPF, Dn, QDotDd); // QDotDd = matrixPF * Dn
-        CHKERRQ(ierr);
-
-        ierr = VecAXPY(rhsPF, 1.0, QDotDd); // rhsPF = rhsPF + QDotDd
-        CHKERRQ(ierr);
-
-        ierr = VecDestroy(&QDotDd);
-        CHKERRQ(ierr);
-        ierr = VecDestroy(&Dn);
-        CHKERRQ(ierr);
-    }
+    // updateRHSPF(matrixPF, rhsPF);
 
     return ierr;
 }
 
-PetscErrorCode FEM::assembleQMatrix(Mat &A, Vec &b)
+PetscErrorCode FEM::assembleQMatrix(Mat &A)
 {
     std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
 
@@ -313,10 +239,9 @@ PetscErrorCode FEM::assembleQMatrix(Mat &A, Vec &b)
                     const int elemIndex = elemInfo[3 * iElem];
                     const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                     const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    // std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
-                    double Qvalue = elements[elemIndex]->getQValue(idxLocalNode1, idxLocalNode2);
+                    double Qvalue = elements[elemIndex]->getQValue(idxLocalNode1, idxLocalNode2, prescribedDamageField);
 
-                    val[p1] += 1; // localStiffValue[0];
+                    val[p1] += Qvalue; // localStiffValue[0];
                 }
 
                 idxRows[p1] = nDOFPF * n1; // First DOF
@@ -333,9 +258,9 @@ PetscErrorCode FEM::assembleQMatrix(Mat &A, Vec &b)
                     const int elemIndex = elemInfo[3 * iElem];
                     const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                     const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    double Qvalue = elements[elemIndex]->getQValue(idxLocalNode1, idxLocalNode2);
+                    double Qvalue = elements[elemIndex]->getQValue(idxLocalNode1, idxLocalNode2, prescribedDamageField);
 
-                    val[p1] += 1; // localStiffValue[0];
+                    val[p1] += Qvalue; // localStiffValue[0];
                 }
 
                 idxRows[p1] = nDOFPF * n1;
@@ -347,15 +272,13 @@ PetscErrorCode FEM::assembleQMatrix(Mat &A, Vec &b)
             kkn2n++;
             kk += nDOFPF;
         }
-
-        // kk += nDOFPF * numFriends - (nDOFPF * nDOFPF - (nDOFPF * (nDOFPF + 1)) / 2.0);
     }
 
-    // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
-    //     PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
+    for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
+        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
 
-    // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++) // Setting the lower triangular part of the matrix
-    //     PetscCall(MatSetValue(A, idxCols[i], idxRows[i], val[i], INSERT_VALUES));
+    for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++) // Setting the lower triangular part of the matrix
+        PetscCall(MatSetValue(A, idxCols[i], idxRows[i], val[i], INSERT_VALUES));
 
     return ierr;
 }
@@ -495,17 +418,6 @@ PetscErrorCode FEM::assembleBetweenProcesses(Mat &A, Vec &b)
         for (int j = 0; j < numNodes; j++)
             totalMatrixQ[i][j] = totalMatrixQVecFormat[i * numNodes + j];
 
-    // Print the totalMatrixQ
-    std::cout << "Number of nodes: " << numNodes << std::endl;
-    for (int i = 0; i < numNodes; i++)
-    {
-        for (int j = 0; j < numNodes; j++)
-            std::cout << totalMatrixQ[i][j] << " ";
-        std::cout << std::endl;
-    }
-
-    exit(0);
-
     // Erase the Memory
     delete[] totalMatrixQVecFormat;
     delete[] localQMatrix;
@@ -591,15 +503,14 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
     }
     else
     {
-
         for (int i = 0; i < numNodes; i++)
         {
             DOF *damageDOF = discritizedNodes[i]->getDOFs()[2];
             double deltaD = Ddk[i];
             double d_stag = damageDOF->getValue() + deltaD;
+
             damageDOF->setDamageValue(d_stag);
         }
-
         // Setting d = 1 for the nodes with d > 1
         for (auto node : discritizedNodes)
         {
@@ -608,6 +519,67 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
                 damageDOF->setDamageValue(dtol);
         }
     }
+
+    return ierr;
+}
+
+PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed damage field is setted
+{
+
+    MPI_Barrier(PETSC_COMM_WORLD);
+
+    PetscCall(MatZeroEntries(matrixPF));
+    PetscCall(VecZeroEntries(rhsPF));
+    PetscCall(VecZeroEntries(solutionPF));
+
+    // assembleQMatrix(matrixPF);
+
+    // for (int Ii = DStart; Ii < DEnd; Ii++)
+    //     elements[Ii]->getqContribution(rhsPF, prescribedDamageField);
+
+    for (int Ii = Istart; Ii < Iend; Ii++)
+        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+
+    PetscCall(VecAssemblyBegin(rhsPF));
+    PetscCall(VecAssemblyEnd(rhsPF));
+    PetscCall(MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
+
+    // updateRHSPF(matrixPF, rhsPF);
+
+    solveSystemByPSOR(matrixPF, rhsPF, solutionPF); // Solves Ddk
+    updateFieldVariables(solutionPF, true);         // d = dn + delta_d, where dn is the damage field from the PREVIOUS STEP
+
+    return ierr;
+}
+
+PetscErrorCode FEM::updateRHSPF(Mat &A, Vec &b)
+{
+    // Performing the multiplication of matrixPF by dn and adding to rhsPF
+    Vec QTimesDd, Dn;
+    PetscCall(VecDuplicate(b, &QTimesDd));
+    PetscCall(VecDuplicate(b, &Dn));
+    PetscCall(VecZeroEntries(QTimesDd));
+    PetscCall(VecZeroEntries(Dn));
+
+    for (int i = 0; i < numNodes; i++)
+    {
+        DOF *damageDOF = discritizedNodes[i]->getDOFs()[2];
+        PetscScalar value = damageDOF->getValue(); // dn, converged value from the last step
+        PetscCall(VecSetValues(Dn, 1, &i, &value, INSERT_VALUES));
+    }
+
+    PetscCall(VecAssemblyBegin(QTimesDd));
+    PetscCall(VecAssemblyEnd(QTimesDd));
+    PetscCall(VecAssemblyBegin(Dn));
+    PetscCall(VecAssemblyEnd(Dn));
+
+    PetscCall(MatMult(A, Dn, QTimesDd));  // QTimesDd = matrixPF * Dn
+    PetscCall(VecAXPY(b, 1.0, QTimesDd)); // rhsPF = rhsPF - QTimesDd
+
+    PetscCall(VecDestroy(&QTimesDd));
+    PetscCall(VecDestroy(&Dn));
 
     return ierr;
 }

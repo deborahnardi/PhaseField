@@ -42,7 +42,7 @@ private:
 
     Mat matrix, matrixPF, matrixCopy;
     Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
-    PetscInt Istart, Iend, IstartBD, IendBD, IstartPF, IendPF;
+    PetscInt Istart, Iend, IstartBD, IendBD, IstartPF, IendPF, DStart, DEnd;
     PetscInt *d_nnz, *o_nnz, *d_nz, *o_nz, *dirichletBC;
     PetscErrorCode ierr;
     int *JC, *IR, nzQ = 0;
@@ -137,7 +137,8 @@ public:
     PetscErrorCode updateVariables(Mat A, Vec &x, bool _hasConverged = true);
     PetscErrorCode assembleSymmStiffMatrix(Mat &A);
     PetscErrorCode updateRHS(Mat &A, Vec &b);
-    PetscErrorCode assembleQMatrix(Mat &A, Vec &b);
+    PetscErrorCode assembleQMatrix(Mat &A);
+    PetscErrorCode updateRHSPF(Mat &A, Vec &b);
     /*----------------------------------------------------------------------------------
                                     OUTPUT METHODS
     ------------------------------------------------------------------------------------
