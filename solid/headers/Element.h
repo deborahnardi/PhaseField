@@ -54,8 +54,6 @@ public:
     virtual std::vector<double> getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField = false) {};
     virtual double getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField) {};
     virtual PetscErrorCode getqContribution(Vec &rhs, bool _PrescribedDamageField) {};
-    virtual double stiffnessValue(const int localPos1, const int localPos2, Tensor &tensorC, const PetscReal B[3][6]) {};
-
     // =======================================
     // =========== POST PROCESSING ===========
     // =======================================
@@ -121,7 +119,6 @@ public:
     PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) override;
     std::vector<double> getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField = false) override;
     double getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField) override;
-    double stiffnessValue(const int localPos1, const int localPos2, Tensor &tensorC, const PetscReal B[3][6]) override;
     PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField = false) override;
     void getContribution() override;
     PetscErrorCode getqContribution(Vec &rhs, bool _PrescribedDamageField) override;

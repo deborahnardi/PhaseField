@@ -64,14 +64,14 @@ materials[0]->setL0(0.01); // Internal lenght of Phase Field model, in mm;
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 planeSurfaces[1]->setAttributes(materials[0], 1., SOLID_ELEMENT);
 
-double meshMinSizeGlobal = 1, meshMaxSizeGlobal = 1, meshSizeFactorGlobal = 1;
+double meshMinSizeGlobal = 1.e-4, meshMaxSizeGlobal = 0.1, meshSizeFactorGlobal = 1.0;
 // double meshMinSize = 0.05, meshMaxSize = 0.1, meshDistMin = 0.01, meshDistMax = 0.05;
-double meshMinSize = 1, meshMaxSize = 1, meshDistMin = 1, meshDistMax = 1;
+double meshMinSize = 0.002, meshMaxSize = 0.1, meshDistMin = 0.01, meshDistMax = 0.05;
 
 geo1->setGlobalMeshSize(meshMinSizeGlobal, meshMaxSizeGlobal, meshSizeFactorGlobal);
-// geo1->setRefiningFieldCurves({lines[3]}, 1);
-// geo1->setThresholdRefinement(meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 1, 2);
-// geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.48, 0.52, 0.05, 3);
+geo1->setRefiningFieldCurves({lines[3]}, 1);
+geo1->setThresholdRefinement(meshMinSize, meshMaxSize, meshDistMin, meshDistMax, 1, 2);
+geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.48, 0.52, 0.05, 3);
 // geo1->setBoxRefinement(meshMinSize, meshMaxSize, L / 2, 1., 0.47, 0.53, 0.05, 3);
 geo1->setBackgroundMesh({2, 3}, 4);
 
@@ -96,9 +96,9 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
         }
 };
 analysis1->setBoundaryFunction(boundaryFunction);
-analysis1->setPrescribedDamageField(false);
+analysis1->setPrescribedDamageField(true);
 //  //   ********************************** FEM INFORMATION **********************************
-params->setSolverType(EMumps);
+params->setSolverType(ECholesky);
 params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
 params->setReactionDir("Y");

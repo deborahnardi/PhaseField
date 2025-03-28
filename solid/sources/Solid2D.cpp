@@ -253,13 +253,6 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, boo
     return ierr;
 }
 
-double Solid2D::stiffnessValue(const int localPos1, const int localPos2, Tensor &tensorC, const PetscReal B[3][6])
-{
-    double value = 0.0;
-
-    return value;
-}
-
 std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
 {
     /*

@@ -5,7 +5,8 @@ enum SolverType
     EMumps,
     ESuiteSparse,
     EIterative,
-    ECholesky
+    ECholesky,
+    EPardiso
 };
 
 enum BoundaryType

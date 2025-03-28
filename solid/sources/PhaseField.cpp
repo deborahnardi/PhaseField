@@ -42,37 +42,6 @@ void FEM::matrixPreAllocationPF(int nDOF)
 
     MPI_Reduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, 0, PETSC_COMM_WORLD);
     MPI_Allreduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, PETSC_COMM_WORLD);
-
-    // int rankLocalDOFs = end - start; // Number of nodes in the local partition
-
-    // d_nnz = new PetscInt[rankLocalDOFs]();
-    // o_nnz = new PetscInt[rankLocalDOFs]();
-
-    // // In the phase-field problem, there is only one DOF
-
-    // for (auto node : discritizedNodes)
-    // {
-    //     DOF *damageDOF0 = node->getDOFs()[2];
-    //     if (damageDOF0->getIndex() >= IstartPF && damageDOF0->getIndex() < IendPF)
-    //         for (auto node2 : n2nMatTotal[node->getIndex()])
-    //         {
-    //             DOF *damageDOF1 = discritizedNodes[node2]->getDOFs()[2];
-    //             if (damageDOF1->getIndex() >= IstartPF && damageDOF1->getIndex() < IendPF)
-    //                 d_nnz[damageDOF0->getIndex() - IstartPF]++;
-    //             else
-    //                 o_nnz[damageDOF0->getIndex() - IstartPF]++;
-    //         }
-    // }
-
-    // // Total number of non-zero elements in the matrix, stores it in nzQ
-    // int localNzQ = 0;
-    // nzQ = 0;
-
-    // for (int i = 0; i < rankLocalDOFs; i++)
-    //     localNzQ += d_nnz[i] + o_nnz[i];
-
-    // MPI_Reduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, 0, PETSC_COMM_WORLD);
-    // MPI_Allreduce(&localNzQ, &nzQ, 1, MPI_INT, MPI_SUM, PETSC_COMM_WORLD);
 }
 // --------------------------------------------------------------------------------------------------
 void FEM::solvePhaseFieldProblem() // Called by the main program
@@ -134,8 +103,31 @@ void FEM::staggeredAlgorithm(int _iStep)
     {
         it++;
         PetscPrintf(PETSC_COMM_WORLD, "\n------- Stag Iteration %d -------\n", it);
+        //================================================================================================
+        //                                 STAGE 01 - SOLVE DISPLACEMENT FIELD
+        //================================================================================================
+        PetscLogStage stageNum;
+        char stageName[100];
+        snprintf(stageName, sizeof(stageName), "SolveEqProb: %d", globalCounter++, "_", it);
+
+        PetscLogStageRegister(stageName, &stageNum);
+        PetscLogStagePush(stageNum);
+
         solveDisplacementField(_iStep); // Obtains ustag
-        solvePhaseField();              // Obtains dstag
+
+        PetscLogStagePop();
+        //================================================================================================
+        //                                STAGE 02 - SOLVE PHASE FIELD
+        //================================================================================================
+        snprintf(stageName, sizeof(stageName), "SolvePFProb: %d", globalCounter, "_", it);
+
+        PetscLogStageRegister(stageName, &stageNum);
+        PetscLogStagePush(stageNum);
+
+        solvePhaseField(); // Obtains dstag
+
+        PetscLogStagePop();
+        //================================================================================================
 
         // Compute the norm of the difference between the previous and current displacement fields
         double normU = 0.0;
@@ -186,11 +178,6 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
-    // assembleQMatrix(matrixPF);
-
-    // for (int Ii = DStart; Ii < DEnd; Ii++)
-    //     elements[Ii]->getqContribution(rhsPF, prescribedDamageField);
-
     for (int Ii = DStart; Ii < DEnd; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
 
@@ -198,8 +185,6 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     PetscCall(VecAssemblyEnd(rhsPF));
     PetscCall(MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY));
-
-    // updateRHSPF(matrixPF, rhsPF);
 
     return ierr;
 }
@@ -285,15 +270,27 @@ PetscErrorCode FEM::assembleQMatrix(Mat &A)
 
 PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 {
-    assembleBetweenProcesses(A, b);
-    getPSORVecs();
+    getCompressedColumnStorage(A, b);
+    MPI_Barrier(PETSC_COMM_WORLD);
 
+    if (rank == 0) // Only rank 0 solves the problem
+        PSORAlgorithm();
+
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscCall(MatSeqAIJRestoreArrayRead(seqMatQ, &PA));
+    MPI_Bcast(Ddk, numNodes, MPI_DOUBLE, 0, PETSC_COMM_WORLD); // Communicates the solution to all processes
+
+    // PetscCall(PetscFree(seqMatQ));
+
+    return 0;
+}
+
+PetscErrorCode FEM::PSORAlgorithm()
+{
     double resPSOR = params->getResPSOR();
     int maxPSORIt = params->getMaxItPSOR();
     double tolPSOR = params->getTolPSOR();
     int itPSOR = 0;
-
-    MPI_Barrier(PETSC_COMM_WORLD);
 
     DdkMinus1 = new double[numNodes]{};
 
@@ -341,131 +338,62 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
 
     } while (resPSOR > tolPSOR && itPSOR < maxPSORIt);
 
-    delete[] JC;
-    delete[] IR;
-    delete[] PA;
     delete[] totalVecq;
     delete[] DdkMinus1;
 
-    return ierr;
+    return 0;
 }
 
-PetscErrorCode FEM::assembleBetweenProcesses(Mat &A, Vec &b)
+PetscErrorCode FEM::getCompressedColumnStorage(Mat &A, Vec &b)
 {
-    PetscInt startRow, endRow;
-    ierr = MatGetOwnershipRange(A, &startRow, &endRow);
-    CHKERRQ(ierr);
-    int rankLocalRows = endRow - startRow;
-
-    totalMatrixQ = new double *[numNodes] {};
-    for (int i = 0; i < numNodes; i++)
-        totalMatrixQ[i] = new double[numNodes]{};
-
     totalVecq = new double[numNodes]{};
 
     // Get the values from vector q and store them in the totalVecq
 
-    double *localVecq = new double[rankLocalRows]{};
-    for (int i = startRow; i < endRow; i++)
-    {
-        PetscScalar value;
-        ierr = VecGetValues(b, 1, &i, &value);
-        CHKERRQ(ierr);
-        localVecq[i - startRow] = value;
-    }
+    Vec q;
+    VecScatter ctx;
 
-    int *numEachProcess = new int[size];
-    MPI_Allgather(&rankLocalRows, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
+    // Gathers the solution vector to the master process
+    PetscCall(VecScatterCreateToAll(b, &ctx, &q));
+    PetscCall(VecScatterBegin(ctx, b, q, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(ctx, b, q, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterDestroy(&ctx));
 
-    int *globalBuffer0 = new int[size];
-    globalBuffer0[0] = 0;
-    for (int i = 1; i < size; i++)
-        globalBuffer0[i] = globalBuffer0[i - 1] + numEachProcess[i - 1];
-
-    MPI_Gatherv(localVecq, rankLocalRows, MPI_DOUBLE, totalVecq, numEachProcess, globalBuffer0, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
-    MPI_Bcast(totalVecq, numNodes, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
+    if (rank == 0)
+        for (int i = 0; i < numNodes; i++)
+        {
+            PetscInt idx = i;
+            PetscScalar val;
+            PetscCall(VecGetValues(q, 1, &idx, &val));
+            totalVecq[i] = val;
+        }
 
     // Get values from the matrix A and store them in the totalQMatrix
+    PetscBool done = PETSC_FALSE;
+    PetscInt numNodesInt = numNodes;
+    PetscInt *nCols = new PetscInt;
+    *nCols = numNodesInt;
 
-    // Broadcast the totalMatrixQ to all processes
-    double *totalMatrixQVecFormat = new double[numNodes * numNodes]{};
-    double *localQMatrix = new double[rankLocalRows * numNodes]{};
-
-    for (PetscInt i = startRow; i < endRow; i++)
+    if (!reuse)
     {
-        for (int j = 0; j < numNodes; j++)
-        {
-            PetscScalar value;
-            ierr = MatGetValues(A, 1, &i, 1, &j, &value);
-            CHKERRQ(ierr);
-            localQMatrix[(i - startRow) * numNodes + j] = value;
-        }
+        PetscCall(MatCreateRedundantMatrix(A, 0, PETSC_COMM_SELF, MAT_INITIAL_MATRIX, &seqMatQ));
+        reuse = PETSC_TRUE;
+    }
+    else
+        PetscCall(MatCreateRedundantMatrix(A, 0, PETSC_COMM_SELF, MAT_REUSE_MATRIX, &seqMatQ));
+
+    if (rank == 0) // ATTENTION: Only process 0 has JC, IR, and PA
+    {
+        PetscCall(MatGetColumnIJ(seqMatQ, 0, PETSC_FALSE, PETSC_FALSE, nCols, &JC, &IR, &done));
+        PetscCall(MatSeqAIJGetArrayRead(seqMatQ, &PA));
     }
 
-    int numIJ = rankLocalRows * numNodes;
-    MPI_Allgather(&numIJ, 1, MPI_INT, numEachProcess, 1, MPI_INT, PETSC_COMM_WORLD);
+    MPI_Barrier(PETSC_COMM_WORLD);
+    PetscCall(VecDestroy(&q));
 
-    int *globalBuffer = new int[size];
-    globalBuffer[0] = 0;
-    for (int i = 1; i < size; i++)
-        globalBuffer[i] = globalBuffer[i - 1] + numEachProcess[i - 1];
+    delete[] nCols;
 
-    MPI_Gatherv(localQMatrix, rankLocalRows * numNodes, MPI_DOUBLE, totalMatrixQVecFormat, numEachProcess, globalBuffer, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
-    MPI_Bcast(totalMatrixQVecFormat, numNodes * numNodes, MPI_DOUBLE, 0, PETSC_COMM_WORLD);
-
-    // Convert the totalMatrixQVecFormat to totalMatrixQ
-    for (int i = 0; i < numNodes; i++)
-        for (int j = 0; j < numNodes; j++)
-            totalMatrixQ[i][j] = totalMatrixQVecFormat[i * numNodes + j];
-
-    // Erase the Memory
-    delete[] totalMatrixQVecFormat;
-    delete[] localQMatrix;
-    delete[] numEachProcess;
-    delete[] globalBuffer0;
-    delete[] localVecq;
-    delete[] globalBuffer;
-
-    return ierr;
-}
-
-PetscErrorCode FEM::getPSORVecs()
-{
-    // Get the matrix A in compressed column format
-
-    JC = new int[numNodes + 1]{};
-    IR = new int[nzQ]{};
-    PA = new double[nzQ]{};
-
-    int count = -1., var = 0;
-    for (int jj = 0; jj < numNodes; jj++)
-    {
-        var = 0;
-        for (int ii = 0; ii < numNodes; ii++)
-        {
-            if (totalMatrixQ[ii][jj] != 0.0)
-            {
-                count++;
-                PA[count] = totalMatrixQ[ii][jj];
-                IR[count] = ii;
-
-                if (var == 0)
-                {
-                    JC[jj] = count;
-                    var = 1;
-                }
-            }
-        }
-    }
-
-    JC[numNodes] = nzQ; // nzQ is the total number of non-zero elements in the matrix
-
-    for (int i = 0; i < numNodes; i++)
-        delete[] totalMatrixQ[i];
-
-    delete[] totalMatrixQ;
-
-    return ierr;
+    return 0;
 }
 
 PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
@@ -532,21 +460,13 @@ PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed 
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
-    // assembleQMatrix(matrixPF);
-
-    // for (int Ii = DStart; Ii < DEnd; Ii++)
-    //     elements[Ii]->getqContribution(rhsPF, prescribedDamageField);
-
-    for (int Ii = Istart; Ii < Iend; Ii++)
+    for (int Ii = DStart; Ii < DEnd; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));
     PetscCall(MatAssemblyBegin(matrixPF, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(matrixPF, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
-
-    // updateRHSPF(matrixPF, rhsPF);
 
     solveSystemByPSOR(matrixPF, rhsPF, solutionPF); // Solves Ddk
     updateFieldVariables(solutionPF, true);         // d = dn + delta_d, where dn is the damage field from the PREVIOUS STEP

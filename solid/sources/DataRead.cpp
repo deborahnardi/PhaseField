@@ -590,6 +590,21 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
         }
     }
 
+    // Create eSameList for each node (created for OPENMP)
+
+    eSameListForEachNode.resize(numNodesForEachRank[rank]);
+
+    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++) // This loops iterates over the nodes of the local partition (size + 1)
+    {
+        int node1 = nodesForEachRankCSR[rank] + iNode1;
+        std::vector<std::vector<int>> eSameListForNode;
+        for (int jj = n2nCSRUpper[iNode1]; jj < n2nCSRUpper[iNode1 + 1]; jj++) // This loop iterates over the neighbours of each node
+        {
+            eSameListForNode.push_back(eSameList[jj]);
+        }
+        eSameListForEachNode[iNode1] = eSameListForNode;
+    }
+
     PetscPrintf(PETSC_COMM_WORLD, "Elements decomposed!\n");
     return ierr;
 }
@@ -645,7 +660,11 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, int 
         PetscCall(MatSetType(A, MATSEQAIJ));
         PetscCall(MatSetFromOptions(A));
 
-        PetscCall(MatSeqAIJSetPreallocation(A, 0, d_nz));
+        PetscCall(MatSeqAIJSetPreallocation(A, PETSC_DEFAULT, d_nz));
+
+        std::cout << "d_nz: " << std::endl;
+        for (int i = 0; i < m; i++)
+            std::cout << d_nz[i] << std::endl;
         PetscCall(MatSetUp(A));
     }
     else
@@ -682,6 +701,8 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, int 
 
     delete[] d_nnz;
     delete[] o_nnz;
+    delete[] d_nz;
+    delete[] o_nz;
 
     if (params->getCalculateReactionForces())
     {

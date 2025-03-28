@@ -9,6 +9,7 @@
 #include <petscmat.h>
 #include <metis.h>
 #include <functional>
+#include <omp.h>
 
 #include "Node.h"
 #include "Element.h"
@@ -26,7 +27,7 @@ class FEM
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size, nDOF = 2, nDOFPF = 1;
-    int itAUX, stepAUX;
+    int itAUX, stepAUX, globalCounter = 0;
     double norm = 0., res = 0.;
     std::string name, filename, resultsPath;
     std::vector<Material *> materials;
@@ -40,18 +41,21 @@ private:
     PetscLogDouble bytes = 0.0;
     PetscInt totalNnz = 0.0, totalNnzPF = 0.0;
 
-    Mat matrix, matrixPF, matrixCopy;
-    Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces;
+    Mat matrix, matrixPF, matrixCopy, seqMatQ;
+    Vec rhs, solution, rhsPF, solutionPF, disp, nodalForces, reactionForces, DdkVec;
     PetscInt Istart, Iend, IstartBD, IendBD, IstartPF, IendPF, DStart, DEnd;
     PetscInt *d_nnz, *o_nnz, *d_nz, *o_nz, *dirichletBC;
     PetscErrorCode ierr;
-    int *JC, *IR, nzQ = 0;
-    double *PA;
-    double *DdkMinus1, *Ddk, *totalVecq, **totalMatrixQ;
+    int nzQ = 0;
+    double *DdkMinus1, *Ddk, *totalVecq;
+    const PetscInt *JC, *IR;
+    const PetscScalar *PA;
+    PetscBool reuse = PETSC_FALSE;
 
     std::vector<int> n2nUpperTotal, n2nCSRUpperTotal, nodesForEachRankCSR, numNodesForEachRank, n2nDRankUpper, n2nDRankLower, n2nCSRUpper;
     std::vector<std::set<int>> n2nUpperMatTotal, n2e, n2nMat, n2nUpperMat, n2nLowerMat;
     std::vector<std::vector<int>> eSameList;
+    std::vector<std::vector<std::vector<int>>> eSameListForEachNode;
 
     std::vector<std::set<int>> n2nMatTotal, n2nLowerMatTotal;
     std::vector<int> n2nTotal, n2nLowerTotal;
@@ -121,6 +125,7 @@ public:
     void staggeredAlgorithm(int _iStep);
     PetscErrorCode updateFieldVariables(Vec &x, bool _hasConverged = true);
     PetscErrorCode updateFieldDistribution();
+    PetscErrorCode PSORAlgorithm();
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------
@@ -133,7 +138,7 @@ public:
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
-    PetscErrorCode assembleBetweenProcesses(Mat &A, Vec &b);
+    PetscErrorCode getCompressedColumnStorage(Mat &A, Vec &b);
     PetscErrorCode updateVariables(Mat A, Vec &x, bool _hasConverged = true);
     PetscErrorCode assembleSymmStiffMatrix(Mat &A);
     PetscErrorCode updateRHS(Mat &A, Vec &b);
