@@ -662,9 +662,6 @@ PetscErrorCode FEM::createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, int 
 
         PetscCall(MatSeqAIJSetPreallocation(A, PETSC_DEFAULT, d_nz));
 
-        std::cout << "d_nz: " << std::endl;
-        for (int i = 0; i < m; i++)
-            std::cout << d_nz[i] << std::endl;
         PetscCall(MatSetUp(A));
     }
     else

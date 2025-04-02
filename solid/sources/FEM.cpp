@@ -272,7 +272,7 @@ PetscErrorCode FEM::cleanSolution(Vec &x, Vec &b, Mat &A)
     ierr = MatDestroy(&A);
     CHKERRQ(ierr);
 
-    delete[] Ddk;
+    // delete[] Ddk;
 
     return ierr;
 }

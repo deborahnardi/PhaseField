@@ -58,10 +58,14 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     createPETScVariables(matrixPF, rhsPF, solutionPF, numNodes, nDOFPF, true);
     params->setCalculateReactionForces(true);
 
-    Ddk = new double[numNodes]{}; // Damage field at the current iteration
+    // Ddk = new double[numNodes]{}; // Damage field at the current iteration
 
     if (prescribedDamageField)
+    {
+        Ddk = new double[numNodes]{}; // Damage field at the current iteration
         updateFieldDistribution();
+        delete[] Ddk;
+    }
 
     prescribedDamageField = false;
 
@@ -99,6 +103,7 @@ void FEM::staggeredAlgorithm(int _iStep)
     double resStag = 0.0;
     double previousU[globalDOFs.size()]{}; // Previous displacement field
     double maxTol = params->getTolStaggered();
+    Ddk = new double[numNodes]{}; // Damage field at the current iteration
     do
     {
         it++;
@@ -145,6 +150,8 @@ void FEM::staggeredAlgorithm(int _iStep)
         PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
+
+    delete[] Ddk;
 }
 
 void FEM::solveDisplacementField(int _iStep)
