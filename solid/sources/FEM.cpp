@@ -389,6 +389,11 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 #pragma omp for
         for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
         {
+            // #pragma omp critical
+            //             {
+            //                 std::cout << "Thread " << thread_id << " of " << num_threads << " is working on node " << iNode1 << std::endl;
+            //             }
+
             const int n1 = nodesForEachRankCSR[rank] + iNode1;
             std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
             const int numFriends = friendNodes.size();
@@ -502,6 +507,7 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 
     // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++) // Setting the lower triangular part of the matrix
     //     PetscCall(MatSetValue(A, idxCols[i], idxRows[i], val[i], INSERT_VALUES));
+    // exit(0);
 
     return 0;
 }
@@ -538,17 +544,19 @@ PetscErrorCode FEM::updateRHS(Mat &A, Vec &b)
 
 PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 {
-
-    KSP ksp;
-    PC pc;
-    PetscInt its;
+    // KSP ksp;
+    // PC pc;
+    PetscInt its = 0;
     PetscReal residual_norm = 0.;
 
-    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    // PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+    // PetscCall(KSPSetReusePreconditioner(ksp, PETSC_FALSE));
     PetscCall(KSPSetOperators(ksp, A, A));
     PetscCall(KSPSetFromOptions(ksp));
     PetscCall(KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
     PetscCall(KSPGetPC(ksp, &pc));
+
+    PetscCall(VecSet(x, 0.0)); // Initialize the solution vector to zero
 
     switch (params->getSolverType())
     {
@@ -572,11 +580,24 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
         break;
     case EPardiso:
-        PetscCall(KSPSetType(ksp, KSPPREONLY));
-        PetscCall(PCSetType(pc, PCLU));
-        PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMKL_CPARDISO));
+        if (size == 1)
+        {
+            PetscCall(KSPSetType(ksp, KSPPREONLY));
+            PetscCall(PCSetType(pc, PCLU));
+            PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMKL_PARDISO)); // MATSOLVERMKL_CPARDISO for sequential
+        }
+        else
+        {
+            /* NOT WORKING YET */
+            PetscCall(KSPSetType(ksp, KSPPREONLY));
+            PetscCall(PCSetType(pc, PCLU));
+            PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMKL_CPARDISO)); // MATSOLVERMKL_CPARDISO for parallel
+        }
         break;
     }
+
+    PetscCall(PCFactorSetReuseOrdering(pc, PETSC_TRUE));
+    PetscCall(PCFactorSetReuseFill(pc, PETSC_TRUE));
 
     PetscCall(KSPSolve(ksp, b, x));
     PetscCall(KSPGetIterationNumber(ksp, &its)); // Gets the number of iterations
@@ -587,7 +608,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
         PetscCall(PetscPrintf(PETSC_COMM_WORLD, "EIterative(%d) residual norm: %e\n", its, (double)residual_norm));
     }
 
-    PetscCall(KSPDestroy(&ksp));
+    // PetscCall(KSPDestroy(&ksp));
 
     return ierr;
 }

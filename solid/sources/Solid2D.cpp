@@ -441,6 +441,12 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
                     count++;
                 }
 
+        // for (std::size_t i = 0; i < values.size(); ++i)
+        // {
+        //     if (std::isnan(values[i]))
+        //         std::cout << "⚠️  NaN detectado em values[" << i << "] dentro de getStiffnessIIOrIJ!" << std::endl;
+        // }
+
         delete[] N;
         for (int i = 0; i < numElNodes; i++)
             delete[] dN[i];
@@ -864,7 +870,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
 
         for (PetscInt a = 0; a < numElNodes; a++)
             localRHS[a] = firstInt[a] + secondInt[a];
-
+        // #pragma omp critical
         ierr = VecSetValues(rhs, numElDOF, idx, localRHS, ADD_VALUES);
         CHKERRQ(ierr);
         // ======================= SECOND DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE =======================
@@ -915,6 +921,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
         delete[] dN;
     }
 
+    // #pragma omp critical
     ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
     CHKERRQ(ierr);
 

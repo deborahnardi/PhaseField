@@ -51,6 +51,8 @@ private:
     const PetscInt *JC, *IR;
     const PetscScalar *PA;
     PetscBool reuse = PETSC_FALSE;
+    KSP ksp;
+    PC pc;
 
     std::vector<int> n2nUpperTotal, n2nCSRUpperTotal, nodesForEachRankCSR, numNodesForEachRank, n2nDRankUpper, n2nDRankLower, n2nCSRUpper;
     std::vector<std::set<int>> n2nUpperMatTotal, n2e, n2nMat, n2nUpperMat, n2nLowerMat;

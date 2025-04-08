@@ -642,6 +642,8 @@ PetscErrorCode FEM::matrixPreAllocation()
             o_nz[nDOF * ii + iDOF] = (n2nDRankUpper[ii] + n2nDRankLower[ii]) * nDOF;
         }
 
+    PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
+
     return ierr;
 }
 

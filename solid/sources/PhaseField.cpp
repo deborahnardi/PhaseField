@@ -78,8 +78,10 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     {
         PetscPrintf(PETSC_COMM_WORLD, "\n================ STEP %d ================\n", iStep);
         printMemoryUsage(iStep);
+        Ddk = new double[numNodes]{};
         staggeredAlgorithm(iStep); // Returns converged uStag and dStag
         updateFieldVariables(solutionPF);
+        delete[] Ddk;
 
         postProc();
 
@@ -92,6 +94,11 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
     }
 
     cleanSolution(rhs, solution, matrix);
+    cleanSolution(rhsPF, solutionPF, matrixPF);
+
+    KSPDestroy(&ksp);
+    MatDestroy(&seqMatQ);
+
     auto end_timer = std::chrono::high_resolution_clock::now();
     PetscPrintf(PETSC_COMM_WORLD, "Total elapsed time: %f\n", elapsedTime(start_timer, end_timer));
     PetscPrintf(PETSC_COMM_WORLD, "================ END OF PHASE FIELD PROBLEM ================\n");
@@ -103,7 +110,8 @@ void FEM::staggeredAlgorithm(int _iStep)
     double resStag = 0.0;
     double previousU[globalDOFs.size()]{}; // Previous displacement field
     double maxTol = params->getTolStaggered();
-    Ddk = new double[numNodes]{}; // Damage field at the current iteration
+    // Ddk = new double[numNodes]{}; // Damage field at the current iteration
+    // KSPCreate(PETSC_COMM_WORLD, &ksp);
     do
     {
         it++;
@@ -122,7 +130,7 @@ void FEM::staggeredAlgorithm(int _iStep)
 
         PetscLogStagePop();
         //================================================================================================
-        //                                STAGE 02 - SOLVE PHASE FIELD
+        //                                 STAGE 02 - SOLVE PHASE FIELD
         //================================================================================================
         snprintf(stageName, sizeof(stageName), "SolvePFProb: %d", globalCounter, "_", it);
 
@@ -150,8 +158,7 @@ void FEM::staggeredAlgorithm(int _iStep)
         PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
-
-    delete[] Ddk;
+    // KSPDestroy(&ksp);
 }
 
 void FEM::solveDisplacementField(int _iStep)
@@ -185,6 +192,7 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
+    // #pragma omp parallel for
     for (int Ii = DStart; Ii < DEnd; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
 
@@ -414,7 +422,6 @@ PetscErrorCode FEM::updateFieldVariables(Vec &x, bool _hasConverged)
 
     if (_hasConverged)
     {
-
         for (int i = 0; i < numNodes; i++)
         {
 
