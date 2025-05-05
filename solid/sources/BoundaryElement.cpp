@@ -113,6 +113,7 @@ PetscErrorCode BoundaryElement::getContribution(Vec &rhs) // entra com lambda aq
                         delete[] dN[a];
                     delete[] dN;
                 }
+
                 ierr = VecSetValues(rhs, numBdNodes, idx, localRhs, ADD_VALUES);
                 CHKERRQ(ierr);
 

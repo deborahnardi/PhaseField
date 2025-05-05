@@ -347,40 +347,10 @@ PetscErrorCode FEM::assembleProblem(int it)
 
 PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 {
-    // -------------------------------------------------------------------------------------------------
-
     std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
-
-    // std::vector<int> val(totalNnz, 0), idxRows(totalNnz, 0), idxCols(totalNnz, 0);
-    // PetscScalar *val = new PetscScalar[totalNnz]();
-    // PetscInt *idxRows = new PetscInt[totalNnz]();
-    // PetscInt *idxCols = new PetscInt[totalNnz]();
-
-    /*
-        NOTE OF THE PRESENT DEVELOPER FOR THE FUTURE DEVELOPER:
-
-        For some reason, when using BAIJ matrix, the code crashes when setting the values considering pointers for val, idxRows, and idxCols
-        The code works fine when using the arrays directly.
-
-        THIS WON'T WORK:
-        ierr = MatSetValues(A, totalNnz, idxRows, totalNnz, idxCols, val, INSERT_VALUES);
-        CHKERRQ(ierr);
-
-        THIS WILL WORK:
-        for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)
-        PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES));
-
-    */
-
-    // PetscScalar val[totalNnz] = {0};
-    // PetscInt idxRows[totalNnz] = {0};
-    // PetscInt idxCols[totalNnz] = {0};
-
-    // PetscScalar *val = new PetscScalar[totalNnz]();
-    //  PetscInt *idxRows = new PetscInt[totalNnz]();
-    //  PetscInt *idxCols = new PetscInt[totalNnz]();
-
     int kk = 0;
+    SplitModel splitModel = params->getSplitModel();
+
 #pragma omp parallel
     {
         int thread_id = omp_get_thread_num();
@@ -389,11 +359,6 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 #pragma omp for
         for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
         {
-            // #pragma omp critical
-            //             {
-            //                 std::cout << "Thread " << thread_id << " of " << num_threads << " is working on node " << iNode1 << std::endl;
-            //             }
-
             const int n1 = nodesForEachRankCSR[rank] + iNode1;
             std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
             const int numFriends = friendNodes.size();
@@ -431,7 +396,7 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
                         const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                         const int idxLocalNode2 = elemInfo[3 * iElem + 2];
 
-                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
+                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
 
                         localVal[p1] += localStiffValue[0];
                         localVal[p2] += localStiffValue[1];
@@ -463,7 +428,7 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
                         const int elemIndex = elemInfo[3 * iElem];
                         const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                         const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2);
+                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
 
                         localVal[p1] += localStiffValue[0];
                         localVal[p2] += localStiffValue[1];
@@ -560,7 +525,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
 
     switch (params->getSolverType())
     {
-    case ESuiteSparse: // Sequential
+    case ESuiteSparse: // Sequential (it is a direct solver)
         PetscCall(PCSetType(pc, PCLU));
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK));
         break;
@@ -579,7 +544,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
         PetscCall(PCSetType(pc, PCCHOLESKY));
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
         break;
-    case EPardiso:
+    case EPardiso: // Parallel Direct Solver
         if (size == 1)
         {
             PetscCall(KSPSetType(ksp, KSPPREONLY));

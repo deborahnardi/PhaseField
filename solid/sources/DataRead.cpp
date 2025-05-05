@@ -529,7 +529,6 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
 
         for (int jj = n2nCSRUpper[iNode1]; jj < n2nCSRUpper[iNode1 + 1]; jj++) // This loop iterates over the neighbours of each node
         {
-
             int node2 = n2nUpper[jj]; // The neighbour of the node
 
             std::vector<int> elemsFromNode1(n2e[node1].begin(), n2e[node1].end()); // Elements that node1 belongs to
@@ -547,14 +546,12 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
                         numSharedElems++;
                 }
             }
-
             /*
                 3 infos are needed to create the eSharedList array:
                 - The element index;
                 - The local index of node1;
                 - The local index of node2;
             */
-
             std::vector<int> eSharedList(3 * numSharedElems, 0);
             int counter = -1;
             for (int i = 0; i < elemsFromNode1.size(); i++)
@@ -585,7 +582,6 @@ PetscErrorCode FEM::decomposeElements(Vec &b, Vec &x)
                     }
                 }
             }
-
             eSameList[jj] = eSharedList;
         }
     }

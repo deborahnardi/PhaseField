@@ -98,6 +98,7 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
 
     KSPDestroy(&ksp);
     MatDestroy(&seqMatQ);
+    VecDestroy(&nodalForces);
 
     auto end_timer = std::chrono::high_resolution_clock::now();
     PetscPrintf(PETSC_COMM_WORLD, "Total elapsed time: %f\n", elapsedTime(start_timer, end_timer));
@@ -119,27 +120,27 @@ void FEM::staggeredAlgorithm(int _iStep)
         //================================================================================================
         //                                 STAGE 01 - SOLVE DISPLACEMENT FIELD
         //================================================================================================
-        PetscLogStage stageNum;
-        char stageName[100];
-        snprintf(stageName, sizeof(stageName), "SolveEqProb: %d", globalCounter++, "_", it);
+        // PetscLogStage stageNum;
+        // char stageName[100];
+        // snprintf(stageName, sizeof(stageName), "SolveEqProb: %d", globalCounter++, "_", it);
 
-        PetscLogStageRegister(stageName, &stageNum);
-        PetscLogStagePush(stageNum);
+        // PetscLogStageRegister(stageName, &stageNum);
+        // PetscLogStagePush(stageNum);
 
         solveDisplacementField(_iStep); // Obtains ustag
 
-        PetscLogStagePop();
+        //  PetscLogStagePop();
         //================================================================================================
         //                                 STAGE 02 - SOLVE PHASE FIELD
         //================================================================================================
-        snprintf(stageName, sizeof(stageName), "SolvePFProb: %d", globalCounter, "_", it);
+        //    snprintf(stageName, sizeof(stageName), "SolvePFProb: %d", globalCounter, "_", it);
 
-        PetscLogStageRegister(stageName, &stageNum);
-        PetscLogStagePush(stageNum);
+        //      PetscLogStageRegister(stageName, &stageNum);
+        //        PetscLogStagePush(stageNum);
 
         solvePhaseField(); // Obtains dstag
 
-        PetscLogStagePop();
+        // PetscLogStagePop();
         //================================================================================================
 
         // Compute the norm of the difference between the previous and current displacement fields
@@ -192,9 +193,12 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
-    // #pragma omp parallel for
-    for (int Ii = DStart; Ii < DEnd; Ii++)
-        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+#pragma omp parallel
+    {
+#pragma omp for
+        for (int Ii = DStart; Ii < DEnd; Ii++)
+            elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+    }
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));
@@ -356,6 +360,12 @@ PetscErrorCode FEM::PSORAlgorithm()
     delete[] totalVecq;
     delete[] DdkMinus1;
 
+    if (rank == 0)
+    {
+        delete[] JC;
+        delete[] IR;
+    }
+
     return 0;
 }
 
@@ -474,8 +484,12 @@ PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed 
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
-    for (int Ii = DStart; Ii < DEnd; Ii++)
-        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+#pragma omp parallel
+    {
+#pragma omp for
+        for (int Ii = DStart; Ii < DEnd; Ii++)
+            elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+    }
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));

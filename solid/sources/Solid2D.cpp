@@ -253,7 +253,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, boo
     return ierr;
 }
 
-std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
+std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, SplitModel splitModel, bool _PrescribedDamageField)
 {
     /*
         THIS METHOD IS USED TO COMPUTE THE CONTRIBUTION OF A SPECIFIC ELEMENT TO THE GLOBAL MATRIX AND RHS VECTOR
@@ -298,9 +298,7 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
 
     PetscScalar mu = material->getShearModulus();
     PetscScalar kappa = 2.0 / 3.0 * mu + material->getLameConstant();
-    Tensor tensorK = tensors[0];
-    Tensor tensorI = tensors[1];
-    Tensor tensorJ = tensors[2];
+
     int nDOF = 2;
 
     std::vector<double> values;
@@ -359,37 +357,9 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
         PetscReal dCoeff = pow(1 - damageValue, 2);
 
         // ASSEMBLING CONSTITUTIVE MATRIX CONSIDERING THE ENERGY SPLIT
-
         // COMPUTING THE CONSTITUTIVE TENSOR
-        double tensorCPlus[3][3] = {};
-        double tensorCMinus[3][3] = {};
-        double tensorC[3][3] = {};
 
-        if (divU > 0)
-        {
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
-                {
-                    tensorCPlus[i][j] = dCoeff * (kappa * tensorK[i][j] + 2.0 * mu * tensorJ[i][j]);
-                    tensorCMinus[i][j] = 0.0;
-                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
-                }
-        }
-        else if (divU <= 0)
-        {
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
-                {
-                    tensorCPlus[i][j] = dCoeff * 2.0 * mu * tensorJ[i][j];
-                    tensorCMinus[i][j] = kappa * tensorK[i][j];
-                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
-                }
-        }
-
-        // double tensorC[3][3] = {};
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 3; j++)
-                tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+        std::array<std::array<double, 3>, 3> tensorC = computeConstitutiveTensor(splitModel, tensors, gradU, divU, kappa, mu, dCoeff);
 
         // RELATING dN_dX TO THE B MATRIX
         PetscReal B[3][6] = {};
@@ -454,6 +424,222 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
     }
 
     return values;
+}
+
+std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradU[2][2], double divU, double kappa, double mu, double dCoeff)
+{
+    /*
+        Compute Constitutive Tensor based on the energy split model. Implemented split energy models:tensorCPlus
+        volDev: stands for volumetric deviatoric split model;
+        spectral: stands for spectral split model;
+    */
+
+    Tensor tensorK = tensors[0];
+    Tensor tensorI = tensors[1];
+    Tensor tensorJ = tensors[2];
+
+    std::array<std::array<double, 3>, 3> tensorCPlus = {};
+    std::array<std::array<double, 3>, 3> tensorCMinus = {};
+    std::array<std::array<double, 3>, 3> tensorC = {};
+
+    switch (splitModel)
+    {
+    case volDev:
+    {
+        if (divU > 0)
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    tensorCPlus[i][j] = dCoeff * (kappa * tensorK[i][j] + 2.0 * mu * tensorJ[i][j]);
+                    tensorCMinus[i][j] = 0.0;
+                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+                }
+        }
+        else if (divU <= 0)
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    tensorCPlus[i][j] = dCoeff * 2.0 * mu * tensorJ[i][j];
+                    tensorCMinus[i][j] = kappa * tensorK[i][j];
+                    tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+                }
+        }
+
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+
+        break;
+    }
+
+    case spectral:
+    {
+        // Computing deformations (epsilon tensor)
+        double strain[3][3] = {};
+
+        for (PetscInt i = 0; i < 2; i++)
+            for (PetscInt j = 0; j < 2; j++)
+                strain[i][j] = 0.5 * (gradU[i][j] + gradU[j][i]);
+
+        switch (material->getPlaneAnalysis())
+        {
+        case PLANE_STRESS:
+            double _poisson = material->getPoisson();
+            strain[2][2] = -(_poisson / (1 - _poisson)) * (strain[0][0] + strain[1][1]);
+            break;
+        }
+
+        double volStrain = (strain[0][0] + strain[1][1] + strain[2][2]); // Volumetric strain
+        double devStrain[3][3] = {};
+
+        tensorI[2][2] = 0.0;
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                devStrain[i][j] = strain[i][j] - (1.0 / 3.0) * volStrain * tensorI[i][j];
+
+        double eeq = 2.0 / 3.0 * (devStrain[0][0] * devStrain[0][0] + devStrain[1][1] * devStrain[1][1] + devStrain[2][2] * devStrain[2][2] + 2.0 * (devStrain[0][1] * devStrain[0][1] + devStrain[0][2] * devStrain[0][2] + devStrain[1][2] * devStrain[1][2])); // Equivalent strain
+
+        double detdd =
+            devStrain[0][0] * (devStrain[1][1] * devStrain[2][2] - devStrain[1][2] * devStrain[2][1]) -
+            devStrain[0][1] * (devStrain[1][0] * devStrain[2][2] - devStrain[1][2] * devStrain[2][0]) +
+            devStrain[0][2] * (devStrain[1][0] * devStrain[2][1] - devStrain[1][1] * devStrain[2][0]);
+
+        double cos3eta = 4.0 * detdd / (eeq * eeq * eeq);
+        double etaReal = 1.0 / 3.0 * std::acos(cos3eta);
+
+        double etaStar[1][3] = {};
+        etaStar[0][0] = etaReal;
+        etaStar[0][1] = etaReal - 2.0 * M_PI / 3.0;
+        etaStar[0][2] = etaReal + 2.0 * M_PI / 3.0;
+
+        double d_ep_de[3][3] = {};   // First derivative of the energy functional with respect to the strain tensor
+        double d2_ep_de2[3][3] = {}; // Second derivative of the energy functional with respect to the strain tensor
+
+        double e11 = devStrain[0][0];
+        double e22 = devStrain[1][1];
+        double e12 = devStrain[0][1];
+        double e33 = devStrain[2][2];
+        double e23 = devStrain[1][2];
+        double e13 = devStrain[0][2];
+        double e31 = devStrain[2][0];
+        double e32 = devStrain[2][1];
+        double e21 = devStrain[1][0];
+
+        for (int ip = 0; ip < 3; ip++) // ip stands for the principal value
+        {
+            double eta = etaStar[0][ip];
+            double cosEta = std::cos(eta);
+
+            // d_cos(3eta)_dekl ---------------------------------------------------
+
+            double d_cos3eta_de[1][3] = {};
+
+            d_cos3eta_de[0][0] = (27.0 / 4.0) * (pow(e11, 2) * pow(e22, 2) - 3 * e11 * pow(e12, 2) * e22 - e11 * pow(e22, 3) + 2 * pow(e12, 4) + pow(e12, 2) * pow(e22, 2)) / (sqrt(pow(e11, 2) - e11 * e22 + 3 * pow(e12, 2) + pow(e22, 2)) * (pow(e11, 4) - 2 * pow(e11, 3) * e22 + 6 * pow(e11, 2) * pow(e12, 2) + 3 * pow(e11, 2) * pow(e22, 2) - 6 * e11 * pow(e12, 2) * e22 - 2 * e11 * pow(e22, 3) + 9 * pow(e12, 4) + 6 * pow(e12, 2) * pow(e22, 2) + pow(e22, 4)));
+
+            d_cos3eta_de[0][1] = (27.0 / 4.0) * (-pow(e11, 3) * e22 + pow(e11, 2) * pow(e12, 2) + pow(e11, 2) * pow(e22, 2) - 3 * e11 * pow(e12, 2) * e22 + 2 * pow(e12, 4)) / (sqrt(pow(e11, 2) - e11 * e22 + 3 * pow(e12, 2) + pow(e22, 2)) * (pow(e11, 4) - 2 * pow(e11, 3) * e22 + 6 * pow(e11, 2) * pow(e12, 2) + 3 * pow(e11, 2) * pow(e22, 2) - 6 * e11 * pow(e12, 2) * e22 - 2 * e11 * pow(e22, 3) + 9 * pow(e12, 4) + 6 * pow(e12, 2) * pow(e22, 2) + pow(e22, 4)));
+
+            d_cos3eta_de[0][2] = 54 * sqrt(6) * e12 * (-6 * pow(e11, 3) + 9 * pow(e11, 2) * e22 - 27 * e11 * pow(e12, 2) + 9 * e11 * pow(e22, 2) - 27 * pow(e12, 2) * e22 - 6 * pow(e22, 3) + (e11 + e22) * (18 * pow(e12, 2) + pow(e11 - 2 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2))) / pow(18 * pow(e12, 2) + pow(e11 - 2 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2), 5.0 / 2.0);
+
+            // d2_cos(3eta)_deij_dekl--------------------------------------------
+
+            double d2_cos3eta_de2[3][3] = {};
+            d2_cos3eta_de2[0][0] = 9.0 * sqrt(6) * (45.0 * pow(2 * e11 - e22, 2) * (2 * pow(e11, 3) - 3 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + 2.0 * (2 * e11 - e22) * pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 6.0 * (18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2)) * (-2.0 * pow(e11, 3) + 3.0 * pow(e11, 2) * e22 - 9.0 * e11 * pow(e12, 2) + 3.0 * e11 * pow(e22, 2) - 9.0 * pow(e12, 2) * e22 - 2.0 * pow(e22, 3) - 3.0 * (2 * e11 - e22) * (2.0 * pow(e11, 2) - 2.0 * e11 * e22 + 3.0 * pow(e12, 2) - pow(e22, 2)))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2), 7.0 / 2.0);
+
+            d2_cos3eta_de2[0][1] = (27.0 / 8.0) * (4.0 * pow(e11, 4) * e22 - 6.0 * pow(e11, 3) * pow(e12, 2) - 5.0 * pow(e11, 3) * pow(e22, 2) + 7.0 * pow(e11, 2) * pow(e12, 2) * e22 - 5.0 * pow(e11, 2) * pow(e22, 3) - 8.0 * e11 * pow(e12, 4) + 7.0 * e11 * pow(e12, 2) * pow(e22, 2) + 4.0 * e11 * pow(e22, 4) - 8.0 * pow(e12, 4) * e22 - 6.0 * pow(e12, 2) * pow(e22, 3)) / (sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) * (pow(e11, 6) - 3.0 * pow(e11, 5) * e22 + 9.0 * pow(e11, 4) * pow(e12, 2) + 6.0 * pow(e11, 4) * pow(e22, 2) - 18.0 * pow(e11, 3) * pow(e12, 2) * e22 - 7.0 * pow(e11, 3) * pow(e22, 3) + 27.0 * pow(e11, 2) * pow(e12, 4) + 27.0 * pow(e11, 2) * pow(e12, 2) * pow(e22, 2) + 6.0 * pow(e11, 2) * pow(e22, 4) - 27.0 * e11 * pow(e12, 4) * e22 - 18.0 * e11 * pow(e12, 2) * pow(e22, 3) - 3.0 * e11 * pow(e22, 5) + 27.0 * pow(e12, 6) + 27.0 * pow(e12, 4) * pow(e22, 2) + 9.0 * pow(e12, 2) * pow(e22, 4) + pow(e22, 6)));
+
+            d2_cos3eta_de2[0][2] = 54.0 * sqrt(6) * e12 * (45.0 * (2.0 * e11 - e22) * (2.0 * pow(e11, 3) - 3.0 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 9.0 * (18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2)) * (-2.0 * pow(e11, 2) + 2.0 * e11 * e22 - 3.0 * pow(e12, 2) + pow(e22, 2) - (e11 + e22) * (2.0 * e11 - e22))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2), 7.0 / 2.0);
+            //
+            d2_cos3eta_de2[1][0] = (27.0 / 8.0) * (4.0 * pow(e11, 4) * e22 - 6.0 * pow(e11, 3) * pow(e12, 2) - 5.0 * pow(e11, 3) * pow(e22, 2) + 7.0 * pow(e11, 2) * pow(e12, 2) * e22 - 5.0 * pow(e11, 2) * pow(e22, 3) - 8.0 * e11 * pow(e12, 4) + 7.0 * e11 * pow(e12, 2) * pow(e22, 2) + 4.0 * e11 * pow(e22, 4) - 8.0 * pow(e12, 4) * e22 - 6.0 * pow(e12, 2) * pow(e22, 3)) / (sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) * (pow(e11, 6) - 3.0 * pow(e11, 5) * e22 + 9.0 * pow(e11, 4) * pow(e12, 2) + 6.0 * pow(e11, 4) * pow(e22, 2) - 18.0 * pow(e11, 3) * pow(e12, 2) * e22 - 7.0 * pow(e11, 3) * pow(e22, 3) + 27.0 * pow(e11, 2) * pow(e12, 4) + 27.0 * pow(e11, 2) * pow(e12, 2) * pow(e22, 2) + 6.0 * pow(e11, 2) * pow(e22, 4) - 27.0 * e11 * pow(e12, 4) * e22 - 18.0 * e11 * pow(e12, 2) * pow(e22, 3) - 3.0 * e11 * pow(e22, 5) + 27.0 * pow(e12, 6) + 27.0 * pow(e12, 4) * pow(e22, 2) + 9.0 * pow(e12, 2) * pow(e22, 4) + pow(e22, 6)));
+
+            d2_cos3eta_de2[1][1] = 9.0 * sqrt(6) * (2.0 * (-e11 + 2.0 * e22) * pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 45.0 * pow(e11 - 2.0 * e22, 2) * (2.0 * pow(e11, 3) - 3.0 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + 6.0 * (18.0 * pow(e12, 2) + pow(e11 - 2 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2)) * (-2.0 * pow(e11, 3) + 3.0 * pow(e11, 2) * e22 - 9.0 * e11 * pow(e12, 2) + 3.0 * e11 * pow(e22, 2) - 9.0 * pow(e12, 2) * e22 - 2.0 * pow(e22, 3) - 3.0 * (e11 - 2.0 * e22) * (pow(e11, 2) + 2.0 * e11 * e22 - 3.0 * pow(e12, 2) - 2.0 * pow(e22, 2)))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 7.0 / 2.0);
+
+            d2_cos3eta_de2[1][2] = 54.0 * sqrt(6) * e12 * (-45.0 * (e11 - 2.0 * e22) * (2.0 * pow(e11, 3) - 3.0 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 9.0 * (18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2)) * (pow(e11, 2) + 2.0 * e11 * e22 - 3.0 * pow(e12, 2) - 2.0 * pow(e22, 2) + (e11 - 2.0 * e22) * (e11 + e22))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2), 7.0 / 2.0);
+            //
+            d2_cos3eta_de2[2][0] = 54.0 * sqrt(6) * e12 * (45.0 * (2.0 * e11 - e22) * (2.0 * pow(e11, 3) - 3.0 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 9.0 * (18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2)) * (-2.0 * pow(e11, 2) + 2.0 * e11 * e22 - 3.0 * pow(e12, 2) + pow(e22, 2) - (e11 + e22) * (2.0 * e11 - e22))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2), 7.0 / 2.0);
+
+            d2_cos3eta_de2[2][1] = 54.0 * sqrt(6) * e12 * (-45.0 * (e11 - 2 * e22) * (2.0 * pow(e11, 3) - 3.0 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 9.0 * (18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2)) * (pow(e11, 2) + 2.0 * e11 * e22 - 3.0 * pow(e12, 2) - 2.0 * pow(e22, 2) + (e11 - 2.0 * e22) * (e11 + e22))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2 * e11 - e22, 2), 7.0 / 2.0);
+
+            d2_cos3eta_de2[2][2] = 54.0 * sqrt(6) * (270.0 * pow(e12, 2) * (2.0 * pow(e11, 3) - 3.0 * pow(e11, 2) * e22 + 9.0 * e11 * pow(e12, 2) - 3.0 * e11 * pow(e22, 2) + 9.0 * pow(e12, 2) * e22 + 2.0 * pow(e22, 3)) + (e11 + e22) * pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 2) + 3.0 * (18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2)) * (-2.0 * pow(e11, 3) + 3.0 * pow(e11, 2) * e22 - 9.0 * e11 * pow(e12, 2) + 3.0 * e11 * pow(e22, 2) - 9.0 * pow(e12, 2) * e22 - 36.0 * pow(e12, 2) * (e11 + e22) - 2.0 * pow(e22, 3))) / pow(18.0 * pow(e12, 2) + pow(e11 - 2.0 * e22, 2) + pow(e11 + e22, 2) + pow(2.0 * e11 - e22, 2), 7.0 / 2.0);
+
+            // d_eeq_deij--------------------------------------------
+            double d_eeq_de[1][3] = {};
+
+            d_eeq_de[0][0] = (2.0 / 3.0) * e11 / sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 1.0 / 3.0 * e22 / sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2));
+
+            d_eeq_de[0][1] = -1.0 / 3.0 * e11 / sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + (2.0 / 3.0) * e22 / sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2));
+
+            d_eeq_de[0][2] = 2.0 * e12 / sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2));
+
+            // d2_eeq_deij_dekl -------------------------------------------------
+
+            double d2_eeq_de2[3][3] = {};
+            d2_eeq_de2[0][0] = 4.0 * pow(e12, 2) / (2.0 * pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 2.0 * e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 6.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 2.0 * pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) + pow(e22, 2) / (2.0 * pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 2.0 * e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 6.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 2.0 * pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+
+            d2_eeq_de2[0][1] = -e11 * e22 / (2.0 * pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 2.0 * e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 6.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 2.0 * pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) - pow(e12, 2) / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+
+            d2_eeq_de2[0][2] = -2.0 * e11 * e12 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) + e12 * e22 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+            //
+            d2_eeq_de2[1][0] = -e11 * e22 / (2.0 * pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 2.0 * e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 6.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 2.0 * pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) - pow(e12, 2) / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+
+            d2_eeq_de2[1][1] = pow(e11, 2) / (2.0 * pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 2.0 * e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 6.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 2.0 * pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) + 4.0 * pow(e12, 2) / (2.0 * pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - 2.0 * e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 6.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 2.0 * pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+
+            d2_eeq_de2[1][2] = e11 * e12 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) - 2.0 * e12 * e22 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+            //
+            d2_eeq_de2[2][0] = -2.0 * e11 * e12 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) + e12 * e22 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+
+            d2_eeq_de2[2][1] = e11 * e12 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) - 2.0 * e12 * e22 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+
+            d2_eeq_de2[2][2] = 2.0 * pow(e11, 2) / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) - 2.0 * e11 * e22 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) + 2.0 * pow(e22, 2) / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
+            // -------------------------------------------------
+
+            double d_coseta_de[1][3] = {};
+            for (int i = 0; i < 3; i++)
+                d_coseta_de[0][i] = d_cos3eta_de[0][i] / (12.0 * cosEta * cosEta - 3.0);
+
+            // -------------------------------------------------
+
+            double d2_coseta_de2[3][3] = {};
+            std::vector<std::vector<double>> outerProduct1(3, std::vector<double>(3, 0.0)); // outer product between d_cos3eta_de and d_coseta_de
+
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    outerProduct1[i][j] = d_cos3eta_de[0][i] * d_coseta_de[0][j];
+                    d2_coseta_de2[i][j] = (d2_cos3eta_de2[i][j] * (12.0 * cosEta * cosEta - 3.0) - 24.0 * cosEta * outerProduct1[i][j]) / pow((12.0 * cosEta * cosEta - 3), 2);
+                }
+
+            // -------------------------------------------------
+
+            std::vector<std::vector<double>> outerProduct2(3, std::vector<double>(3, 0.0)); // outer product between d_eeq_de and d_coseta_de
+            std::vector<std::vector<double>> outerProduct3(3, std::vector<double>(3, 0.0)); // outer product between d_coseta_de and d_eeq_de
+
+            double d2_eq_de2[3][3][3] = {};
+
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j)
+                {
+                    outerProduct2[i][j] = d_eeq_de[0][i] * d_coseta_de[0][j];
+                    outerProduct3[i][j] = d_coseta_de[0][i] * d_eeq_de[0][j];
+                    d2_eq_de2[ip][i][j] = cosEta * d2_eeq_de2[i][j] + outerProduct2[i][j] + outerProduct3[i][j] + eeq * d2_coseta_de2[i][j];
+                }
+
+            // -------------------------------------------------
+
+            double ident[1][3] = {};
+            ident[0][0] = 1.0;
+            ident[0][1] = 1.0;
+            ident[0][2] = 0.0;
+
+            double d_ep_de[1][3] = {};
+            for (int i = 0; i < 3; i++)
+                d_ep_de[0][i] = 1.0 / 3.0 * ident[0][i] + cosEta * d_eeq_de[0][i] + eeq * d_coseta_de[0][i];
+        }
+    }
+    }
+
+    return tensorC;
 }
 
 double Solid2D::getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField)
@@ -870,8 +1056,10 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
 
         for (PetscInt a = 0; a < numElNodes; a++)
             localRHS[a] = firstInt[a] + secondInt[a];
-        // #pragma omp critical
-        ierr = VecSetValues(rhs, numElDOF, idx, localRHS, ADD_VALUES);
+#pragma omp critical
+        {
+            ierr = VecSetValues(rhs, numElDOF, idx, localRHS, ADD_VALUES);
+        }
         CHKERRQ(ierr);
         // ======================= SECOND DERIVATIVE WITH RESPECT TO THE FIELD VARIABLE =======================
         for (PetscInt a = 0; a < numElNodes; a++)
@@ -921,8 +1109,10 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
         delete[] dN;
     }
 
-    // #pragma omp critical
-    ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
+#pragma omp critical
+    {
+        ierr = MatSetValues(A, numElDOF, idx, numElDOF, idx, localQ, ADD_VALUES);
+    }
     CHKERRQ(ierr);
 
     delete[] idx;

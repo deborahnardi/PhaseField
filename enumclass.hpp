@@ -9,6 +9,12 @@ enum SolverType
     EPardiso
 };
 
+enum SplitModel
+{
+    volDev,
+    spectral
+};
+
 enum BoundaryType
 {
     DIRICHLET = 0,

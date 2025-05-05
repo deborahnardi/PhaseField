@@ -17,6 +17,7 @@ private:
     std::vector<double> dispByStep;
     SolverType solverType = EMumps;
     bool calcReactionForces = false;
+    SplitModel splitModel = volDev;
     std::string PFmodel = "AT2", reactionDir = "X";
 
 public:
@@ -39,6 +40,7 @@ public:
     bool getCalculateReactionForces() const { return calcReactionForces; }
     std::string getPFModel() const { return PFmodel; }
     std::string getReactionDir() const { return reactionDir; }
+    SplitModel getSplitModel() const { return splitModel; }
 
     void setNSteps(const int &_nSteps) { nSteps = _nSteps; }
     void setMaxNewtonRaphsonIt(const int &_maxItNR) { maxItNR = _maxItNR; }
@@ -52,4 +54,5 @@ public:
     void calculateReactionForces(const bool &_calcReactionForces) { calcReactionForces = _calcReactionForces; }
     void setReactionDir(const std::string &_reactionDir) { reactionDir = _reactionDir; }
     void setPFModel(const std::string &_PFmodel) { PFmodel = _PFmodel; }
+    SplitModel setSplitModel(const SplitModel &_splitModel) { splitModel = _splitModel; }
 };
