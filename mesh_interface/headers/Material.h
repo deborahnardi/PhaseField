@@ -13,7 +13,7 @@ private:
 
 public:
     Material();
-    Material(int _index, double _poisson, double _young, PlaneAnalysis _planeAnalysis = PLANE_STRESS);
+    Material(int _index, double _poisson, double _young, PlaneAnalysis _planeAnalysis = PLANE_STRAIN);
     ~Material();
 
     int getIndex() { return index; };

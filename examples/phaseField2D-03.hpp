@@ -103,6 +103,7 @@ params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
 params->setReactionDir("Y");
 params->setPFModel("AT2");
+params->setSplitModel(spectral);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");
 analysis1->setPrintMatrix(false);

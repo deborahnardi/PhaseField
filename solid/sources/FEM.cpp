@@ -351,120 +351,120 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
     int kk = 0;
     SplitModel splitModel = params->getSplitModel();
 
-#pragma omp parallel
+    // #pragma omp parallel
+    //     {
+    //         int thread_id = omp_get_thread_num();
+    //         int num_threads = omp_get_num_threads();
+
+    // #pragma omp for
+    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
     {
-        int thread_id = omp_get_thread_num();
-        int num_threads = omp_get_num_threads();
+        const int n1 = nodesForEachRankCSR[rank] + iNode1;
+        std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
+        const int numFriends = friendNodes.size();
+        PetscScalar localVal[nDOF * nDOF * numFriends - 1] = {0};  // Node 0 has 0, 1, 4 and 7 as friends. 0-0: 3 positions, 0-1: 4 positions, 0-4: 4 positions, 0-7: 4 positions. Total: 15 positions.
+        PetscInt idxLocalRows[nDOF * nDOF * numFriends - 1] = {0}; // Local values belong to the current thread
+        PetscInt idxLocalCols[nDOF * nDOF * numFriends - 1] = {0};
 
-#pragma omp for
-        for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
+        int kkn2n = 0, kkLocal = 0, kkStart = 0;
+        kkStart = n2nCSRUpper[iNode1] * nDOF * nDOF - (iNode1);
+
+        for (auto n2 : friendNodes)
         {
-            const int n1 = nodesForEachRankCSR[rank] + iNode1;
-            std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
-            const int numFriends = friendNodes.size();
-            PetscScalar localVal[nDOF * nDOF * numFriends - 1] = {0};  // Node 0 has 0, 1, 4 and 7 as friends. 0-0: 3 positions, 0-1: 4 positions, 0-4: 4 positions, 0-7: 4 positions. Total: 15 positions.
-            PetscInt idxLocalRows[nDOF * nDOF * numFriends - 1] = {0}; // Local values belong to the current thread
-            PetscInt idxLocalCols[nDOF * nDOF * numFriends - 1] = {0};
+            // std::vector<int> elemInfo = eSameList[kkn2n];
+            std::vector<int> elemInfo = eSameListForEachNode[iNode1][kkn2n];
+            const int numLocalElems = elemInfo.size() / 3;
 
-            int kkn2n = 0, kkLocal = 0, kkStart = 0;
-            kkStart = n2nCSRUpper[iNode1] * nDOF * nDOF - (iNode1);
+            /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
+                IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
+                CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
+             */
 
-            for (auto n2 : friendNodes)
-            {
-                // std::vector<int> elemInfo = eSameList[kkn2n];
-                std::vector<int> elemInfo = eSameListForEachNode[iNode1][kkn2n];
-                const int numLocalElems = elemInfo.size() / 3;
+            if (n1 != n2)
+            { // idof = 0,       jdof = 0
+                int p1 = kkLocal;
+                // idof = 0,       jdof = 1
+                int p2 = kkLocal + 1;
+                // idof = 1,       jdof = 0
+                int p3 = kkLocal + numFriends * nDOF - 1;
+                // idof = 1,       jdof = 1
+                int p4 = kkLocal + numFriends * nDOF + 0;
 
-                /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
-                    IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
-                    CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
-                 */
-
-                if (n1 != n2)
-                { // idof = 0,       jdof = 0
-                    int p1 = kkLocal;
-                    // idof = 0,       jdof = 1
-                    int p2 = kkLocal + 1;
-                    // idof = 1,       jdof = 0
-                    int p3 = kkLocal + numFriends * nDOF - 1;
-                    // idof = 1,       jdof = 1
-                    int p4 = kkLocal + numFriends * nDOF + 0;
-
-                    for (int iElem = 0; iElem < numLocalElems; iElem++)
-                    {
-                        const int elemIndex = elemInfo[3 * iElem];
-                        const int idxLocalNode1 = elemInfo[3 * iElem + 1];
-                        const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-
-                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
-
-                        localVal[p1] += localStiffValue[0];
-                        localVal[p2] += localStiffValue[1];
-                        localVal[p3] += localStiffValue[2];
-                        localVal[p4] += localStiffValue[3];
-                    }
-
-                    idxLocalRows[p1] = nDOF * n1;     // First DOF
-                    idxLocalRows[p2] = nDOF * n1;     // First DOF
-                    idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
-                    idxLocalRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
-
-                    idxLocalCols[p1] = nDOF * n2;
-                    idxLocalCols[p2] = nDOF * n2 + 1;
-                    idxLocalCols[p3] = nDOF * n2;
-                    idxLocalCols[p4] = nDOF * n2 + 1;
-                }
-                else
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
                 {
-                    // idof = 0,       jdof = 0
-                    int p1 = kkLocal;
-                    // idof = 0,       jdof = 1
-                    int p2 = kkLocal + 1;
-                    // idof = 1,       jdof = 1
-                    int p3 = kkLocal + numFriends * nDOF;
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
 
-                    for (int iElem = 0; iElem < numLocalElems; iElem++)
-                    {
-                        const int elemIndex = elemInfo[3 * iElem];
-                        const int idxLocalNode1 = elemInfo[3 * iElem + 1];
-                        const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
 
-                        localVal[p1] += localStiffValue[0];
-                        localVal[p2] += localStiffValue[1];
-                        localVal[p3] += localStiffValue[2];
-                    }
-
-                    idxLocalRows[p1] = nDOF * n1;
-                    idxLocalRows[p2] = nDOF * n1;
-                    idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
-
-                    idxLocalCols[p1] = nDOF * n2;
-                    idxLocalCols[p2] = nDOF * n2 + 1;
-                    idxLocalCols[p3] = nDOF * n2 + 1;
-
-                    // There is no p4 due to symmetry
+                    localVal[p1] += localStiffValue[0];
+                    localVal[p2] += localStiffValue[1];
+                    localVal[p3] += localStiffValue[2];
+                    localVal[p4] += localStiffValue[3];
                 }
-                kkn2n++;
-                kkLocal += nDOF;
-            }
 
-            //  Spreads local values to global values
-            // for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
-            // {
-            //     val[kkStart + i] = localVal[i];
-            //     idxRows[kkStart + i] = idxLocalRows[i];
-            //     idxCols[kkStart + i] = idxLocalCols[i];
-            // }
-#pragma omp critical
-            for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
+                idxLocalRows[p1] = nDOF * n1;     // First DOF
+                idxLocalRows[p2] = nDOF * n1;     // First DOF
+                idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+                idxLocalRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                idxLocalCols[p1] = nDOF * n2;
+                idxLocalCols[p2] = nDOF * n2 + 1;
+                idxLocalCols[p3] = nDOF * n2;
+                idxLocalCols[p4] = nDOF * n2 + 1;
+            }
+            else
             {
-                MatSetValue(A, idxLocalRows[i], idxLocalCols[i], localVal[i], INSERT_VALUES);
-                MatSetValue(A, idxLocalCols[i], idxLocalRows[i], localVal[i], INSERT_VALUES);
-            }
+                // idof = 0,       jdof = 0
+                int p1 = kkLocal;
+                // idof = 0,       jdof = 1
+                int p2 = kkLocal + 1;
+                // idof = 1,       jdof = 1
+                int p3 = kkLocal + numFriends * nDOF;
 
-            // kk += kkLocal + nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
+                for (int iElem = 0; iElem < numLocalElems; iElem++)
+                {
+                    const int elemIndex = elemInfo[3 * iElem];
+                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
+
+                    localVal[p1] += localStiffValue[0];
+                    localVal[p2] += localStiffValue[1];
+                    localVal[p3] += localStiffValue[2];
+                }
+
+                idxLocalRows[p1] = nDOF * n1;
+                idxLocalRows[p2] = nDOF * n1;
+                idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                idxLocalCols[p1] = nDOF * n2;
+                idxLocalCols[p2] = nDOF * n2 + 1;
+                idxLocalCols[p3] = nDOF * n2 + 1;
+
+                // There is no p4 due to symmetry
+            }
+            kkn2n++;
+            kkLocal += nDOF;
         }
+
+        //  Spreads local values to global values
+        // for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
+        // {
+        //     val[kkStart + i] = localVal[i];
+        //     idxRows[kkStart + i] = idxLocalRows[i];
+        //     idxCols[kkStart + i] = idxLocalCols[i];
+        // }
+        // #pragma omp critical
+        for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
+        {
+            MatSetValue(A, idxLocalRows[i], idxLocalCols[i], localVal[i], INSERT_VALUES);
+            MatSetValue(A, idxLocalCols[i], idxLocalRows[i], localVal[i], INSERT_VALUES);
+        }
+
+        // kk += kkLocal + nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
+        //}
     }
 
     // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
