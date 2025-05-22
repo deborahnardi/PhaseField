@@ -476,12 +476,15 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
     case spectral:
     {
-        // Computing deformations (epsilon tensor)
+        // Computing deformations(epsilon tensor) double strain[3][3] = { {0.0} }; //
         double strain[3][3] = {};
-
-        for (PetscInt i = 0; i < 2; i++)
-            for (PetscInt j = 0; j < 2; j++)
+        for (PetscInt i = 0; i < 2; ++i)
+            for (PetscInt j = 0; j < 2; ++j)
                 strain[i][j] = 0.5 * (gradU[i][j] + gradU[j][i]);
+
+        strain[0][2] = strain[2][0] = 0.0;
+        strain[1][2] = strain[2][1] = 0.0;
+        strain[2][2] = 0.0;
 
         switch (material->getPlaneAnalysis())
         {
@@ -491,10 +494,10 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
             break;
         }
 
-        strain[0][0] = 2.0e-5;
-        strain[1][1] = -1.0e-4;
-        strain[0][1] = -3.0e-5;
-        strain[1][0] = strain[0][1];
+        // strain[0][0] = 4.201433961241174E-004;
+        // strain[1][1] = 1.803278624210739E-004;
+        // strain[0][1] = 1.479491857090474E-003;
+        // strain[1][0] = strain[0][1];
 
         // strain[0][0] = 1.0e-5;
         // strain[1][1] = 1.0e-5;
@@ -537,9 +540,20 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
             d12 * (d21 * d33 - d23 * d31) +
             d13 * (d21 * d32 - d22 * d31);
 
-        double cos3eta = 4.0 * detdd / (eeq * eeq * eeq);
-        cos3eta = std::round(cos3eta * 1e10) / 1e10;
-        double etaReal = 1.0 / 3.0 * std::acos(cos3eta);
+        double tol = 1e-12;
+        double etaReal = 0.0, cos3eta = 0.0;
+
+        if (std::abs(eeq) < tol)
+        {
+            etaReal = 0.0; // ou qualquer valor apropriado (ex: 0 → ep1 = ep2 = ep3 = volStrain)
+        }
+        else
+        {
+            cos3eta = 4.0 * detdd / (eeq * eeq * eeq);
+            cos3eta = std::clamp(cos3eta, -1.0, 1.0);
+            cos3eta = std::round(cos3eta * 1e10) / 1e10;
+            etaReal = (1.0 / 3.0) * std::acos(cos3eta);
+        }
 
         double etaStar[3] = {};
         etaStar[0] = etaReal;
@@ -564,26 +578,10 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
         // COMPUTING THE PRINCIPAL VALUES VIA LODE ANGLE
 
-        double ep1 = volStrain + eeq * std::cos(etaStar[0]); // ep1
-        double ep2 = volStrain + eeq * std::cos(etaStar[1]); // ep2
-        double ep3 = volStrain + eeq * std::cos(etaStar[2]); // ep3
-
-        // SEPARATING THE POSITIVE AND NEGATIVE EIGENVALUES
         double principalValues[3] = {};
-        principalValues[0] = ep1;
-        principalValues[1] = ep2;
-        principalValues[2] = ep3;
-
-        double epPos[3] = {};
-        double epNeg[3] = {};
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (principalValues[i] > 0)
-                epPos[i] = principalValues[i];
-            else
-                epNeg[i] = principalValues[i];
-        }
+        principalValues[0] = volStrain + eeq * std::cos(etaStar[0]); // ep1
+        principalValues[1] = volStrain + eeq * std::cos(etaStar[1]); // ep2
+        principalValues[2] = volStrain + eeq * std::cos(etaStar[2]); // ep3
 
         // d_eeq_deij--------------------------------------------
         double d_eeq_de[3] = {};
@@ -613,13 +611,15 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
         d2_eeq_de2[2][2] = 2.0 * pow(e11, 2) / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) - 2.0 * e11 * e22 / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2))) + 2.0 * pow(e22, 2) / (pow(e11, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) - e11 * e22 * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + 3.0 * pow(e12, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)) + pow(e22, 2) * sqrt(pow(e11, 2) - e11 * e22 + 3.0 * pow(e12, 2) + pow(e22, 2)));
         // -------------------------------------------------
-
-        if (delta < 0)                     // THERE ARE 3 DISTINCT REAL EIGENVALUES
-            for (int ip = 0; ip < 3; ip++) // ip stands for the principal value
+        double tolDelta = 1e-12;
+        if (std::abs(principalValues[0] - principalValues[1]) > tol && std::abs(principalValues[0] - principalValues[2]) > tol && std::abs(principalValues[1] - principalValues[2]) > tol) // THERE ARE 3 DISTINCT REAL EIGENVALUES
+            for (int ip = 0; ip < 3; ip++)                                                                                                                                                 // ip stands for the principal value
             {
                 double eta = etaStar[ip];
                 double cosEta = std::cos(eta);
-
+                cosEta = std::round(cosEta * 1e10) / 1e10;
+                // std::cout << "delta: " << delta << " ep1: " << principalValues[0] << " ep2: " << principalValues[1] << " ep3: " << principalValues[2] << std::endl;
+                // std::cout << "cos(eta): " << cosEta << std::endl;
                 // d_cos(3eta)_dekl ---------------------------------------------------
 
                 double d_cos3eta_de[3] = {};
@@ -654,16 +654,12 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
                 // -------------------------------------------------
 
                 double d_coseta_de[3] = {};
-                double num = d_cos3eta_de[2];
-                double denum = (12.0 * cosEta * cosEta - 3.0);
-                double teste = num / denum;
                 for (int i = 0; i < 3; i++)
                     d_coseta_de[i] = d_cos3eta_de[i] / (12.0 * cosEta * cosEta - 3.0);
 
                 // -------------------------------------------------
 
                 double d2_coseta_de2[3][3] = {};
-                // double outerProduct1[3][3] = {}; // outer product between d_cos3eta_de and d_coseta_de
 
                 for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
@@ -802,16 +798,10 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         // -------------------------------------------------
 
         // COMPUTING THE CONSTITUTIVE TENSOR D
-        double tensorC[3][3] = {};
-        double lame = 1.0; // material->getLameConstant();
-        double mu = 0.25;  // material->getShearModulus();
+        double lame = material->getLameConstant(); // 1.0
+        double mu = material->getShearModulus();   // 0.25
 
-        double outerProduct[3][3][3] = {}; // outer product between d_ep_de and d_ep_de
-
-        // for (int ip = 0; ip < 3; ip++)
-        //     for (int i = 0; i < 3; i++)
-        //         for (int j = 0; j < 3; j++)
-        //             outerProduct[ip][i][j] = d_ep_de[ip][i] * d_ep_de[ip][j];
+        // double outerProduct[3][3][3] = {}; // outer product between d_ep_de and d_ep_de
 
         // double outerProductIdent[3][3] = {}; // outer product between ident and ident
         // for (int i = 0; i < 3; i++)
@@ -823,23 +813,23 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         //     }
         double d_ep_de_pos[3][3] = {};
         double d_ep_de_neg[3][3] = {};
-
-        for (int i = 0; i < 3; i++)
+        const double pTol = 1.0e-12;
+        for (int ip = 0; ip < 3; ip++)
         {
-            if (principalValues[i] >= 0.0)
+            if (principalValues[ip] >= pTol)
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    d_ep_de_pos[i][j] = d_ep_de[i][j];
-                    d_ep_de_neg[i][j] = 0.0;
+                    d_ep_de_pos[ip][j] = d_ep_de[ip][j];
+                    d_ep_de_neg[ip][j] = 0.0;
                 }
             }
             else
             {
                 for (int j = 0; j < 3; j++)
                 {
-                    d_ep_de_pos[i][j] = 0.0;
-                    d_ep_de_neg[i][j] = d_ep_de[i][j];
+                    d_ep_de_pos[ip][j] = 0.0;
+                    d_ep_de_neg[ip][j] = d_ep_de[ip][j];
                 }
             }
         }
@@ -849,7 +839,7 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
         for (int ip = 0; ip < 3; ip++)
         {
-            if (principalValues[ip] >= 0.0)
+            if (principalValues[ip] >= pTol)
             {
                 for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
@@ -869,18 +859,74 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
             }
         }
 
-        // double outerProductEpEp[3][3] = {};
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 3; j++)
-        //     {
-        //     }
+        double outerProductEpEpPos[3][3][3] = {};
+        double outerProductEpEpNeg[3][3][3] = {};
+        for (int ip = 0; ip < 3; ip++)
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    outerProductEpEpPos[ip][i][j] = d_ep_de_pos[ip][i] * d_ep_de_pos[ip][j];
+                    outerProductEpEpNeg[ip][i][j] = d_ep_de_neg[ip][i] * d_ep_de_neg[ip][j];
+                }
 
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 3; j++)
-        //     {
-        //         double outerProductIdent = ident[i] * ident[j];
-        //         tensorCPlus[i][j] = dCoeff *
-        //     }
+        // COMPUTING THE POSITIVE AND NEGATIVE PART OF THE TENSOR
+        for (int ip = 0; ip < 3; ip++)
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    tensorCPlus[i][j] += 2 * mu * (outerProductEpEpPos[ip][i][j] + principalValues[ip] * d2_ep_de2_pos[ip][i][j]);
+                    tensorCMinus[i][j] += 2 * mu * (outerProductEpEpNeg[ip][i][j] + principalValues[ip] * d2_ep_de2_neg[ip][i][j]);
+                }
+        }
+
+        bool strainIsNull = true;
+        for (int ip = 0; ip < 3; ++ip)
+        {
+            if (std::abs(principalValues[ip]) > pTol)
+            {
+                strainIsNull = false;
+                break;
+            }
+        }
+
+        if (strainIsNull)
+        {
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j)
+                {
+                    tensorCPlus[i][j] = 0.0;
+                    tensorCMinus[i][j] = 0.0;
+                }
+        }
+
+        if (divU > pTol)
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    double outerProductIdent = ident[i] * ident[j];
+                    tensorCPlus[i][j] += lame * outerProductIdent;
+                }
+        else if (divU < -pTol)
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    double outerProductIdent = ident[i] * ident[j];
+                    tensorCMinus[i][j] += lame * outerProductIdent;
+                }
+        else
+        {
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    double outerProductIdent = ident[i] * ident[j];
+                    tensorCMinus[i][j] += lame * outerProductIdent;
+                }
+        }
+
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                tensorC[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
 
         // -------------------------------------------------
         // DIVIDING BY THE COEFFICIENTS OF THE TENSOR
@@ -891,9 +937,95 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         tensorC[2][1] = tensorC[2][1] / 2.0;
         tensorC[2][2] = tensorC[2][2] / 4.0;
 
+        // for (int i = 0; i < 3; i++)
+        //     for (int j = 0; j < 3; j++)
+        //         if (tensorC[i][j] < 0.0)
+        //         {
+        //             std::cout << "strain tensor:" << std::endl;
+        //             for (int k = 0; k < 3; k++)
+        //             {
+        //                 for (int l = 0; l < 3; l++)
+        //                 {
+        //                     std::cout << strain[k][l] << " ";
+        //                 }
+        //                 std::cout << std::endl;
+        //             }
+        //             std::cout << "principal vals: " << principalValues[0] << " " << principalValues[1] << " " << principalValues[2] << std::endl;
+        //             std::cout << std::endl;
+
+        //             double Ppos[3][3] = {};
+        //             double Pneg[3][3] = {};
+        //             for (int ip = 0; ip < 3; ip++)
+        //             {
+        //                 for (int i = 0; i < 3; i++)
+        //                     for (int j = 0; j < 3; j++)
+        //                     {
+        //                         Ppos[i][j] += 2 * (outerProductEpEpPos[ip][i][j] + principalValues[ip] * d2_ep_de2_pos[ip][i][j]);
+        //                         Pneg[i][j] += 2 * (outerProductEpEpNeg[ip][i][j] + principalValues[ip] * d2_ep_de2_neg[ip][i][j]);
+        //                     }
+        //             }
+
+        //             Ppos[0][2] = Ppos[0][2] / 2.0;
+        //             Ppos[1][2] = Ppos[1][2] / 2.0;
+        //             Ppos[2][0] = Ppos[2][0] / 2.0;
+        //             Ppos[2][1] = Ppos[2][1] / 2.0;
+        //             Ppos[2][2] = Ppos[2][2] / 4.0;
+
+        //             Pneg[0][2] = Pneg[0][2] / 2.0;
+        //             Pneg[1][2] = Pneg[1][2] / 2.0;
+        //             Pneg[2][0] = Pneg[2][0] / 2.0;
+        //             Pneg[2][1] = Pneg[2][1] / 2.0;
+        //             Pneg[2][2] = Pneg[2][2] / 4.0;
+
+        //             std::cout << "Ppos: " << std::endl;
+        //             for (int k = 0; k < 3; k++)
+        //             {
+        //                 for (int l = 0; l < 3; l++)
+        //                 {
+        //                     std::cout << Ppos[k][l] << " ";
+        //                 }
+        //                 std::cout << std::endl;
+        //             }
+        //             std::cout << std::endl;
+        //             std::cout << "Pneg: " << std::endl;
+        //             for (int k = 0; k < 3; k++)
+        //             {
+        //                 for (int l = 0; l < 3; l++)
+        //                 {
+        //                     std::cout << Pneg[k][l] << " ";
+        //                 }
+        //                 std::cout << std::endl;
+        //             }
+        //             std::cout << std::endl;
+        //             std::cout << "TensorC: " << std::endl;
+        //             for (int k = 0; k < 3; k++)
+        //             {
+        //                 for (int l = 0; l < 3; l++)
+        //                 {
+        //                     std::cout << tensorC[k][l] << " ";
+        //                 }
+        //                 std::cout << std::endl;
+        //             }
+        //             std::cout << "-----------------------------------------" << std::endl;
+
+        //             break;
+        //         }
+
         break;
     }
     }
+    // // Print tensor C
+    // for (int i = 0; i < 3; i++)
+    // {
+    //     for (int j = 0; j < 3; j++)
+    //     {
+    //         std::cout << tensorC[i][j] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    // std::cout << std::endl;
+    // std::cout << "----------------------------------------" << std::endl;
 
     return tensorC;
 }
@@ -1244,14 +1376,96 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
 
         // COMPUTING \psi^+(\epsilon): ELASTIC ENERGY DENSITY (POSITIVE PART) - DRIVING FORCE
         double psiPlus = 0.;
-        for (int k = 0; k < 2; k++)
-            for (int l = 0; l < 2; l++)
-                psiPlus += G * ((gradU[k][l] * gradU[k][l] + gradU[k][l] * gradU[l][k]) * 0.5) * wJac;
+        PetscScalar firstInt[numElNodes] = {};
 
-        psiPlus += -1.0 / 3.0 * G * divU * divU * wJac;
+        switch (params->getSplitModel())
+        {
+        case volDev:
+        {
+            for (int k = 0; k < 2; k++)
+                for (int l = 0; l < 2; l++)
+                    psiPlus += G * ((gradU[k][l] * gradU[k][l] + gradU[k][l] * gradU[l][k]) * 0.5) * wJac;
 
-        if (divU > 0)
-            psiPlus += kappa * 0.5 * divU * divU * wJac;
+            psiPlus += -1.0 / 3.0 * G * divU * divU * wJac;
+
+            if (divU > 0)
+                psiPlus += kappa * 0.5 * divU * divU * wJac;
+
+            break;
+        }
+
+        case spectral:
+        {
+            double strain[3][3] = {};
+            for (PetscInt i = 0; i < 2; ++i)
+                for (PetscInt j = 0; j < 2; ++j)
+                    strain[i][j] = 0.5 * (gradU[i][j] + gradU[j][i]);
+
+            strain[0][2] = strain[2][0] = 0.0;
+            strain[1][2] = strain[2][1] = 0.0;
+            strain[2][2] = 0.0;
+
+            switch (material->getPlaneAnalysis())
+            {
+            case PLANE_STRESS:
+                double _poisson = material->getPoisson();
+                strain[2][2] = -(_poisson / (1 - _poisson)) * (strain[0][0] + strain[1][1]);
+                break;
+            }
+
+            double volStrain = (1.0 / 3.0) * (strain[0][0] + strain[1][1] + strain[2][2]);
+
+            double d11 = strain[0][0] - volStrain;
+            double d22 = strain[1][1] - volStrain;
+            double d33 = strain[2][2] - volStrain;
+            double d12 = strain[0][1];
+            double d21 = strain[1][0];
+            double d23 = strain[1][2];
+            double d32 = strain[2][1];
+            double d31 = strain[2][0];
+            double d13 = strain[0][2];
+
+            double eeq = sqrt(2.0 / 3.0 * (d11 * d11 + d22 * d22 + d33 * d33 + 2.0 * (d12 * d12 + d13 * d13 + d23 * d23))); // Equivalent strain
+
+            double detdd =
+                d11 * (d22 * d33 - d23 * d32) -
+                d12 * (d21 * d33 - d23 * d31) +
+                d13 * (d21 * d32 - d22 * d31);
+
+            double tol = 1e-12;
+            double etaReal = 0.0, cos3eta = 0.0;
+            if (std::abs(eeq) < tol)
+            {
+                etaReal = 0.0;
+            }
+            else
+            {
+                cos3eta = 4.0 * detdd / (eeq * eeq * eeq);
+                cos3eta = std::clamp(cos3eta, -1.0, 1.0);
+                cos3eta = std::round(cos3eta * 1e10) / 1e10;
+                etaReal = (1.0 / 3.0) * std::acos(cos3eta);
+            }
+
+            double etaStar[3] = {};
+            etaStar[0] = etaReal;
+            etaStar[1] = etaReal - 2.0 * M_PI / 3.0;
+            etaStar[2] = etaReal + 2.0 * M_PI / 3.0;
+
+            // COMPUTING THE PRINCIPAL VALUES VIA LODE ANGLE
+            double principalValues[3] = {};
+            principalValues[0] = volStrain + eeq * std::cos(etaStar[0]); // ep1
+            principalValues[1] = volStrain + eeq * std::cos(etaStar[1]); // ep2
+            principalValues[2] = volStrain + eeq * std::cos(etaStar[2]); // ep3
+
+            const double pTol = 1e-12;
+            for (int ip = 0; ip < 3; ip++)
+                if (principalValues[ip] > pTol)
+                    psiPlus += G * (principalValues[ip] * principalValues[ip]) * wJac;
+
+            if (divU > pTol)
+                psiPlus += lame * 0.5 * divU * divU * wJac;
+        }
+        }
 
         PetscScalar damageValue = 0.;
         for (PetscInt c = 0; c < numElNodes; c++)
@@ -1259,7 +1473,6 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
 
         const PetscScalar dCoeff = -2 * (1 - damageValue);
 
-        PetscScalar firstInt[numElNodes] = {};
         for (PetscInt a = 0; a < numElNodes; a++)
             firstInt[a] += dCoeff * N[a] * psiPlus;
 

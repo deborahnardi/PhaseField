@@ -230,19 +230,18 @@ PetscErrorCode FEM::solveFEMProblem()
             updateBoundaryFunction(double(iStep) * params->getDeltaTime());
 
         it = 0;
-        res = 1.;
+        double res = 1.e5;
 
         stepAUX = iStep;
 
         do
         {
             it++;
-            itAUX = it;
             PetscPrintf(PETSC_COMM_WORLD, "\n------- Iteration %d -------\n", it);
             assembleProblem(it);
-            solveLinearSystem(matrix, rhs, solution);
-            updateVariables(matrix, solution);
-            res = res / norm;
+            solveLinearSystem(matrix, rhs, solution); // right hand side is the residual
+            updateVariables(matrix, solution, rhs, res);
+            // res = res / norm;
             PetscPrintf(PETSC_COMM_WORLD, "Residual: %e\n", res);
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
@@ -260,6 +259,60 @@ PetscErrorCode FEM::solveFEMProblem()
 
     auto end_timer = std::chrono::high_resolution_clock::now();
     PetscPrintf(PETSC_COMM_WORLD, "Total elapsed time: %f\n", elapsedTime(start_timer, end_timer));
+    return ierr;
+}
+
+PetscErrorCode FEM::performLineSearch(Mat &A, Vec &solution, Vec &rhs, Vec &copyRHS, double &_res) // solution = delta_u, rhs = Fext - Fint = R(uk)
+{
+    const double normR0 = _res;
+    std::vector<PetscScalar> backup(globalDOFs.size());
+    for (auto dof : globalDOFs)
+        backup[dof->getIndex()] = dof->getValue();
+
+    double resEta = {};
+    do
+    {
+        // 1) Gets the current state of the displacement DOFs
+        for (auto dof : globalDOFs)
+            dof->setValue(backup[dof->getIndex()]);
+
+        double R0 = {}, R1 = {}, alpha = {}, eta = {};
+        // Compute R0 and R1: R0 = delta_u ^ T * R(uk) and R1 = delta_u ^ T * R(uk + delta_u)
+        VecDot(solution, copyRHS, &R0); // R0 stands for the iteration at uk (before the line search)
+        VecDot(solution, rhs, &R1);     // R1 stands for the iteration at uk + delta_u (during the line search)
+        alpha = R0 / R1;
+
+        // Compute the line search parameter eta
+        double eta = (alpha > 0
+                          ? 0.5 * alpha
+                          : 0.5 * alpha + std::sqrt(alpha * alpha / 4.0 - alpha));
+        eta = std::clamp(eta, 1e-8, 1.0);
+
+        Vec All;
+        VecScatter ctx;
+        // Gathers the solution vector to the master process
+        VecScatterCreateToAll(solution, &ctx, &All);
+        VecScatterBegin(ctx, solution, All, INSERT_VALUES, SCATTER_FORWARD);
+        VecScatterEnd(ctx, solution, All, INSERT_VALUES, SCATTER_FORWARD);
+        VecScatterDestroy(&ctx);
+
+        std::vector<PetscScalar> x_ls(globalDOFs.size()); // x_ls = x line search, x_ls = x + eta * delta_u
+        for (auto dof : globalDOFs)
+        {
+            PetscInt Ii = dof->getIndex();
+            PetscScalar currentVal = dof->getValue();
+            PetscScalar deltaU = 0.0;
+            VecGetValues(All, 1, &Ii, &deltaU);
+            x_ls[Ii] = currentVal + eta * deltaU;
+            dof->setValue(x_ls[Ii]); // Set the displacement DOFs to the new state
+        }
+        VecDestroy(&All);
+
+        updateRHS(matrix, rhs);                         // Update the residual with the new displacement values from x_ls
+        updateVariables(matrix, solution, rhs, resEta); // Compute the residual norm in case x_ls is the solution
+    } while (resEta > 0.5 * _res); // If the residual norm is greater than 0.5 * res0, repeat the line search
+
+    _res = resEta;
     return ierr;
 }
 
@@ -351,128 +404,112 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
     int kk = 0;
     SplitModel splitModel = params->getSplitModel();
 
-    // #pragma omp parallel
-    //     {
-    //         int thread_id = omp_get_thread_num();
-    //         int num_threads = omp_get_num_threads();
-
-    // #pragma omp for
-    for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
+#pragma omp parallel
     {
-        const int n1 = nodesForEachRankCSR[rank] + iNode1;
-        std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
-        const int numFriends = friendNodes.size();
-        PetscScalar localVal[nDOF * nDOF * numFriends - 1] = {0};  // Node 0 has 0, 1, 4 and 7 as friends. 0-0: 3 positions, 0-1: 4 positions, 0-4: 4 positions, 0-7: 4 positions. Total: 15 positions.
-        PetscInt idxLocalRows[nDOF * nDOF * numFriends - 1] = {0}; // Local values belong to the current thread
-        PetscInt idxLocalCols[nDOF * nDOF * numFriends - 1] = {0};
+        int thread_id = omp_get_thread_num();
+        int num_threads = omp_get_num_threads();
 
-        int kkn2n = 0, kkLocal = 0, kkStart = 0;
-        kkStart = n2nCSRUpper[iNode1] * nDOF * nDOF - (iNode1);
-
-        for (auto n2 : friendNodes)
+#pragma omp for
+        for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
         {
-            // std::vector<int> elemInfo = eSameList[kkn2n];
-            std::vector<int> elemInfo = eSameListForEachNode[iNode1][kkn2n];
-            const int numLocalElems = elemInfo.size() / 3;
+            const int n1 = nodesForEachRankCSR[rank] + iNode1;
+            std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
+            const int numFriends = friendNodes.size();
+            PetscScalar localVal[nDOF * nDOF * numFriends - 1] = {0};  // Node 0 has 0, 1, 4 and 7 as friends. 0-0: 3 positions, 0-1: 4 positions, 0-4: 4 positions, 0-7: 4 positions. Total: 15 positions.
+            PetscInt idxLocalRows[nDOF * nDOF * numFriends - 1] = {0}; // Local values belong to the current thread
+            PetscInt idxLocalCols[nDOF * nDOF * numFriends - 1] = {0};
 
-            /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
-                IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
-                CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
-             */
+            int kkn2n = 0, kkLocal = 0, kkStart = 0;
+            kkStart = n2nCSRUpper[iNode1] * nDOF * nDOF - (iNode1);
 
-            if (n1 != n2)
-            { // idof = 0,       jdof = 0
-                int p1 = kkLocal;
-                // idof = 0,       jdof = 1
-                int p2 = kkLocal + 1;
-                // idof = 1,       jdof = 0
-                int p3 = kkLocal + numFriends * nDOF - 1;
-                // idof = 1,       jdof = 1
-                int p4 = kkLocal + numFriends * nDOF + 0;
-
-                for (int iElem = 0; iElem < numLocalElems; iElem++)
-                {
-                    const int elemIndex = elemInfo[3 * iElem];
-                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
-                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
-
-                    localVal[p1] += localStiffValue[0];
-                    localVal[p2] += localStiffValue[1];
-                    localVal[p3] += localStiffValue[2];
-                    localVal[p4] += localStiffValue[3];
-                }
-
-                idxLocalRows[p1] = nDOF * n1;     // First DOF
-                idxLocalRows[p2] = nDOF * n1;     // First DOF
-                idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
-                idxLocalRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
-
-                idxLocalCols[p1] = nDOF * n2;
-                idxLocalCols[p2] = nDOF * n2 + 1;
-                idxLocalCols[p3] = nDOF * n2;
-                idxLocalCols[p4] = nDOF * n2 + 1;
-            }
-            else
+            for (auto n2 : friendNodes)
             {
-                // idof = 0,       jdof = 0
-                int p1 = kkLocal;
-                // idof = 0,       jdof = 1
-                int p2 = kkLocal + 1;
-                // idof = 1,       jdof = 1
-                int p3 = kkLocal + numFriends * nDOF;
+                // std::vector<int> elemInfo = eSameList[kkn2n];
+                std::vector<int> elemInfo = eSameListForEachNode[iNode1][kkn2n];
+                const int numLocalElems = elemInfo.size() / 3;
 
-                for (int iElem = 0; iElem < numLocalElems; iElem++)
-                {
-                    const int elemIndex = elemInfo[3 * iElem];
-                    const int idxLocalNode1 = elemInfo[3 * iElem + 1];
-                    const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
+                /*  COMPUTE HERE THE Kglobal COMPONENTS ASSOCIATED TO THE INFLUENCE OF NODE n2 (COLUMN) ON NODE n1 (LINE)
+                    IF n1 == n2, ONLY 3 DIFFERENT COMPONENTS ARE COMPUTED
+                    CONSIDERING ONLY A 2D ANALYSIS, THOSE COMPONENTS MUST BE PLACED AT THE FOLLOWING POSITIONS ON VECTOR val:
+                 */
 
-                    localVal[p1] += localStiffValue[0];
-                    localVal[p2] += localStiffValue[1];
-                    localVal[p3] += localStiffValue[2];
+                if (n1 != n2)
+                { // idof = 0,       jdof = 0
+                    int p1 = kkLocal;
+                    // idof = 0,       jdof = 1
+                    int p2 = kkLocal + 1;
+                    // idof = 1,       jdof = 0
+                    int p3 = kkLocal + numFriends * nDOF - 1;
+                    // idof = 1,       jdof = 1
+                    int p4 = kkLocal + numFriends * nDOF + 0;
+
+                    for (int iElem = 0; iElem < numLocalElems; iElem++)
+                    {
+                        const int elemIndex = elemInfo[3 * iElem];
+                        const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                        const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+
+                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
+
+                        localVal[p1] += localStiffValue[0];
+                        localVal[p2] += localStiffValue[1];
+                        localVal[p3] += localStiffValue[2];
+                        localVal[p4] += localStiffValue[3];
+                    }
+
+                    idxLocalRows[p1] = nDOF * n1;     // First DOF
+                    idxLocalRows[p2] = nDOF * n1;     // First DOF
+                    idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+                    idxLocalRows[p4] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                    idxLocalCols[p1] = nDOF * n2;
+                    idxLocalCols[p2] = nDOF * n2 + 1;
+                    idxLocalCols[p3] = nDOF * n2;
+                    idxLocalCols[p4] = nDOF * n2 + 1;
                 }
+                else
+                {
+                    // idof = 0,       jdof = 0
+                    int p1 = kkLocal;
+                    // idof = 0,       jdof = 1
+                    int p2 = kkLocal + 1;
+                    // idof = 1,       jdof = 1
+                    int p3 = kkLocal + numFriends * nDOF;
 
-                idxLocalRows[p1] = nDOF * n1;
-                idxLocalRows[p2] = nDOF * n1;
-                idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+                    for (int iElem = 0; iElem < numLocalElems; iElem++)
+                    {
+                        const int elemIndex = elemInfo[3 * iElem];
+                        const int idxLocalNode1 = elemInfo[3 * iElem + 1];
+                        const int idxLocalNode2 = elemInfo[3 * iElem + 2];
+                        std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel);
 
-                idxLocalCols[p1] = nDOF * n2;
-                idxLocalCols[p2] = nDOF * n2 + 1;
-                idxLocalCols[p3] = nDOF * n2 + 1;
+                        localVal[p1] += localStiffValue[0];
+                        localVal[p2] += localStiffValue[1];
+                        localVal[p3] += localStiffValue[2];
+                    }
 
-                // There is no p4 due to symmetry
+                    idxLocalRows[p1] = nDOF * n1;
+                    idxLocalRows[p2] = nDOF * n1;
+                    idxLocalRows[p3] = nDOF * n1 + 1; // + 1 because it is the second DOF
+
+                    idxLocalCols[p1] = nDOF * n2;
+                    idxLocalCols[p2] = nDOF * n2 + 1;
+                    idxLocalCols[p3] = nDOF * n2 + 1;
+
+                    // There is no p4 due to symmetry
+                }
+                kkn2n++;
+                kkLocal += nDOF;
             }
-            kkn2n++;
-            kkLocal += nDOF;
-        }
 
-        //  Spreads local values to global values
-        // for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
-        // {
-        //     val[kkStart + i] = localVal[i];
-        //     idxRows[kkStart + i] = idxLocalRows[i];
-        //     idxCols[kkStart + i] = idxLocalCols[i];
-        // }
-        // #pragma omp critical
-        for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
-        {
-            MatSetValue(A, idxLocalRows[i], idxLocalCols[i], localVal[i], INSERT_VALUES);
-            MatSetValue(A, idxLocalCols[i], idxLocalRows[i], localVal[i], INSERT_VALUES);
+#pragma omp critical
+            for (int i = 0; i < nDOF * nDOF * numFriends - 1; i++)
+            {
+                MatSetValue(A, idxLocalRows[i], idxLocalCols[i], localVal[i], INSERT_VALUES);
+                MatSetValue(A, idxLocalCols[i], idxLocalRows[i], localVal[i], INSERT_VALUES);
+            }
         }
-
-        // kk += kkLocal + nDOF * numFriends - (nDOF * nDOF - (nDOF * (nDOF + 1)) / 2.0);
-        //}
     }
-
-    // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++)                // sizeof(idxRows) = size in bytes of the array; sizeof(idxRows[0]) = size in bytes of the first element of the array
-    //     PetscCall(MatSetValue(A, idxRows[i], idxCols[i], val[i], INSERT_VALUES)); // THIS WORKS
-
-    // for (int i = 0; i < sizeof(idxRows) / sizeof(idxRows[0]); i++) // Setting the lower triangular part of the matrix
-    //     PetscCall(MatSetValue(A, idxCols[i], idxRows[i], val[i], INSERT_VALUES));
-    // exit(0);
 
     return 0;
 }
@@ -578,13 +615,12 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     return ierr;
 }
 
-PetscErrorCode FEM::updateVariables(Mat A, Vec &x, bool _hasConverged)
+PetscErrorCode FEM::updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _hasConverged)
 {
-    PetscInt Rstart, Rend;
-    MatGetOwnershipRange(A, &Rstart, &Rend);
-
-    Vec All;
+    Vec All, AllForces;
     VecScatter ctx;
+
+    _res = 0.;
 
     // Gathers the solution vector to the master process
     PetscCall(VecScatterCreateToAll(x, &ctx, &All));
@@ -592,15 +628,24 @@ PetscErrorCode FEM::updateVariables(Mat A, Vec &x, bool _hasConverged)
     PetscCall(VecScatterEnd(ctx, x, All, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterDestroy(&ctx));
 
+    PetscCall(VecScatterCreateToAll(b, &ctx, &AllForces));
+    PetscCall(VecScatterBegin(ctx, b, AllForces, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(ctx, b, AllForces, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterDestroy(&ctx));
+
     for (auto dof : globalDOFs)
     {
         PetscInt Ii = dof->getIndex();
         PetscScalar val;
+        PetscScalar valForces;
+        PetscCall(VecGetValues(AllForces, 1, &Ii, &valForces));
         PetscCall(VecGetValues(All, 1, &Ii, &val));
         dof->incrementValue(val);
+        _res += valForces * valForces;
     }
-
+    _res = sqrt(_res);
     PetscCall(VecDestroy(&All));
+    PetscCall(VecDestroy(&AllForces));
 
     return ierr;
 }

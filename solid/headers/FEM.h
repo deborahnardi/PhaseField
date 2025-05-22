@@ -27,8 +27,8 @@ class FEM
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size, nDOF = 2, nDOFPF = 1;
-    int itAUX, stepAUX, globalCounter = 0;
-    double norm = 0., res = 0.;
+    int stepAUX, globalCounter = 0;
+    double norm = 0.;
     std::string name, filename, resultsPath;
     std::vector<Material *> materials;
     std::vector<Node *> nodes, partitionedNodes, discritizedNodes;
@@ -113,6 +113,7 @@ public:
     PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
     std::array<Tensor, 3> computeConstitutiveTensors();
+    PetscErrorCode performLineSearch(Mat &A, Vec &solution, Vec &rhs, Vec &copyRHS, double &_res);
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
@@ -141,7 +142,7 @@ public:
     PetscErrorCode printGlobalMatrix(Mat &A);
     PetscErrorCode cleanSolution(Vec &x, Vec &b, Mat &A);
     PetscErrorCode getCompressedColumnStorage(Mat &A, Vec &b);
-    PetscErrorCode updateVariables(Mat A, Vec &x, bool _hasConverged = true);
+    PetscErrorCode updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _hasConverged = true);
     PetscErrorCode assembleSymmStiffMatrix(Mat &A);
     PetscErrorCode updateRHS(Mat &A, Vec &b);
     PetscErrorCode assembleQMatrix(Mat &A);

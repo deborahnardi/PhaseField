@@ -148,14 +148,14 @@ void FEM::staggeredAlgorithm(int _iStep)
         for (int i = 0; i < globalDOFs.size(); i++)
         {
             DOF *dof = globalDOFs[i];
-            if (dof->getDOFType() != D)
-            {
-                double value = dof->getValue();
-                normU += (value - previousU[i]) * (value - previousU[i]);
-                previousU[i] = value;
-            }
+            // if (dof->getDOFType() != D)
+            //{
+            double value = dof->getValue();
+            normU += (value - previousU[i]) * (value - previousU[i]);
+            previousU[i] = value;
+            //}
         }
-        resStag = sqrt(normU);
+        resStag = sqrt(normU); // norm;
         PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
@@ -170,10 +170,61 @@ void FEM::solveDisplacementField(int _iStep)
     double entry = double(_iStep) * params->getDeltaTime();
     if (boundaryFunction)                                                // 0 is false, any non zero value is true;
         updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); //
+    // double aux = 0.0;
+    //  assembleProblem(0);
+    //  solveLinearSystem(matrix, rhs, solution);
+    //  updateVariables(matrix, solution, aux);
 
-    assembleProblem(0);
-    solveLinearSystem(matrix, rhs, solution);
-    updateVariables(matrix, solution);
+    int it = 0;
+    double res0 = 1.;          // res0 = previous residual, res1 = current residual
+    const int minNewtonLS = 5; // minimum number of iterations for the line search
+    Vec copyRHS;
+    do
+    {
+        it++;
+
+        if (it <= minNewtonLS) // No need for LS (Line Search)
+        {
+            assembleProblem(it);
+            solveLinearSystem(matrix, rhs, solution);
+            updateVariables(matrix, solution, rhs, res0);
+
+            VecDuplicate(rhs, &copyRHS);
+            VecCopy(rhs, copyRHS);
+        }
+        else
+        {
+            // First try the complete step inside Newton Raphson
+            Vec xTrial = nullptr;
+            VecDuplicate(solution, &xTrial);
+            VecAXPY(xTrial, 1.0, solution); // xTrial = 1.0 * solution + xTrial
+            // Save the current state of the displacement DOFs
+            std::vector<PetscScalar> backup(globalDOFs.size());
+            for (auto dof : globalDOFs)
+                backup.push_back(dof->getValue());
+
+            double resTrial = 0.0;
+            updateVariables(matrix, xTrial, rhs, resTrial); // Compute the residual norm in case xTrial is the solution
+            if (resTrial > res0)                            // The residual has increased
+            {
+                // Perform the line search
+                // 1. Go back to the previous state
+                for (auto dof : globalDOFs)
+                    dof->setValue(backup[dof->getIndex()]);
+
+                performLineSearch(matrix, solution, rhs, copyRHS, res0); // Perform the line search, gets x_ls
+            }
+            else // VERIFY HERE
+            {
+                // 2. If the residual has decreased, update the solution
+                for (auto dof : globalDOFs)
+                    dof->setValue(backup[dof->getIndex()]); // Set the displacement DOFs to the previous state
+            }
+
+            PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, res0);
+        }
+    } while (res0 > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
+    std::cout << "Displacement field solved, residual: " << res0 << " it: " << it << std::endl;
 }
 
 PetscErrorCode FEM::solvePhaseField()

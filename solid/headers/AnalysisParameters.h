@@ -8,11 +8,11 @@
 class AnalysisParameters
 {
 private:
-    int nSteps = 1, maxItNR = 1000, maxIterPSOR = 1000, maxItStaggered = 100000;
-    double tolNR = 1.e-6, tolPSOR = 1.e-6, tolStaggered = 1.e-5;
+    int nSteps = 1, maxItNR = 100000, maxIterPSOR = 1000, maxItStaggered = 100000;
+    double tolNR = 1.e-6, tolPSOR = 1.e-6, tolStaggered = 1.e-4;
     double ubar, deltaTime;
     double residStaggered = 1.e30, residPSOR = 1e20;
-    int maxIterEIterative = 100000;
+    int maxIterEIterative = 10000;
     double tolEIterative = 1.e-8;
     std::vector<double> dispByStep;
     SolverType solverType = EMumps;
@@ -54,5 +54,5 @@ public:
     void calculateReactionForces(const bool &_calcReactionForces) { calcReactionForces = _calcReactionForces; }
     void setReactionDir(const std::string &_reactionDir) { reactionDir = _reactionDir; }
     void setPFModel(const std::string &_PFmodel) { PFmodel = _PFmodel; }
-    SplitModel setSplitModel(const SplitModel &_splitModel) { splitModel = _splitModel; }
+    void setSplitModel(const SplitModel &_splitModel) { splitModel = _splitModel; }
 };
