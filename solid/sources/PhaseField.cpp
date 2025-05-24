@@ -192,9 +192,17 @@ void FEM::solveDisplacementField(int _iStep)
         {
             assembleProblem();
             solveLinearSystem(matrix, rhs, solution);
-            VecCopy(rhs, copyRHS);
-
+            VecCopy(solution, copyRHS);
+            // MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
+            // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
             updateVariables(matrix, solution, rhs, res0);
+
+            for (auto dof : globalDOFs)
+            {
+                std::cout << "id: " << dof->getIndex()
+                          << " currentVal: " << dof->getValue() << std::endl;
+            }
+            throw std::runtime_error("Newton-Raphson iteration diverged!");
             // computeNorm(rhs, res0);
             resTrial = res0;
         }
@@ -214,8 +222,6 @@ void FEM::solveDisplacementField(int _iStep)
                           << " currentVal: " << dof->getValue()
                           << " backUpVal: " << backup[dof->getIndex()] << std::endl;
             }
-
-            throw std::runtime_error("Newton-Raphson iteration diverged!");
 
             updateVariables(matrix, solution, rhs, resTrial);
 
@@ -263,11 +269,11 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     PetscCall(VecZeroEntries(solutionPF));
 
     // #pragma omp parallel
-    // {
+    //     {
     // #pragma omp for
     for (int Ii = DStart; Ii < DEnd; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
-    //  }
+    //    }
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));
@@ -429,11 +435,11 @@ PetscErrorCode FEM::PSORAlgorithm()
     delete[] totalVecq;
     delete[] DdkMinus1;
 
-    if (rank == 0)
-    {
-        delete[] JC;
-        delete[] IR;
-    }
+    // if (rank == 0)
+    // {
+    //     delete[] JC;
+    //     delete[] IR;
+    // }
 
     return 0;
 }
@@ -554,11 +560,11 @@ PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed 
     PetscCall(VecZeroEntries(solutionPF));
 
     // #pragma omp parallel
-    //{
+    //     {
     // #pragma omp for
     for (int Ii = DStart; Ii < DEnd; Ii++)
         elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
-    //  }
+    //}
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));

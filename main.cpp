@@ -14,51 +14,11 @@ static char help[] = "Solves the phase-field problem using Finete Element Method
 
 #include <omp.h>
 
-// class MyClass
-// {
-// public:
-//   void processData(int numThreads)
-//   {
-//     // Define o número de threads para OpenMP
-//     omp_set_num_threads(numThreads);
-
-// // Simula um loop de processamento de dados
-// #pragma omp parallel for
-//     for (int i = 0; i < 10; ++i)
-//     {
-//       int thread_id = omp_get_thread_num();
-//       std::cout << "Thread " << thread_id << " is processing item " << i << std::endl;
-//     }
-//   }
-// };
-
 int main(int argc, char **argv)
 {
 
   PetscInitialize(&argc, &argv, (char *)0, help); // Starts main program invoking PETSc
 
-  //================================ TESTING OPENMP ================================
-
-  // std::cout << "OpenMP is initialized (MAIN) with " << omp_get_max_threads() << " threads." << std::endl;
-
-  //   int rank, size;
-  //   MPI_Comm_rank(MPI_COMM_WORLD, &rank); // Obtém o rank do processo MPI
-  //   MPI_Comm_size(MPI_COMM_WORLD, &size); // Obtém o número total de processos MPI
-
-  // // Definir número de threads pelo OpenMP
-  // #pragma omp parallel
-  //   {
-  //     int thread_id = omp_get_thread_num();
-  //     int num_threads = omp_get_num_threads();
-
-  // // Usamos critical para evitar misturas na saída
-  // #pragma omp critical
-  //     {
-  //       std::cout << "MPI Rank " << rank << " - Hello from thread "
-  //                 << thread_id << " out of " << num_threads << " threads."
-  //                 << std::endl;
-  //     }
-  //   }
   // ======================================================================================
 
   // DISCOMMENT THE ABOVE LINE BEFORE RUNNING THE NON PETSC EXAMPLES

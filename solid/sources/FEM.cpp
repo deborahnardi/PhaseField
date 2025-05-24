@@ -47,14 +47,14 @@ void FEM::setLoadingVector2(double ubar, int nSteps)
     double totalLoad = 0;
 
     // From 0 to ubar with x variating from 0 to 19 (20 steps)
-    for (int i = 0; i < 20; ++i)
-        load.push_back(ubar * i);
+    for (int i = 0; i < 20; i++)
+        load.push_back(ubar * (i + 1));
 
-    for (int i = 20; i < 60; ++i)
-        load.push_back(ubar * (40 - i));
+    for (int i = 20; i < 60; i++)
+        load.push_back(ubar * (40 - (i + 1)));
 
-    for (int i = 60; i < 80; ++i)
-        load.push_back(ubar * (i - 80));
+    for (int i = 60; i < 80; i++)
+        load.push_back(ubar * ((i + 1) - 80));
 
     // double step2 = (ubar1 - ubar2) / 39;
     // for (int i = 1; i <= 40; ++i)
@@ -422,8 +422,8 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 
     // #pragma omp parallel
     //     {
-    //         int thread_id = omp_get_thread_num();
-    //         int num_threads = omp_get_num_threads();
+    int thread_id = omp_get_thread_num();
+    int num_threads = omp_get_num_threads();
 
     // #pragma omp for
     for (int iNode1 = 0; iNode1 < n2nCSRUpper.size() - 1; iNode1++)
@@ -431,9 +431,9 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
         const int n1 = nodesForEachRankCSR[rank] + iNode1;
         std::vector<int> friendNodes(n2nUpperMat[iNode1].begin(), n2nUpperMat[iNode1].end());
         const int numFriends = friendNodes.size();
-        PetscScalar localVal[nDOF * nDOF * numFriends - 1] = {0};  // Node 0 has 0, 1, 4 and 7 as friends. 0-0: 3 positions, 0-1: 4 positions, 0-4: 4 positions, 0-7: 4 positions. Total: 15 positions.
-        PetscInt idxLocalRows[nDOF * nDOF * numFriends - 1] = {0}; // Local values belong to the current thread
-        PetscInt idxLocalCols[nDOF * nDOF * numFriends - 1] = {0};
+        PetscScalar localVal[nDOF * nDOF * numFriends - 1]{};  // Node 0 has 0, 1, 4 and 7 as friends. 0-0: 3 positions, 0-1: 4 positions, 0-4: 4 positions, 0-7: 4 positions. Total: 15 positions.
+        PetscInt idxLocalRows[nDOF * nDOF * numFriends - 1]{}; // Local values belong to the current thread
+        PetscInt idxLocalCols[nDOF * nDOF * numFriends - 1]{};
 
         int kkn2n = 0, kkLocal = 0, kkStart = 0;
         kkStart = n2nCSRUpper[iNode1] * nDOF * nDOF - (iNode1);
@@ -525,7 +525,7 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
             MatSetValue(A, idxLocalCols[i], idxLocalRows[i], localVal[i], INSERT_VALUES);
         }
     }
-    //}
+    //} // comment this when OMP is not used
 
     return 0;
 }

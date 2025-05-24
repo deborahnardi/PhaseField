@@ -54,7 +54,7 @@ public:
     virtual std::vector<double> getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, SplitModel splitModel, int _stepGlobal, bool _PrescribedDamageField = false) {};
     virtual double getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField) {};
     virtual PetscErrorCode getqContribution(Vec &rhs, bool _PrescribedDamageField) {};
-    virtual std::array<std::array<double, 3>, 3> computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradUgradU[2][2], double divU, double kappa, double mu, double dCoeff, int _stepGlobal) {};
+    virtual std::array<std::array<double, 3>, 3> computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradU[2][2], double divU, double kappa, double mu, double dCoeff, int _stepGlobal) {};
     // =======================================
     // =========== POST PROCESSING ===========
     // =======================================
