@@ -27,7 +27,7 @@ class FEM
 private:
     int numNodes = 0, numElements = 0, nDOFs = 0, numDirichletDOFs = 0, numNeumannDOFs = 0, numElNodes = 0, elemDim = 0, numOfPrescribedDisp = 0;
     int rank, size, nDOF = 2, nDOFPF = 1;
-    int stepAUX, globalCounter = 0;
+    int stepAUX, globalCounter = 0, stepGlobal{0};
     double norm = 0.;
     std::string name, filename, resultsPath;
     std::vector<Material *> materials;
@@ -113,7 +113,7 @@ public:
     PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
     std::array<Tensor, 3> computeConstitutiveTensors();
-    PetscErrorCode performLineSearch(Mat &A, Vec &solution, Vec &rhs, Vec &copyRHS, double &_res);
+    PetscErrorCode performLineSearch(Mat &A, Vec &solution, Vec &rhs, Vec &copyRHS, std::vector<PetscScalar> &_backup, double &_res);
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods
     ------------------------------------------------------------------------------------
@@ -129,6 +129,8 @@ public:
     PetscErrorCode updateFieldVariables(Vec &x, bool _hasConverged = true);
     PetscErrorCode updateFieldDistribution();
     PetscErrorCode PSORAlgorithm();
+    PetscErrorCode evalStaggeredRes(double &_res);
+    PetscErrorCode computeNorm(Vec &b, double &_res);
     /*----------------------------------------------------------------------------------
                                     PETSc Methods
     ------------------------------------------------------------------------------------
@@ -136,7 +138,7 @@ public:
     PetscErrorCode decomposeElements(Vec &b, Vec &x);
     PetscErrorCode matrixPreAllocation();
     PetscErrorCode solveFEMProblem();
-    PetscErrorCode assembleProblem(int it);
+    PetscErrorCode assembleProblem();
     PetscErrorCode createPETScVariables(Mat &A, Vec &b, Vec &x, int mSize, int _nDOF, bool showInfo);
     PetscErrorCode solveLinearSystem(Mat &A, Vec &b, Vec &x);
     PetscErrorCode printGlobalMatrix(Mat &A);

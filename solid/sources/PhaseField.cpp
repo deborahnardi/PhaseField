@@ -82,7 +82,7 @@ void FEM::solvePhaseFieldProblem() // Called by the main program
         staggeredAlgorithm(iStep); // Returns converged uStag and dStag
         updateFieldVariables(solutionPF);
         delete[] Ddk;
-
+        stepGlobal++;
         postProc();
 
         if (rank == 0)
@@ -109,7 +109,7 @@ void FEM::staggeredAlgorithm(int _iStep)
 {
     int it = 0;
     double resStag = 0.0;
-    double previousU[globalDOFs.size()]{}; // Previous displacement field
+    //  double previousU[globalDOFs.size()]{}; // Previous displacement field
     double maxTol = params->getTolStaggered();
     // Ddk = new double[numNodes]{}; // Damage field at the current iteration
     // KSPCreate(PETSC_COMM_WORLD, &ksp);
@@ -143,19 +143,21 @@ void FEM::staggeredAlgorithm(int _iStep)
         // PetscLogStagePop();
         //================================================================================================
 
-        // Compute the norm of the difference between the previous and current displacement fields
-        double normU = 0.0;
-        for (int i = 0; i < globalDOFs.size(); i++)
-        {
-            DOF *dof = globalDOFs[i];
-            // if (dof->getDOFType() != D)
-            //{
-            double value = dof->getValue();
-            normU += (value - previousU[i]) * (value - previousU[i]);
-            previousU[i] = value;
-            //}
-        }
-        resStag = sqrt(normU); // norm;
+        evalStaggeredRes(resStag); // Computes the residual norm of the phase field
+
+        // double normU = 0.0;
+        // for (int i = 0; i < globalDOFs.size(); i++)
+        // {
+        //     DOF *dof = globalDOFs[i];
+        //     if (dof->getDOFType() != D)
+        //     {
+        //         double value = dof->getValue();
+        //         normU += (value - previousU[i]) * (value - previousU[i]);
+        //         previousU[i] = value;
+        //     }
+        // }
+        // resStag = sqrt(normU);
+
         PetscPrintf(PETSC_COMM_WORLD, "Residual stag: %e\n", resStag);
 
     } while (resStag > params->getTolStaggered() && it < params->getMaxItStaggered());
@@ -176,55 +178,71 @@ void FEM::solveDisplacementField(int _iStep)
     //  updateVariables(matrix, solution, aux);
 
     int it = 0;
-    double res0 = 1.;          // res0 = previous residual, res1 = current residual
-    const int minNewtonLS = 5; // minimum number of iterations for the line search
+    const int minNewtonLS = 5;       // minimum number of iterations for the line search
+    double res0 = 1., resTrial = {}; // res0 = previous residual, res1 = current residual
     Vec copyRHS;
+    VecDuplicate(rhs, &copyRHS);
+    VecZeroEntries(copyRHS);
+
     do
     {
         it++;
 
         if (it <= minNewtonLS) // No need for LS (Line Search)
         {
-            assembleProblem(it);
+            assembleProblem();
             solveLinearSystem(matrix, rhs, solution);
-            updateVariables(matrix, solution, rhs, res0);
-
-            VecDuplicate(rhs, &copyRHS);
             VecCopy(rhs, copyRHS);
+
+            updateVariables(matrix, solution, rhs, res0);
+            // computeNorm(rhs, res0);
+            resTrial = res0;
         }
         else
         {
-            // First try the complete step inside Newton Raphson
-            Vec xTrial = nullptr;
-            VecDuplicate(solution, &xTrial);
-            VecAXPY(xTrial, 1.0, solution); // xTrial = 1.0 * solution + xTrial
-            // Save the current state of the displacement DOFs
-            std::vector<PetscScalar> backup(globalDOFs.size());
-            for (auto dof : globalDOFs)
-                backup.push_back(dof->getValue());
+            // First try the complete Newton Raphson step
+            assembleProblem();
+            solveLinearSystem(matrix, rhs, solution);
 
-            double resTrial = 0.0;
-            updateVariables(matrix, xTrial, rhs, resTrial); // Compute the residual norm in case xTrial is the solution
-            if (resTrial > res0)                            // The residual has increased
+            // Save the current state of the displacement DOFs
+            std::vector<double> backup = {};
+
+            for (auto dof : globalDOFs)
+            {
+                backup.push_back(dof->getValue());
+                std::cout << "id: " << dof->getIndex()
+                          << " currentVal: " << dof->getValue()
+                          << " backUpVal: " << backup[dof->getIndex()] << std::endl;
+            }
+
+            throw std::runtime_error("Newton-Raphson iteration diverged!");
+
+            updateVariables(matrix, solution, rhs, resTrial);
+
+            computeNorm(rhs, resTrial); // Compute the residual norm in case xTrial is the solution
+
+            if (resTrial > res0) // The residual has increased
             {
                 // Perform the line search
                 // 1. Go back to the previous state
                 for (auto dof : globalDOFs)
                     dof->setValue(backup[dof->getIndex()]);
 
-                performLineSearch(matrix, solution, rhs, copyRHS, res0); // Perform the line search, gets x_ls
+                // std::cout << "----------------------------------------------" << std::endl;
+                // std::cout << "Line search has been triggered" << std::endl;
+                performLineSearch(matrix, solution, rhs, copyRHS, backup, res0); // Perform the line search, gets x_ls
+                // VecCopy(rhs, copyRHS);
+                // std::cout << "Line search has been completed" << std::endl;
+                // std::cout << "----------------------------------------------" << std::endl;
+                resTrial = res0;
             }
-            else // VERIFY HERE
-            {
-                // 2. If the residual has decreased, update the solution
-                for (auto dof : globalDOFs)
-                    dof->setValue(backup[dof->getIndex()]); // Set the displacement DOFs to the previous state
-            }
-
-            PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, res0);
+            else
+                res0 = resTrial;
         }
+        // PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, resTrial);
     } while (res0 > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
-    std::cout << "Displacement field solved, residual: " << res0 << " it: " << it << std::endl;
+    VecDestroy(&copyRHS);
+    std::cout << "Displacement field solved, residual: " << resTrial << " numIts: " << it << std::endl;
 }
 
 PetscErrorCode FEM::solvePhaseField()
@@ -244,12 +262,12 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int Ii = DStart; Ii < DEnd; Ii++)
-            elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
-    }
+    // #pragma omp parallel
+    // {
+    // #pragma omp for
+    for (int Ii = DStart; Ii < DEnd; Ii++)
+        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+    //  }
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));
@@ -535,12 +553,12 @@ PetscErrorCode FEM::updateFieldDistribution() // Used only in case a prescribed 
     PetscCall(VecZeroEntries(rhsPF));
     PetscCall(VecZeroEntries(solutionPF));
 
-#pragma omp parallel
-    {
-#pragma omp for
-        for (int Ii = DStart; Ii < DEnd; Ii++)
-            elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
-    }
+    // #pragma omp parallel
+    //{
+    // #pragma omp for
+    for (int Ii = DStart; Ii < DEnd; Ii++)
+        elements[Ii]->getPhaseFieldContribution(matrixPF, rhsPF);
+    //  }
 
     PetscCall(VecAssemblyBegin(rhsPF));
     PetscCall(VecAssemblyEnd(rhsPF));
@@ -580,5 +598,55 @@ PetscErrorCode FEM::updateRHSPF(Mat &A, Vec &b)
     PetscCall(VecDestroy(&QTimesDd));
     PetscCall(VecDestroy(&Dn));
 
+    return ierr;
+}
+
+PetscErrorCode FEM::evalStaggeredRes(double &_res)
+{
+    PetscCall(MatZeroEntries(matrix));
+    PetscCall(VecZeroEntries(rhs));
+    PetscCall(VecZeroEntries(solution));
+
+    // ====================== CALCULATING CONTRIBUTIONS ======================
+
+    assembleSymmStiffMatrix(matrix);
+
+    // ====================== ASSEMBLING MATRIX AND VECTOR ======================
+
+    PetscCall(MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
+
+    // ASSEMBLING THE RHS VECTOR: multiply column i of the stiffness matrix by the prescribed displacement of node i and set it to the right-hand side vector
+    updateRHS(matrix, rhs);
+
+    for (int Ii = IstartBD; Ii < IendBD; Ii++) // Neumann boundary conditions
+        bdElements[Ii]->getContribution(rhs);
+
+    PetscCall(VecAssemblyBegin(rhs));
+    PetscCall(VecAssemblyEnd(rhs));
+
+    // ====================== APPLYING DIRICHLET BOUNDARY CONDITIONS ======================
+    PetscCall(MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs)); // Apply Dirichlet boundary conditions
+
+    Vec All;
+    VecScatter ctx;
+
+    _res = 0.;
+
+    // Gathers the solution vector to the master process
+    PetscCall(VecScatterCreateToAll(rhs, &ctx, &All));
+    PetscCall(VecScatterBegin(ctx, rhs, All, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterEnd(ctx, rhs, All, INSERT_VALUES, SCATTER_FORWARD));
+    PetscCall(VecScatterDestroy(&ctx));
+
+    for (auto dof : globalDOFs)
+    {
+        PetscInt Ii = dof->getIndex();
+        PetscScalar valForces;
+        PetscCall(VecGetValues(All, 1, &Ii, &valForces));
+        _res += valForces * valForces;
+    }
+    VecDestroy(&All);
     return ierr;
 }

@@ -253,7 +253,7 @@ PetscErrorCode Solid2D::getContribution(Mat &A, Vec &rhs, bool negativeLoad, boo
     return ierr;
 }
 
-std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, SplitModel splitModel, bool _PrescribedDamageField)
+std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, SplitModel splitModel, int _stepGlobal, bool _PrescribedDamageField)
 {
     /*
         THIS METHOD IS USED TO COMPUTE THE CONTRIBUTION OF A SPECIFIC ELEMENT TO THE GLOBAL MATRIX AND RHS VECTOR
@@ -359,7 +359,7 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
         // ASSEMBLING CONSTITUTIVE MATRIX CONSIDERING THE ENERGY SPLIT
         // COMPUTING THE CONSTITUTIVE TENSOR
 
-        std::array<std::array<double, 3>, 3> tensorC = computeConstitutiveTensor(splitModel, tensors, gradU, divU, kappa, mu, dCoeff);
+        std::array<std::array<double, 3>, 3> tensorC = computeConstitutiveTensor(splitModel, tensors, gradU, divU, kappa, mu, dCoeff, _stepGlobal);
 
         // RELATING dN_dX TO THE B MATRIX
         PetscReal B[3][6] = {};
@@ -426,7 +426,7 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, c
     return values;
 }
 
-std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradU[2][2], double divU, double kappa, double mu, double dCoeff)
+std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradU[2][2], double divU, double kappa, double mu, double dCoeff, int _stepGlobal)
 {
     /*
         Compute Constitutive Tensor based on the energy split model. Implemented split energy models:tensorCPlus
@@ -476,15 +476,10 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
     case spectral:
     {
-        // Computing deformations(epsilon tensor) double strain[3][3] = { {0.0} }; //
         double strain[3][3] = {};
-        for (PetscInt i = 0; i < 2; ++i)
-            for (PetscInt j = 0; j < 2; ++j)
+        for (PetscInt i = 0; i < 2; i++)
+            for (PetscInt j = 0; j < 2; j++)
                 strain[i][j] = 0.5 * (gradU[i][j] + gradU[j][i]);
-
-        strain[0][2] = strain[2][0] = 0.0;
-        strain[1][2] = strain[2][1] = 0.0;
-        strain[2][2] = 0.0;
 
         switch (material->getPlaneAnalysis())
         {
@@ -493,6 +488,19 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
             strain[2][2] = -(_poisson / (1 - _poisson)) * (strain[0][0] + strain[1][1]);
             break;
         }
+
+        // if (_stepGlobal > 0)
+        // {
+        //     std::cout << "Strain Tensor: " << std::endl;
+        //     for (int i = 0; i < 3; i++)
+        //     {
+        //         for (int j = 0; j < 3; j++)
+        //             std::cout << strain[i][j] << " ";
+        //         std::cout << std::endl;
+        //     }
+        // }
+
+        // throw std::runtime_error("Spectral split model not implemented yet!");
 
         // strain[0][0] = 4.201433961241174E-004;
         // strain[1][1] = 1.803278624210739E-004;
@@ -545,7 +553,7 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
         if (std::abs(eeq) < tol)
         {
-            etaReal = 0.0; // ou qualquer valor apropriado (ex: 0 → ep1 = ep2 = ep3 = volStrain)
+            etaReal = 0.0;
         }
         else
         {
@@ -801,16 +809,6 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         double lame = material->getLameConstant(); // 1.0
         double mu = material->getShearModulus();   // 0.25
 
-        // double outerProduct[3][3][3] = {}; // outer product between d_ep_de and d_ep_de
-
-        // double outerProductIdent[3][3] = {}; // outer product between ident and ident
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 3; j++)
-        //     {
-        //         double outerProductIdent = ident[i] * ident[j];
-
-        //         tensorC[i][j] = lame * outerProductIdent + 2 * mu * (outerProduct[0][i][j] + ep1 * d2_ep_de2[0][i][j] + outerProduct[1][i][j] + ep2 * d2_ep_de2[1][i][j] + outerProduct[2][i][j] + ep3 * d2_ep_de2[2][i][j]);
-        //     }
         double d_ep_de_pos[3][3] = {};
         double d_ep_de_neg[3][3] = {};
         const double pTol = 1.0e-12;
@@ -1011,21 +1009,20 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         //             break;
         //         }
 
+        // std::cout << "TensorC: " << std::endl;
+        // for (int k = 0; k < 3; k++)
+        // {
+        //     for (int l = 0; l < 3; l++)
+        //     {
+        //         std::cout << tensorC[k][l] << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
+        // std::cout << "-----------------------------------------" << std::endl;
+
         break;
     }
     }
-    // // Print tensor C
-    // for (int i = 0; i < 3; i++)
-    // {
-    //     for (int j = 0; j < 3; j++)
-    //     {
-    //         std::cout << tensorC[i][j] << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-    // std::cout << std::endl;
-    // std::cout << "----------------------------------------" << std::endl;
 
     return tensorC;
 }
