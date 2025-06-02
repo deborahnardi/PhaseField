@@ -173,10 +173,11 @@ void FEM::solveDisplacementField(int _iStep)
     if (boundaryFunction)                                                // 0 is false, any non zero value is true;
         updateBoundaryFunction(double(_iStep) * params->getDeltaTime()); //
     // double aux = 0.0;
-    //  assembleProblem(0);
-    //  solveLinearSystem(matrix, rhs, solution);
-    //  updateVariables(matrix, solution, aux);
-
+    // assembleProblem();
+    // solveLinearSystem(matrix, rhs, solution);
+    // updateVariables(matrix, solution, rhs, aux);
+    // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
+    // throw std::runtime_error("Newton-Raphson iteration diverged!");
     int it = 0;
     const int minNewtonLS = 5;       // minimum number of iterations for the line search
     double res0 = 1., resTrial = {}; // res0 = previous residual, res1 = current residual
@@ -192,16 +193,77 @@ void FEM::solveDisplacementField(int _iStep)
         {
             assembleProblem();
             solveLinearSystem(matrix, rhs, solution);
-            VecCopy(solution, copyRHS);
-            // MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-            // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
+
+            // std::ofstream matrixFile;
+            // matrixFile.open("matrixFile.txt", std::ios::app);
+            // if (matrixFile.is_open())
+            // {
+
+            //     for (PetscInt i = 0; i < globalDOFs.size(); i++)
+            //         for (PetscInt j = 0; j < globalDOFs.size(); j++)
+            //         {
+            //             PetscScalar val = 0.0;
+            //             MatGetValue(matrix, i, j, &val);
+            //             if (val != 0.0)
+            //                 matrixFile << val << "\n";
+            //         }
+            //     matrixFile.close();
+            // }
+            // else
+            // {
+            //     std::cerr << "Não foi possível abrir matrixFile.txt para escrita\n";
+            // }
+
+            // for (PetscInt i = 0; i < globalDOFs.size(); i++)
+            // {
+            //     PetscScalar val = 0.0;
+            //     VecGetValues(solution, 1, &i, &val);
+            //     if (val != 0.0)
+            //         std::cout << val << std::endl;
+            // }
+
+            // std::ofstream matrixFile;
+            // matrixFile.open("matrixFile.txt", std::ios::app);
+            // if (matrixFile.is_open())
+            // {
+            //     matrixFile << std::fixed << std::setprecision(15);
+            //     for (PetscInt i = 0; i < globalDOFs.size(); i++)
+            //         for (PetscInt j = 0; j < globalDOFs.size(); j++)
+            //         {
+            //             PetscScalar val = 0.0;
+            //             MatGetValue(matrix, i, j, &val);
+            //             if (val != 0.0)
+            //                 matrixFile << val << "\n";
+            //         }
+            //     matrixFile.close();
+            // }
+            // else
+            // {
+            //     std::cerr << "Não foi possível abrir matrixFile.txt para escrita\n";
+            // }
+
+            // for (PetscInt i = 0; i < globalDOFs.size(); i++)
+            // {
+            //     PetscScalar val = 0.0;
+            //     VecGetValues(solution, 1, &i, &val);
+            //     if (val != 0.0)
+            //         std::cout << val << std::endl;
+            // }
+
+            // VecCopy(solution, copyRHS);
+            //  MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
+            // VecView(rhs, PETSC_VIEWER_STDOUT_WORLD);
+            // for (int i = 0; i < globalDOFs.size(); i++)
+            // {
+            //     PetscInt Ii = globalDOFs[i]->getIndex();
+            //     PetscScalar val = 0.0;
+            //     VecGetValues(rhs, 1, &Ii, &val);
+            //     if (val != 0.0)
+            //         std::cout << val << std::endl;
+            // }
             updateVariables(matrix, solution, rhs, res0);
 
-            for (auto dof : globalDOFs)
-            {
-                std::cout << "id: " << dof->getIndex()
-                          << " currentVal: " << dof->getValue() << std::endl;
-            }
+            std::cout << "res0: " << res0 << std::endl;
             throw std::runtime_error("Newton-Raphson iteration diverged!");
             // computeNorm(rhs, res0);
             resTrial = res0;
@@ -436,7 +498,6 @@ PetscErrorCode FEM::PSORAlgorithm()
     delete[] DdkMinus1;
 
     // if (rank == 0)
-    // {
     //     delete[] JC;
     //     delete[] IR;
     // }

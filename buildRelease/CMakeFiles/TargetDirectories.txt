@@ -1,0 +1,16 @@
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/solid_library.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/s.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/rebuild_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/mesh_interface/headers/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/mesh_interface/headers/CMakeFiles/rebuild_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/mesh_interface/sources/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/mesh_interface/sources/CMakeFiles/rebuild_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/solid/headers/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/solid/headers/CMakeFiles/rebuild_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/solid/sources/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/solid/sources/CMakeFiles/rebuild_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/petsc/headers/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/petsc/headers/CMakeFiles/rebuild_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/petsc/sources/CMakeFiles/edit_cache.dir
+/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/petsc/sources/CMakeFiles/rebuild_cache.dir

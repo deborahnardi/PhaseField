@@ -649,6 +649,24 @@ PetscErrorCode FEM::updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _h
     PetscCall(VecScatterEnd(ctx, b, AllForces, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterDestroy(&ctx));
 
+    std::ofstream allForces;
+    allForces.open("allForces.txt", std::ios::app);
+    if (allForces.is_open())
+    {
+        for (PetscInt j = 0; j < globalDOFs.size(); j++)
+        {
+            PetscScalar val = 0.0;
+            PetscCall(VecGetValues(AllForces, 1, &j, &val));
+            if (val != 0.0)
+                allForces << val << "\n";
+        }
+        allForces.close();
+    }
+    else
+    {
+        std::cerr << "Não foi possível abrir matrixFile.txt para escrita\n";
+    }
+
     for (auto dof : globalDOFs)
     {
         PetscInt Ii = dof->getIndex();
@@ -657,7 +675,8 @@ PetscErrorCode FEM::updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _h
         PetscCall(VecGetValues(AllForces, 1, &Ii, &valForces));
         PetscCall(VecGetValues(All, 1, &Ii, &val));
         dof->incrementValue(val);
-        _res += valForces * valForces;
+        // _res += valForces * valForces;
+        _res += val * val;
     }
     //_res = sqrt(_res);
     PetscCall(VecDestroy(&All));
