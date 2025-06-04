@@ -1041,3 +1041,115 @@ gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelea
 
 
 
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_488bb/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_488bb.dir/build.make CMakeFiles/cmTC_488bb.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_488bb.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_488bb.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_488bb
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_488bb.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_488bb.dir/CheckFunctionExists.c.o -o cmTC_488bb  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_57bf2/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_57bf2.dir/build.make CMakeFiles/cmTC_57bf2.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_57bf2.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_57bf2.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_57bf2
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_57bf2.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_57bf2.dir/CheckFunctionExists.c.o -o cmTC_57bf2  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_9c377/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_9c377.dir/build.make CMakeFiles/cmTC_9c377.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9c377.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_9c377.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_9c377
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9c377.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_9c377.dir/CheckFunctionExists.c.o -o cmTC_9c377  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_77863/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_77863.dir/build.make CMakeFiles/cmTC_77863.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_77863.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_77863.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_77863
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_77863.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_77863.dir/CheckFunctionExists.c.o -o cmTC_77863  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_417ca/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_417ca.dir/build.make CMakeFiles/cmTC_417ca.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_417ca.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_417ca.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_417ca
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_417ca.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_417ca.dir/CheckFunctionExists.c.o -o cmTC_417ca  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_61573/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_61573.dir/build.make CMakeFiles/cmTC_61573.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_61573.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_61573.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_61573
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_61573.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_61573.dir/CheckFunctionExists.c.o -o cmTC_61573  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_295f2/fast && gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+/usr/bin/gmake  -f CMakeFiles/cmTC_295f2.dir/build.make CMakeFiles/cmTC_295f2.dir/build
+gmake[2]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_295f2.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_295f2.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_295f2
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_295f2.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_295f2.dir/CheckFunctionExists.c.o -o cmTC_295f2  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[2]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+

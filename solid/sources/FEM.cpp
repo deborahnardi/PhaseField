@@ -66,8 +66,6 @@ void FEM::setLoadingVector2(double ubar, int nSteps)
 
     // for (int i = 0; i < load.size(); i++)
     //     std::cout << i << " " << load[i] << " " << std::endl;
-
-    std::cout << std::endl;
 }
 
 void FEM::setLoadingVector1(double ubar, int nSteps)
@@ -369,8 +367,12 @@ PetscErrorCode FEM::assembleProblem()
     PetscCall(VecZeroEntries(solution));
 
     // ====================== CALCULATING CONTRIBUTIONS ======================
+    // std::array<Tensor, 3> tensors = computeConstitutiveTensors();
+    // for (int Ii = Istart; Ii < Iend; Ii++)                   // Loop over the elements
+    //     elements[Ii]->getContribution(tensors, matrix, rhs); // Assemble the stiffness matrix and the right-hand side vector
 
     assembleSymmStiffMatrix(matrix);
+
     // ====================== ASSEMBLING MATRIX AND VECTOR ======================
 
     PetscCall(MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY));
@@ -378,6 +380,7 @@ PetscErrorCode FEM::assembleProblem()
     PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
 
     // ASSEMBLING THE RHS VECTOR: multiply column i of the stiffness matrix by the prescribed displacement of node i and set it to the right-hand side vector
+
     updateRHS(matrix, rhs);
 
     for (int Ii = IstartBD; Ii < IendBD; Ii++) // Neumann boundary conditions
@@ -571,7 +574,7 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     // PetscCall(KSPSetReusePreconditioner(ksp, PETSC_FALSE));
     PetscCall(KSPSetOperators(ksp, A, A));
     PetscCall(KSPSetFromOptions(ksp));
-    PetscCall(KSPSetTolerances(ksp, 1.e-5, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
+    PetscCall(KSPSetTolerances(ksp, 1.e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
     PetscCall(KSPGetPC(ksp, &pc));
 
     PetscCall(VecSet(x, 0.0)); // Initialize the solution vector to zero
@@ -579,11 +582,11 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     switch (params->getSolverType())
     {
     case ESuiteSparse: // Sequential (it is a direct solver)
-        PetscCall(PCSetType(pc, PCLU));
+        PetscCall(PCSetType(pc, PCBJACOBI));
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK));
         break;
     case EMumps: // Parallel - (Multifrontal Massively Parallel Solver), used for large and sparse linear systems (MUMPS is a direct solver)
-        PetscCall(PCSetType(pc, PCLU));
+        PetscCall(PCSetType(pc, PCBJACOBI));
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
         break;
     case EIterative: // Parallel - faster than MUMPS, however it is harder to converge;
@@ -648,24 +651,6 @@ PetscErrorCode FEM::updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _h
     PetscCall(VecScatterBegin(ctx, b, AllForces, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(ctx, b, AllForces, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterDestroy(&ctx));
-
-    std::ofstream allForces;
-    allForces.open("allForces.txt", std::ios::app);
-    if (allForces.is_open())
-    {
-        for (PetscInt j = 0; j < globalDOFs.size(); j++)
-        {
-            PetscScalar val = 0.0;
-            PetscCall(VecGetValues(AllForces, 1, &j, &val));
-            if (val != 0.0)
-                allForces << val << "\n";
-        }
-        allForces.close();
-    }
-    else
-    {
-        std::cerr << "Não foi possível abrir matrixFile.txt para escrita\n";
-    }
 
     for (auto dof : globalDOFs)
     {
