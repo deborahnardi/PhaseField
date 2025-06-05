@@ -178,7 +178,7 @@ void FEM::solveDisplacementField(int _iStep)
     //  updateVariables(matrix, solution, aux);
 
     int it = 0;
-    const int minNewtonLS = 5;       // minimum number of iterations for the line search
+    const int minNewtonLS = 6;       // minimum number of iterations for the line search
     double res0 = 1., resTrial = {}; // res0 = previous residual, res1 = current residual
     Vec copyRHS;
     VecDuplicate(rhs, &copyRHS);
@@ -192,121 +192,38 @@ void FEM::solveDisplacementField(int _iStep)
         {
             assembleProblem();
             solveLinearSystem(matrix, rhs, solution);
-
-            // std::ofstream matrixFile;
-            // matrixFile.open("matrixFile.txt", std::ios::app);
-            // if (matrixFile.is_open())
-            // {
-
-            //     for (PetscInt i = 0; i < globalDOFs.size(); i++)
-            //         for (PetscInt j = 0; j < globalDOFs.size(); j++)
-            //         {
-            //             PetscScalar val = 0.0;
-            //             MatGetValue(matrix, i, j, &val);
-            //             if (val != 0.0)
-            //                 matrixFile << val << "\n";
-            //         }
-            //     matrixFile.close();
-            // }
-            // else
-            // {
-            //     std::cerr << "Não foi possível abrir matrixFile.txt para escrita\n";
-            // }
-
-            // for (PetscInt i = 0; i < globalDOFs.size(); i++)
-            // {
-            //     PetscScalar val = 0.0;
-            //     VecGetValues(solution, 1, &i, &val);
-            //     if (val != 0.0)
-            //         std::cout << val << std::endl;
-            // }
-
-            // std::ofstream matrixFile;
-            // matrixFile.open("matrixFile.txt", std::ios::app);
-            // if (matrixFile.is_open())
-            // {
-
-            //     for (PetscInt i = 0; i < globalDOFs.size(); i++)
-            //         for (PetscInt j = 0; j < globalDOFs.size(); j++)
-            //         {
-            //             PetscScalar val = 0.0;
-            //             MatGetValue(matrix, i, j, &val);
-            //             if (val != 0.0)
-            //                 matrixFile << val << "\n";
-            //         }
-            //     matrixFile.close();
-            // }
-            // else
-            // {
-            //     std::cerr << "Não foi possível abrir matrixFile.txt para escrita\n";
-            // }
-
-            // for (PetscInt i = 0; i < globalDOFs.size(); i++)
-            // {
-            //     PetscScalar val = 0.0;
-            //     VecGetValues(solution, 1, &i, &val);
-            //     if (val != 0.0)
-            //         std::cout << val << std::endl;
-            // }
-
-            // VecCopy(solution, copyRHS);
-            //  MatView(matrix, PETSC_VIEWER_STDOUT_WORLD);
-            // VecView(solution, PETSC_VIEWER_STDOUT_WORLD);
-            // for (int i = 0; i < globalDOFs.size(); i++)
-            // {
-            //     PetscInt Ii = globalDOFs[i]->getIndex();
-            //     PetscScalar val = 0.0;
-            //     VecGetValues(rhs, 1, &Ii, &val);
-            //     if (val != 0.0)
-            //         std::cout << val << std::endl
-            // }
+            VecCopy(rhs, copyRHS);
             updateVariables(matrix, solution, rhs, res0);
-
-            // std::cout << "res0: " << res0 << std::endl;
-            // throw std::runtime_error("Newton-Raphson iteration diverged!");
-            // computeNorm(rhs, res0);
             resTrial = res0;
         }
         else
         {
-            // First try the complete Newton Raphson step
-            assembleProblem();
-            solveLinearSystem(matrix, rhs, solution);
-
-            // Save the current state of the displacement DOFs
-            std::vector<double> backup = {};
-
-            for (auto dof : globalDOFs)
-            {
-                backup.push_back(dof->getValue());
-                std::cout << "id: " << dof->getIndex()
-                          << " currentVal: " << dof->getValue()
-                          << " backUpVal: " << backup[dof->getIndex()] << std::endl;
-            }
-
-            updateVariables(matrix, solution, rhs, resTrial);
-
-            computeNorm(rhs, resTrial); // Compute the residual norm in case xTrial is the solution
+            assembleProblem();          // K(uk+1), rhs de uk+1
+            computeNorm(rhs, resTrial); // rhs de uk+1
 
             if (resTrial > res0) // The residual has increased
             {
-                // Perform the line search
-                // 1. Go back to the previous state
-                for (auto dof : globalDOFs)
-                    dof->setValue(backup[dof->getIndex()]);
+                std::cout << "resTrial: " << resTrial << " res0: " << res0 << std::endl; // rhs de uk
 
-                // std::cout << "----------------------------------------------" << std::endl;
-                // std::cout << "Line search has been triggered" << std::endl;
-                performLineSearch(matrix, solution, rhs, copyRHS, backup, res0); // Perform the line search, gets x_ls
-                // VecCopy(rhs, copyRHS);
-                // std::cout << "Line search has been completed" << std::endl;
-                // std::cout << "----------------------------------------------" << std::endl;
-                resTrial = res0;
+                performLineSearch(copyRHS); // compute u^{k+eta} = u^k + eta * delta_u, gets out with rhs(u^{k+eta} and rhs_u^{k+eta})
+
+                // computeNorm(rhs, resTrial); // // ||rhs_u^{k+eta}||
+                //  res0 = resTrial;
+                //  std::cout << "resTrial: " << resTrial << std::endl;
             }
             else
-                res0 = resTrial;
+            {
+                solveLinearSystem(matrix, rhs, solution);
+
+                VecCopy(rhs, copyRHS);      // copyRhs = rhs de uk
+                for (auto dof : globalDOFs) // uk values
+                    dof->setBackUpValue(dof->getValue());
+
+                updateVariables(matrix, solution, rhs, resTrial); // compute uk+1
+                res0 = resTrial;                                  // res0 is || rhs de uk ||
+            }
         }
-        // PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, resTrial);
+        PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, res0);
     } while (res0 > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
     VecDestroy(&copyRHS);
     std::cout << "Displacement field solved, residual: " << resTrial << " numIts: " << it << std::endl;
@@ -681,7 +598,9 @@ PetscErrorCode FEM::evalStaggeredRes(double &_res)
 
     PetscCall(MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
+
+    if (params->getSplitModel() == volDev)
+        PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
 
     // ASSEMBLING THE RHS VECTOR: multiply column i of the stiffness matrix by the prescribed displacement of node i and set it to the right-hand side vector
     updateRHS(matrix, rhs);

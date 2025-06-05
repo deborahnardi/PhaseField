@@ -113,7 +113,7 @@ public:
     PetscErrorCode computeReactionForces();
     double computeNorm(const double *vec1, const double *vec2, const int &size);
     std::array<Tensor, 3> computeConstitutiveTensors();
-    PetscErrorCode performLineSearch(Mat &A, Vec &solution, Vec &rhs, Vec &copyRHS, std::vector<PetscScalar> &_backup, double &_res);
+    PetscErrorCode performLineSearch(Vec &copyRHS);
     /*----------------------------------------------------------------------------------
                                     Phase Field Methods
     ------------------------------------------------------------------------------------

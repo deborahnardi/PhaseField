@@ -497,10 +497,10 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
             break;
         }
 
-        strain[0][0] = 4.201433961241174e-004;
-        strain[1][1] = 1.803278624210739e-004;
-        strain[0][1] = 1.479491857090474e-003;
-        strain[1][0] = strain[0][1];
+        // strain[0][0] = 4.201433961241174e-004;
+        // strain[1][1] = 1.803278624210739e-004;
+        // strain[0][1] = 1.479491857090474e-003;
+        // strain[1][0] = strain[0][1];
 
         /*
             delta < 0 -> there are 3 distinct real eigenvalues; delta = 0 -> there are 2 equal eigenvalues; delta > 0 -> there is one real eigenvalue and two complex conjugate eigenvalues; we only work with cases where delta < 0 and delta = 0
@@ -582,28 +582,6 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         //     double val = volStrain + eeq * cosEta;
         //     principalValues[ip] = std::round(val * 1e10) / 1e10;
         // }
-
-        bool strainIsNull = true;
-        const double pTol = 1e-12;
-
-        if (std::abs(principalValues[0]) > pTol ||
-            std::abs(principalValues[1]) > pTol ||
-            std::abs(principalValues[2]) > pTol)
-        {
-            strainIsNull = false;
-        }
-
-        if (strainIsNull)
-        {
-
-            for (int i = 0; i < 3; ++i)
-                for (int j = 0; j < 3; ++j)
-                {
-                    double outerProductIdent = ident[i] * ident[j];
-                    tensorC[i][j] = lame * outerProductIdent; // C = lambda * I
-                }
-            break;
-        }
 
         // If the code goes over this point, the strain is not null, so we can compute an equivalent measure of the strain tensor
 
@@ -721,8 +699,56 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
 
         //--
 
-        // -------------------------------------------------
+        bool strainIsNull = true;
+        const double pTol = 1e-12;
 
+        if (std::abs(principalValues[0]) > pTol ||
+            std::abs(principalValues[1]) > pTol ||
+            std::abs(principalValues[2]) > pTol)
+        {
+            strainIsNull = false;
+        }
+
+        if (strainIsNull)
+        {
+            Tensor tensorI = tensors[1]; // Fourth order identity tensor
+
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j)
+                {
+                    double outerProductIdent = ident[i] * ident[j];
+                    tensorC[i][j] = lame * outerProductIdent + 2.0 * mu * tensorI[i][j];
+                }
+
+            // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
+            // double detCPlusMinus = 0.0;
+            // detCPlusMinus = tensorC[0][0] * (tensorC[1][1] * tensorC[2][2] - tensorC[1][2] * tensorC[2][1]) -
+            //                 tensorC[0][1] * (tensorC[1][0] * tensorC[2][2] - tensorC[1][2] * tensorC[2][0]) +
+            //                 tensorC[0][2] * (tensorC[1][0] * tensorC[2][1] - tensorC[1][1] * tensorC[2][0]);
+
+            // if (detCPlusMinus <= pTol)
+            //     std::cout << detCPlusMinus << std::endl;
+            break;
+        }
+
+        // -------------------------------------------------
+        // if (strainIsNull)
+        // {
+        //     // for (int ip = 0; ip < 3; ip++)
+        //     // {
+        //     //     double eta = etaStar[ip];
+        //     //     double cosEta = std::cos(eta);
+        //     //     cosEta = std::round(cosEta * 1e10) / 1e10;
+
+        //     //     double d_coseta_de[3] = {};
+        //     //     for (int i = 0; i < 3; i++)
+        //     //         d_coseta_de[i] = d_cos3eta_de[i] / (12.0 * cosEta * cosEta - 3.0);
+
+        //     //     for (int i = 0; i < 3; i++)
+        //     //         d_ep_de[ip][i] = 1.0 / 3.0 * ident[i] + cosEta * d_eeq_de[i] + eeq * d_coseta_de[i];
+        //     // }
+        // }
+        // else
         if ((abs(principalValues[1] - principalValues[2]) > tol) &&
             (abs(principalValues[0] - principalValues[1]) > tol) &&
             (abs(principalValues[0] - principalValues[2]) > tol)) // THERE ARE 3 DISTINCT REAL EIGENVALUES
@@ -969,11 +995,17 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
             for (int j = 0; j < 3; j++)
             {
                 tensorC[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
-                // tensorCaux[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
+                // tensorCaux[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
             }
 
         // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
         // double detCPlusMinus = 0.0;
+        // detCPlusMinus = tensorCaux[0][0] * (tensorCaux[1][1] * tensorCaux[2][2] - tensorCaux[1][2] * tensorCaux[2][1]) -
+        //                 tensorCaux[0][1] * (tensorCaux[1][0] * tensorCaux[2][2] - tensorCaux[1][2] * tensorCaux[2][0]) +
+        //                 tensorCaux[0][2] * (tensorCaux[1][0] * tensorCaux[2][1] - tensorCaux[1][1] * tensorCaux[2][0]);
+
+        // if (detCPlusMinus <= pTol)
+        //     std::cout << detCPlusMinus << std::endl;
 
         // -------------------------------------------------
         // DIVIDING BY THE COEFFICIENTS OF THE TENSOR
@@ -990,6 +1022,7 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
         //         std::cout << tensorC[i][j] << " ";
         //     std::cout << std::endl;
         // }
+
         break;
     }
     }

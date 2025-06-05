@@ -260,73 +260,62 @@ PetscErrorCode FEM::solveFEMProblem()
     return ierr;
 }
 
-PetscErrorCode FEM::performLineSearch(Mat &A, Vec &solution, Vec &rhs, Vec &copyRHS, std::vector<PetscScalar> &_backup, double &_res) // solution = delta_u, rhs = Fext - Fint = R(uk)
+PetscErrorCode FEM::performLineSearch(Vec &copyRHS) // solution = delta_u, rhs = Fext - Fint = R(uk)
 {
-    const int maxBT = 10; // Maximum back-tracking
-    double R0 = {}, R1 = {}, alpha = {}, eta = {}, resEta = {};
+    const int maxBT = 100; // Maximum back-tracking
+    double alpha = {}, eta = {}, resEta = {}, R0 = {}, R1 = {};
 
     // Compute R0 and R1: R0 = delta_u ^ T * R(uk) and R1 = delta_u ^ T * R(uk + delta_u)
-    VecDot(solution, copyRHS, &R0); // R0 stands for the iteration at uk (before the line search)
-    VecDot(solution, rhs, &R1);     // R1 stands for the iteration at uk + delta_u (during the line search)
-    alpha = R0 / R1;
+    VecDot(solution, copyRHS, &R0); // R0 stands for the iteration at uk (before the line search), residual in energy (force x displacement)
+    VecDot(solution, rhs, &R1);     // R1 stands for the iteration at uk + delta_u
 
+    alpha = R0 / R1;
     // Compute the line search parameter eta
     eta = (alpha > 0
                ? 0.5 * alpha
                : 0.5 * alpha + std::sqrt(alpha * alpha / 4.0 - alpha));
     eta = std::clamp(eta, 1e-8, 1.0);
 
+    // std::cout << (1 - eta) * R0 + R1 * eta * eta << std::endl; // verification
+
+    Vec All;
+    VecScatter ctx;
+    // Gathers the solution vector to the master process
+    VecScatterCreateToAll(solution, &ctx, &All);
+    VecScatterBegin(ctx, solution, All, INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(ctx, solution, All, INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterDestroy(&ctx);
+
     for (int bt = 0; bt < maxBT; bt++)
     {
-        // 1) Gets the current state of the displacement DOFs
-        for (auto dof : globalDOFs)
-            dof->setValue(_backup[dof->getIndex()]);
-
-        Vec All;
-        VecScatter ctx;
-        // Gathers the solution vector to the master process
-        VecScatterCreateToAll(solution, &ctx, &All);
-        VecScatterBegin(ctx, solution, All, INSERT_VALUES, SCATTER_FORWARD);
-        VecScatterEnd(ctx, solution, All, INSERT_VALUES, SCATTER_FORWARD);
-        VecScatterDestroy(&ctx);
 
         // x_ls = currentVal + eta * deltaU
         for (auto dof : globalDOFs)
         {
-            PetscInt Ii = dof->getIndex();
-            PetscScalar currentVal = dof->getValue();
-            PetscScalar deltaU = 0.0;
-            VecGetValues(All, 1, &Ii, &deltaU);
-            dof->setValue(currentVal + eta * deltaU); // Set the displacement DOFs to the new state
+            dof->setValue(dof->getBackUpValue()); // Reset the DOF value to the backup value
+            double deltaU = 0.0;
+            PetscInt index = dof->getIndex();
+            PetscCall(VecGetValues(All, 1, &index, &deltaU)); // Get the current value of the DOF
+            double val = eta * deltaU;
+            dof->incrementValue(val);
         }
-        VecDestroy(&All);
 
-        PetscCall(VecZeroEntries(rhs));
-        updateRHS(matrix, rhs); // Update the residual with the new displacement values from x_ls
+        assembleProblem(); // rhs(eta)
+        VecDot(solution, rhs, &resEta);
 
-        for (int Ii = IstartBD; Ii < IendBD; Ii++) // Neumann boundary conditions
-            bdElements[Ii]->getContribution(rhs);
-
-        PetscCall(VecAssemblyBegin(rhs));
-        PetscCall(VecAssemblyEnd(rhs));
-
-        PetscCall(MatZeroRowsColumns(matrix, numDirichletDOFs, dirichletBC, 1., solution, rhs)); // Apply Dirichlet boundary conditions
-
-        // assembleProblem();
-
-        // updateVariables(matrix, solution, rhs, resEta); // Compute the residual norm in case x_ls is the solution
-        computeNorm(rhs, resEta); // Compute the residual norm in case x_ls is the solution
-        // PetscPrintf(PETSC_COMM_WORLD, "Line search: %d  Residual: %e\n", bt, resEta);
-        if (resEta <= 0.5 * _res) // The residual has decreased
+        if (abs(resEta) <= 0.5 * abs(R0)) // The residual has decreased
         {
-            _res = resEta;
+            //_R0 = resEta;
+
             break;
         }
 
         eta *= 0.5; // Decrease the line search parameter
     }
 
-    _res = resEta;
+    //_R0 = resEta;
+    // computeNorm(rhs, R0);
+    VecDestroy(&All);
     return ierr;
 }
 
@@ -364,7 +353,7 @@ PetscErrorCode FEM::assembleProblem()
 
     PetscCall(MatZeroEntries(matrix));
     PetscCall(VecZeroEntries(rhs));
-    PetscCall(VecZeroEntries(solution));
+    // PetscCall(VecZeroEntries(solution));
 
     // ====================== CALCULATING CONTRIBUTIONS ======================
     // std::array<Tensor, 3> tensors = computeConstitutiveTensors();
@@ -377,7 +366,9 @@ PetscErrorCode FEM::assembleProblem()
 
     PetscCall(MatAssemblyBegin(matrix, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(matrix, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
+
+    if (params->getSplitModel() == volDev)
+        PetscCall(MatSetOption(matrix, MAT_SPD, PETSC_TRUE)); // symmetric positive-definite
 
     // ASSEMBLING THE RHS VECTOR: multiply column i of the stiffness matrix by the prescribed displacement of node i and set it to the right-hand side vector
 
@@ -574,19 +565,19 @@ PetscErrorCode FEM::solveLinearSystem(Mat &A, Vec &b, Vec &x)
     // PetscCall(KSPSetReusePreconditioner(ksp, PETSC_FALSE));
     PetscCall(KSPSetOperators(ksp, A, A));
     PetscCall(KSPSetFromOptions(ksp));
-    PetscCall(KSPSetTolerances(ksp, 1.e-10, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
+    PetscCall(KSPSetTolerances(ksp, 1.e-6, PETSC_DEFAULT, PETSC_DEFAULT, PETSC_DEFAULT));
     PetscCall(KSPGetPC(ksp, &pc));
 
-    PetscCall(VecSet(x, 0.0)); // Initialize the solution vector to zero
+    PetscCall(VecZeroEntries(x));
 
     switch (params->getSolverType())
     {
     case ESuiteSparse: // Sequential (it is a direct solver)
-        PetscCall(PCSetType(pc, PCBJACOBI));
+        PetscCall(PCSetType(pc, PCLU));
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERUMFPACK));
         break;
     case EMumps: // Parallel - (Multifrontal Massively Parallel Solver), used for large and sparse linear systems (MUMPS is a direct solver)
-        PetscCall(PCSetType(pc, PCBJACOBI));
+        PetscCall(PCSetType(pc, PCLU));
         PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
         break;
     case EIterative: // Parallel - faster than MUMPS, however it is harder to converge;
@@ -660,8 +651,8 @@ PetscErrorCode FEM::updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _h
         PetscCall(VecGetValues(AllForces, 1, &Ii, &valForces));
         PetscCall(VecGetValues(All, 1, &Ii, &val));
         dof->incrementValue(val);
-        // _res += valForces * valForces;
-        _res += val * val;
+        _res += valForces * valForces;
+        // _res += val * val;
     }
     //_res = sqrt(_res);
     PetscCall(VecDestroy(&All));
@@ -675,11 +666,22 @@ PetscErrorCode FEM::computeNorm(Vec &b, double &_res)
     Vec All;
     VecScatter ctx;
 
+    _res = 0.0;
+
     PetscCall(VecScatterCreateToAll(b, &ctx, &All));
     PetscCall(VecScatterBegin(ctx, b, All, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(ctx, b, All, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterDestroy(&ctx));
     PetscCall(VecDot(All, All, &_res));
+
+    // double resAux = 0.0;
+    // for (auto dof : globalDOFs)
+    // {
+    //     PetscInt Ii = dof->getIndex();
+    //     PetscScalar val;
+    //     PetscCall(VecGetValues(All, 1, &Ii, &val));
+    //     resAux += val * val;
+    // }
 
     PetscCall(VecDestroy(&All));
     return ierr;

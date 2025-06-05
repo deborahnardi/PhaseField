@@ -8,6 +8,7 @@ private:
     int index = -1.;
     DOFType type;
     double value = 0.; // Value is the current value of the DOF
+    double backUpValue = 0.;
     double vDirichlet = 0., vNeumann = 0., vDamage = 0.;
     double reactionForce = 0.;
     bool bDirichlet = false, bNeumann = false, isControlled = false, bDamage = false;
@@ -25,6 +26,7 @@ public:
     void incrementValue(const double &_increment) { value += _increment; }
     void setControlledDOF() { isControlled = true; }
     void setReactionForce(const double &_reactionForce) { reactionForce = _reactionForce; }
+    void setBackUpValue(const double &_value) { backUpValue = _value; }
 
     DOFType getDOFType() const { return type; }
     void setDOFType(const DOFType &_type) { type = _type; }
@@ -41,6 +43,7 @@ public:
     bool isNeumann() const { return bNeumann; }
     double getNeumannValue() const { return vNeumann; }
     double getReactionForce() const { return reactionForce; }
+    double getBackUpValue() const { return backUpValue; }
 
     void setPrescribedDamage() { bDamage = true; }
 };

@@ -97,7 +97,7 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 };
 analysis1->setBoundaryFunction(boundaryFunction);
 analysis1->setPrescribedDamageField(true);
-//   //   ********************************** FEM INFORMATION **********************************
+//      //   ********************************** FEM INFORMATION **********************************
 params->setSolverType(ESuiteSparse);
 params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
