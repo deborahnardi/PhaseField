@@ -720,13 +720,13 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
                     tensorC[i][j] = lame * outerProductIdent + 2.0 * mu * tensorI[i][j];
                 }
 
-            // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
+            // // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
             // double detCPlusMinus = 0.0;
             // detCPlusMinus = tensorC[0][0] * (tensorC[1][1] * tensorC[2][2] - tensorC[1][2] * tensorC[2][1]) -
             //                 tensorC[0][1] * (tensorC[1][0] * tensorC[2][2] - tensorC[1][2] * tensorC[2][0]) +
             //                 tensorC[0][2] * (tensorC[1][0] * tensorC[2][1] - tensorC[1][1] * tensorC[2][0]);
 
-            // if (detCPlusMinus <= pTol)
+            // if (detCPlusMinus <= 0.0)
             //     std::cout << detCPlusMinus << std::endl;
             break;
         }
@@ -990,21 +990,21 @@ std::array<std::array<double, 3>, 3> Solid2D::computeConstitutiveTensor(SplitMod
                     double outerProductIdent = ident[i] * ident[j];
                     tensorCMinus[i][j] += lame * outerProductIdent;
                 }
-        // double tensorCaux[3][3] = {};
+        double tensorCaux[3][3] = {};
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
             {
                 tensorC[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
-                // tensorCaux[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
+                tensorCaux[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
             }
 
-        // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
+        // // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
         // double detCPlusMinus = 0.0;
         // detCPlusMinus = tensorCaux[0][0] * (tensorCaux[1][1] * tensorCaux[2][2] - tensorCaux[1][2] * tensorCaux[2][1]) -
         //                 tensorCaux[0][1] * (tensorCaux[1][0] * tensorCaux[2][2] - tensorCaux[1][2] * tensorCaux[2][0]) +
         //                 tensorCaux[0][2] * (tensorCaux[1][0] * tensorCaux[2][1] - tensorCaux[1][1] * tensorCaux[2][0]);
 
-        // if (detCPlusMinus <= pTol)
+        // if (detCPlusMinus <= 0.0)
         //     std::cout << detCPlusMinus << std::endl;
 
         // -------------------------------------------------

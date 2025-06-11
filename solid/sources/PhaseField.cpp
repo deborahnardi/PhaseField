@@ -178,55 +178,124 @@ void FEM::solveDisplacementField(int _iStep)
     //  updateVariables(matrix, solution, aux);
 
     int it = 0;
-    const int minNewtonLS = 6;       // minimum number of iterations for the line search
-    double res0 = 1., resTrial = {}; // res0 = previous residual, res1 = current residual
+    const int minNewtonLS = 2; // minimum number of iterations for the line search
+    double currentRes = 1.;    // res0 = previous residual, res1 = current residual
     Vec copyRHS;
     VecDuplicate(rhs, &copyRHS);
     VecZeroEntries(copyRHS);
+    double res0 = 0.0, resTrial = 0.0; // res0 is || rhs de uk ||, resTrial is || rhs de uk+1 ||
 
-    do
+    for (int it = 0; it < params->getMaxNewtonRaphsonIt(); it++)
     {
-        it++;
+        // a) Evals residual in uk
+        assembleProblem();
+        computeNorm(rhs, currentRes);
 
-        if (it <= minNewtonLS) // No need for LS (Line Search)
+        if (it != 0)
         {
-            assembleProblem();
-            solveLinearSystem(matrix, rhs, solution);
-            VecCopy(rhs, copyRHS);
-            updateVariables(matrix, solution, rhs, res0);
-            resTrial = res0;
+            // currentRes /= norm;
+            PetscPrintf(PETSC_COMM_WORLD, "Residual: %.12e\n", currentRes);
+        }
+
+        if (currentRes < params->getTolNR() && it != 0)
+        {
+            // PetscPrintf(PETSC_COMM_WORLD,
+            //             "Displacement field converged in it %d with residual %e\n", it, currentRes);
+            break;
+        }
+
+        // b) backup
+        VecCopy(rhs, copyRHS);
+        for (auto dof : globalDOFs)
+            dof->setBackUpValue(dof->getValue());
+
+        // c) Complete Newton step
+        solveLinearSystem(matrix, rhs, solution);
+        updateVariables(matrix, solution, rhs, currentRes);
+
+        // d) Trial step
+        assembleProblem();
+        computeNorm(rhs, resTrial);
+        // PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e  ResTrial: %e\n", it, currentRes, resTrial);
+
+        // e) Decides if line search is necessary
+        if ((resTrial > currentRes) && it > 2)
+        {
+            // performLineSearch(copyRHS);
+            // computeNorm(rhs, currentRes);
+            currentRes = resTrial;
         }
         else
         {
-            assembleProblem();          // K(uk+1), rhs de uk+1
-            computeNorm(rhs, resTrial); // rhs de uk+1
-
-            if (resTrial > res0) // The residual has increased
-            {
-                std::cout << "resTrial: " << resTrial << " res0: " << res0 << std::endl; // rhs de uk
-
-                performLineSearch(copyRHS); // compute u^{k+eta} = u^k + eta * delta_u, gets out with rhs(u^{k+eta} and rhs_u^{k+eta})
-
-                // computeNorm(rhs, resTrial); // // ||rhs_u^{k+eta}||
-                //  res0 = resTrial;
-                //  std::cout << "resTrial: " << resTrial << std::endl;
-            }
-            else
-            {
-                solveLinearSystem(matrix, rhs, solution);
-
-                VecCopy(rhs, copyRHS);      // copyRhs = rhs de uk
-                for (auto dof : globalDOFs) // uk values
-                    dof->setBackUpValue(dof->getValue());
-
-                updateVariables(matrix, solution, rhs, resTrial); // compute uk+1
-                res0 = resTrial;                                  // res0 is || rhs de uk ||
-            }
+            // accepts the trial step
+            currentRes = resTrial;
         }
-        PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, res0);
-    } while (res0 > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
-    VecDestroy(&copyRHS);
-    std::cout << "Displacement field solved, residual: " << resTrial << " numIts: " << it << std::endl;
+    }
+
+    // do
+    // {
+    //     it++;
+
+    //     // assembleProblem(); // assemble rhs
+    //     // computeNorm(rhs, currentRes);
+
+    //     // assembleProblem(); // assemble rhs
+    //     // computeNorm(rhs, currentRes);
+
+    //     // if (abs(currentRes) >= abs(previousRes))
+    //     // {
+    //     //     solveLinearSystem(matrix, rhs, solution);
+    //     //     performLineSearch(copyRHS);
+    //     //     computeNorm(rhs, currentRes); // |rhs_u^{k+eta}||
+    //     //     previousRes = currentRes;
+    //     // }
+    //     // else
+    //     // {
+    //     //     solveLinearSystem(matrix, rhs, solution);
+    //     //     VecCopy(rhs, copyRHS);
+
+    //     //     updateVariables(matrix, solution, rhs, currentRes);
+    //     //     for (auto dof : globalDOFs) // uk values
+    //     //         dof->setBackUpValue(dof->getValue());
+
+    //     //     previousRes = currentRes;
+    //     // }
+
+    //     if (it <= minNewtonLS) // No need for LS (Line Search)
+    //     {
+    //         assembleProblem();
+    //         solveLinearSystem(matrix, rhs, solution);
+    //         VecCopy(rhs, copyRHS);
+    //         updateVariables(matrix, solution, rhs, res0);
+    //         resTrial = res0;
+    //     }
+    //     else
+    //     {
+    //         assembleProblem();          // K(uk+1), rhs de uk+1
+    //         computeNorm(rhs, resTrial); // rhs de uk+1
+
+    //         if (resTrial > res0) // The residual has increased
+    //         {
+    //             // std::cout << "resTrial: " << resTrial << " res0: " << res0 << std::endl; // rhs de uk
+    //             // VecView(rhs, PETSC_VIEWER_STDOUT_WORLD); // Print the rhs vector
+    //             performLineSearch(copyRHS); // compute u^{k+eta} = u^k + eta * delta_u, gets out with rhs(u^{k+eta} and rhs_u^{k+eta})
+    //             computeNorm(rhs, resTrial); // // ||rhs_u^{k+eta}||
+    //             //  res0 = resTrial;
+    //             //  std::cout << "resTrial: " << resTrial << std::endl;
+    //         }
+    //         solveLinearSystem(matrix, rhs, solution);
+
+    //         VecCopy(rhs, copyRHS);      // copyRhs = rhs de uk
+    //         for (auto dof : globalDOFs) // uk values
+    //             dof->setBackUpValue(dof->getValue());
+
+    //         updateVariables(matrix, solution, rhs, resTrial); // compute uk+1
+    //         res0 = resTrial;                                  // res0 is || rhs de uk ||
+    //     }
+    //     PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e\n", it, resTrial);
+    // } while (resTrial > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
+    // VecDestroy(&copyRHS);
+    // std::cout << "Displacement field solved, residual: " << resTrial << " numIts: " << it << std::endl;
 }
 
 PetscErrorCode FEM::solvePhaseField()

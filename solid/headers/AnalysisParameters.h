@@ -9,7 +9,7 @@ class AnalysisParameters
 {
 private:
     int nSteps = 1, maxItNR = 100000, maxIterPSOR = 1000, maxItStaggered = 100000;
-    double tolNR = 1.e-6, tolPSOR = 1.e-6, tolStaggered = 1.e-4;
+    double tolNR = 1.e-8, tolPSOR = 1.e-6, tolStaggered = 1.e-4;
     double ubar, deltaTime;
     double residStaggered = 1.e30, residPSOR = 1e20;
     int maxIterEIterative = 10000;

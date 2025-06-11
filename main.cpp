@@ -25,19 +25,19 @@ int main(int argc, char **argv)
   // #include "examples/pointerAndReference.hpp"
   // #include "examples/Ex01Inclusions.hpp"
   // #include "examples/square.hpp"
-  //    #include "examples/squareEllipse.hpp"
-  //           #include "examples/Ex02NumericalIntegration.hpp"
-  //   #include "examples/Ex03Truss.hpp"
-  //      #include "examples/Ex04Truss.hpp"
+  //     #include "examples/squareEllipse.hpp"
+  //            #include "examples/Ex02NumericalIntegration.hpp"
+  //    #include "examples/Ex03Truss.hpp"
+  //       #include "examples/Ex04Truss.hpp"
 
-  // ================ Phase Field Examples =================
-  // #include "examples/phaseField1D.hpp"
-  //       #include "examples/phaseField2D-01.hpp"
-  //      #include "examples/phaseField2D-02.hpp"
+// ================ Phase Field Examples =================
+// #include "examples/phaseField1D.hpp"
+//       #include "examples/phaseField2D-01.hpp"
+//      #include "examples/phaseField2D-02.hpp"
 #include "examples/phaseField2D-03.hpp"
-  //              #include "examples/phaseField2D-04.hpp"
-  // #include "examples/phaseField2D-04copy.hpp"
-  //   #include "examples/FEMHardWay.hpp"
+  //               #include "examples/phaseField2D-04.hpp"
+  //  #include "examples/phaseField2D-04copy.hpp"
+  //    #include "examples/FEMHardWay.hpp"
 
   PetscFinalize(); // Finalize main program
 }

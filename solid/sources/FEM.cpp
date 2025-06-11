@@ -239,8 +239,8 @@ PetscErrorCode FEM::solveFEMProblem()
             assembleProblem();
             solveLinearSystem(matrix, rhs, solution); // right hand side is the residual
             updateVariables(matrix, solution, rhs, res);
-            // res = res / norm;
-            PetscPrintf(PETSC_COMM_WORLD, "Residual: %e\n", res);
+            res = res / norm;
+            PetscPrintf(PETSC_COMM_WORLD, "Residual: %.12e\n", res);
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
         postProc();
@@ -262,12 +262,15 @@ PetscErrorCode FEM::solveFEMProblem()
 
 PetscErrorCode FEM::performLineSearch(Vec &copyRHS) // solution = delta_u, rhs = Fext - Fint = R(uk)
 {
-    const int maxBT = 100; // Maximum back-tracking
+    const int maxBT = 10; // Maximum back-tracking
     double alpha = {}, eta = {}, resEta = {}, R0 = {}, R1 = {};
 
     // Compute R0 and R1: R0 = delta_u ^ T * R(uk) and R1 = delta_u ^ T * R(uk + delta_u)
-    VecDot(solution, copyRHS, &R0); // R0 stands for the iteration at uk (before the line search), residual in energy (force x displacement)
-    VecDot(solution, rhs, &R1);     // R1 stands for the iteration at uk + delta_u
+    // VecDot(solution, copyRHS, &R0);
+    // VecDot(solution, rhs, &R1);     // R1 stands for the iteration at uk + delta_u
+
+    VecDot(solution, copyRHS, &R0);
+    VecDot(solution, rhs, &R1); // R1 stands for the iteration at uk + delta_u
 
     alpha = R0 / R1;
     // Compute the line search parameter eta
@@ -276,7 +279,8 @@ PetscErrorCode FEM::performLineSearch(Vec &copyRHS) // solution = delta_u, rhs =
                : 0.5 * alpha + std::sqrt(alpha * alpha / 4.0 - alpha));
     eta = std::clamp(eta, 1e-8, 1.0);
 
-    // std::cout << (1 - eta) * R0 + R1 * eta * eta << std::endl; // verification
+    // std::cout << "R0: " << R0 << " R1: " << R1 << " eta: " << eta << std::endl;
+    std::cout << (1 - eta) * R0 + R1 * eta * eta << std::endl; // verification
 
     Vec All;
     VecScatter ctx;
@@ -303,18 +307,18 @@ PetscErrorCode FEM::performLineSearch(Vec &copyRHS) // solution = delta_u, rhs =
         assembleProblem(); // rhs(eta)
         VecDot(solution, rhs, &resEta);
 
+        // std::cout << "resEta: " << resEta << " R0: " << R0 << " eta: " << eta << std::endl;
+        //  stop the code
+        //  throw ::std::runtime_error("Stopping the code for debugging purposes");
         if (abs(resEta) <= 0.5 * abs(R0)) // The residual has decreased
-        {
-            //_R0 = resEta;
-
             break;
-        }
 
-        eta *= 0.5; // Decrease the line search parameter
+        eta *= 0.8; // Decrease the line search parameter
     }
 
     //_R0 = resEta;
     // computeNorm(rhs, R0);
+
     VecDestroy(&All);
     return ierr;
 }
@@ -379,6 +383,9 @@ PetscErrorCode FEM::assembleProblem()
 
     PetscCall(VecAssemblyBegin(rhs));
     PetscCall(VecAssemblyEnd(rhs));
+
+    // PetscCall(VecView(rhs, PETSC_VIEWER_STDOUT_WORLD));
+    // throw ::std::runtime_error("Stopping the code for debugging purposes");
 
     if (params->getCalculateReactionForces())
     {
@@ -652,7 +659,7 @@ PetscErrorCode FEM::updateVariables(Mat A, Vec &x, Vec &b, double &_res, bool _h
         PetscCall(VecGetValues(All, 1, &Ii, &val));
         dof->incrementValue(val);
         _res += valForces * valForces;
-        // _res += val * val;
+        //_res += val * val;
     }
     //_res = sqrt(_res);
     PetscCall(VecDestroy(&All));
@@ -682,7 +689,7 @@ PetscErrorCode FEM::computeNorm(Vec &b, double &_res)
     //     PetscCall(VecGetValues(All, 1, &Ii, &val));
     //     resAux += val * val;
     // }
-
+    //_res = std::sqrt(_res);
     PetscCall(VecDestroy(&All));
     return ierr;
 }
