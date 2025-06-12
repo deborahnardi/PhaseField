@@ -22,7 +22,7 @@ std::vector<Material *> materials;
 
 double L = 1.0;
 double elSize = 0.1 * L;
-double ubar = 4e-1;
+double ubar = 4e-4;
 
 // ================================ MESH GENERATION INFORMATION ================================
 geo1->setAlgorithm(DELAUNAY);
@@ -58,7 +58,7 @@ boundaryConditions.push_back(geo1->addBoundaryCondition(lines[3], DAMAGE, {{D, 1
 geo1->setTractionBoundary({lines[6]});
 
 materials.push_back(geo1->addMaterial(210000., 0.3));
-materials[0]->setGriffithCriterion(1e10);
+materials[0]->setGriffithCriterion(2.7);
 materials[0]->setL0(0.01); // Internal lenght of Phase Field model, in mm;
 
 planeSurfaces[0]->setAttributes(materials[0], 1., SOLID_ELEMENT);
@@ -97,12 +97,12 @@ auto boundaryFunction = [](const std::vector<double> &coord, const double &pseud
 };
 analysis1->setBoundaryFunction(boundaryFunction);
 analysis1->setPrescribedDamageField(true);
-//       //   ********************************** FEM INFORMATION **********************************
+//         //   ********************************** FEM INFORMATION **********************************
 params->setSolverType(ESuiteSparse);
 params->setTolStaggered(1.e-4);
 params->calculateReactionForces(true);
 params->setReactionDir("Y");
-params->setPFModel("AT2");
+params->setPFModel("AT1");
 params->setSplitModel(spectral);
 analysis1->setAnalysisParameters(params);
 analysis1->readGeometry(projectName + ".mir");

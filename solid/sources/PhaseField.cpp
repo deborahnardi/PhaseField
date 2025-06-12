@@ -191,16 +191,23 @@ void FEM::solveDisplacementField(int _iStep)
         assembleProblem();
         computeNorm(rhs, currentRes);
 
-        if (it != 0)
+        // if (it == 5)
+        // {
+        //     throw ::std::runtime_error("Stopping the code for debugging purposes");
+        // }
+
+        if (it != 1)
         {
-            // currentRes /= norm;
-            PetscPrintf(PETSC_COMM_WORLD, "Residual: %.12e\n", currentRes);
+            PetscPrintf(PETSC_COMM_WORLD,
+                        "It: %d, Residual: %e\n",
+                        it, currentRes);
         }
 
         if (currentRes < params->getTolNR() && it != 0)
         {
-            // PetscPrintf(PETSC_COMM_WORLD,
-            //             "Displacement field converged in it %d with residual %e\n", it, currentRes);
+            // throw ::std::runtime_error("Stopping the code for debugging purposes");
+            PetscPrintf(PETSC_COMM_WORLD,
+                        "Displacement field converged in it %d with residual %e\n", it, currentRes);
             break;
         }
 
@@ -219,10 +226,10 @@ void FEM::solveDisplacementField(int _iStep)
         // PetscPrintf(PETSC_COMM_WORLD, "it: %d  Residual: %e  ResTrial: %e\n", it, currentRes, resTrial);
 
         // e) Decides if line search is necessary
-        if ((resTrial > currentRes) && it > 2)
+        if ((resTrial > currentRes) && it > 5)
         {
-            // performLineSearch(copyRHS);
-            // computeNorm(rhs, currentRes);
+            performLineSearch(copyRHS);
+            computeNorm(rhs, currentRes);
             currentRes = resTrial;
         }
         else
@@ -332,8 +339,6 @@ PetscErrorCode FEM::assemblePhaseFieldProblem()
 
 PetscErrorCode FEM::assembleQMatrix(Mat &A)
 {
-    std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
-
     PetscScalar val[totalNnzPF] = {0};
     PetscInt idxRows[totalNnzPF] = {0};
     PetscInt idxCols[totalNnzPF] = {0};
@@ -418,7 +423,15 @@ PetscErrorCode FEM::solveSystemByPSOR(Mat &A, Vec &b, Vec &x)
         PSORAlgorithm();
 
     MPI_Barrier(PETSC_COMM_WORLD);
+
+    PetscInt numNodesInt = numNodes;
+    PetscInt *nCols = new PetscInt;
+    *nCols = numNodesInt;
+    PetscBool done = PETSC_FALSE;
+    PetscCall(MatRestoreColumnIJ(seqMatQ, 0, PETSC_FALSE, PETSC_FALSE, nCols, &JC, &IR, &done));
     PetscCall(MatSeqAIJRestoreArrayRead(seqMatQ, &PA));
+    delete[] nCols;
+
     MPI_Bcast(Ddk, numNodes, MPI_DOUBLE, 0, PETSC_COMM_WORLD); // Communicates the solution to all processes
 
     // PetscCall(PetscFree(seqMatQ));

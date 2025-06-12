@@ -8,12 +8,10 @@
 #include "../../enumclass.hpp"
 #include "AnalysisParameters.h"
 
-using Tensor = std::array<std::array<double, 3>, 3>;
-
 class Element
 {
 protected:
-    int index, elemDimension, physicalEntity;
+    int index, elemDimension, physicalEntity, globalCounter = 0;
     std::vector<Node *> elemConnectivity;
     Material *material;
     BoundaryType bdType;
@@ -46,15 +44,17 @@ public:
     virtual void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) {};
     virtual void addCondition(BoundaryType _bdType, DOFType _type, double _value) {};
 
-    virtual PetscErrorCode getContribution(std::array<Tensor, 3> tensors, Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) {};
+    virtual PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) {};
     virtual PetscErrorCode getPhaseFieldContribution(Mat &A, Vec &rhs, bool _PrescribedDamageField = false) {};
     virtual void getContribution() {};
     virtual void Test(PetscScalar &integral) {};
     virtual void computeDeformation() {};
-    virtual std::vector<double> getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, SplitModel splitModel, int _stepGlobal, bool _PrescribedDamageField = false) {};
+    virtual std::vector<double> getStiffnessIIOrIJ(const int idxLocalNode1, const int idxLocalNode2, int _stepGlobal, bool _PrescribedDamageField = false) {};
     virtual double getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField) {};
     virtual PetscErrorCode getqContribution(Vec &rhs, bool _PrescribedDamageField) {};
-    virtual std::array<std::array<double, 3>, 3> computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradU[2][2], double divU, double kappa, double mu, double dCoeff) {};
+    virtual void computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, double dCoeff, double tensorC[3][3]) {};
+    virtual int getGlobalCounter() const { return globalCounter; }
+    virtual void incrementGlobalCounter() { globalCounter++; }
     // =======================================
     // =========== POST PROCESSING ===========
     // =======================================
@@ -91,7 +91,7 @@ public:
     void setTheta(const double &_theta) { theta = _theta; }
     void setNode(const int &_index, Node *_node) { elemConnectivity[_index] = _node; }
 
-    PetscErrorCode getContribution(std::array<Tensor, 3> tensors, Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) override;
+    PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) override;
     PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField = false) override;
     void getContribution() override;
     void computeDeformation() override;
@@ -117,14 +117,16 @@ public:
     void assembleGlobalStiffnessMatrix(MatrixXd &GlobalStiff) override;
 
     MatrixXd getElemStiffnessMatrix() const override { return localStiff; }
-    PetscErrorCode getContribution(std::array<Tensor, 3> tensors, Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) override;
-    std::vector<double> getStiffnessIIOrIJ(std::array<Tensor, 3> tensors, const int idxLocalNode1, const int idxLocalNode2, SplitModel splitModel, int _stepGlobal, bool _PrescribedDamageField = false) override;
+    PetscErrorCode getContribution(Mat &matrix, Vec &rhs, bool negativeLoad = false, bool _PrescribedDamageField = false) override;
+    std::vector<double> getStiffnessIIOrIJ(const int idxLocalNode1, const int idxLocalNode2, int _stepGlobal, bool _PrescribedDamageField = false) override;
     double getQValue(const int idxLocalNode1, const int idxLocalNode2, bool _PrescribedDamageField) override;
     PetscErrorCode getPhaseFieldContribution(Mat &matrix, Vec &rhs, bool _PrescribedDamageField = false) override;
     void getContribution() override;
     PetscErrorCode getqContribution(Vec &rhs, bool _PrescribedDamageField) override;
     void Test(PetscScalar &integral) override;
-    std::array<std::array<double, 3>, 3> computeConstitutiveTensor(SplitModel splitModel, std::array<Tensor, 3> tensors, PetscScalar gradU[2][2], double divU, double kappa, double mu, double dCoeff) override;
+    void computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, double dCoeff, double tensorC[3][3]) override;
+    int getGlobalCounter() const { return globalCounter; }
+    void incrementGlobalCounter() { globalCounter++; }
 
     // =======================================
     // =========== POST PROCESSING ===========

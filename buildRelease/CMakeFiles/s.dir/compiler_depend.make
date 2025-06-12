@@ -277,10 +277,10 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -380,7 +380,7 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
   /usr/include/c++/11/bits/locale_conv.h \
   /usr/include/c++/11/bits/unique_ptr.h \
   /usr/include/c++/11/bits/quoted_string.h \
-  /usr/include/metis.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
   /usr/lib/gcc/x86_64-linux-gnu/11/include/omp.h \
   ../solid/headers/Node.h \
   ../solid/headers/DOF.h \
@@ -847,8 +847,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/inttypes.h:
 
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h:
-
 /usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
 
 /usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
@@ -987,8 +985,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/c++/11/bits/erase_if.h:
 
-/usr/include/metis.h:
-
 /usr/include/x86_64-linux-gnu/bits/wordsize.h:
 
 /usr/include/c++/11/chrono:
@@ -1022,8 +1018,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/eigen3/Eigen/LU:
 
 /usr/include/hdf5/serial/hdf5.h:
-
-/usr/include/hdf5/serial/H5FDfamily.h:
 
 /usr/include/x86_64-linux-gnu/bits/fp-logb.h:
 
@@ -1105,8 +1099,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/hdf5/serial/H5Zpublic.h:
 
-/usr/include/x86_64-linux-gnu/bits/types.h:
-
 ../mesh_interface/headers/Circle.h:
 
 /usr/include/c++/11/bits/range_access.h:
@@ -1132,6 +1124,10 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++io.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
+
+/usr/include/hdf5/serial/H5FDfamily.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h:
 
 /usr/include/c++/11/istream:
 
@@ -1178,6 +1174,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h:
 
 /usr/include/c++/11/bits/stl_algobase.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h:
 
 /usr/include/eigen3/Eigen/src/Geometry/arch/Geometry_SIMD.h:
 
@@ -1315,13 +1313,9 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/c++/11/limits:
 
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h:
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h:
 
-/usr/include/eigen3/Eigen/src/Core/util/Meta.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h:
+/home/deborah/petsc-2/petsc-3.22.0/include/petsclogdeprecated.h:
 
 /usr/include/eigen3/Eigen/src/Geometry/EulerAngles.h:
 
@@ -1402,8 +1396,6 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /home/deborah/petsc-2/petsc-3.22.0/include/petsclogtypes.h:
 
 /usr/include/eigen3/Eigen/src/Core/functors/NullaryFunctors.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/include/petsclogdeprecated.h:
 
 /usr/include/c++/11/stdlib.h:
 
@@ -1527,6 +1519,10 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 
 /usr/include/c++/11/bits/quoted_string.h:
 
+/usr/include/x86_64-linux-gnu/bits/types.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h:
+
 /usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
 
 ../solid/headers/Element.h:
@@ -1570,6 +1566,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/eigen3/Eigen/Householder:
 
 /usr/include/eigen3/Eigen/src/Core/util/Constants.h:
+
+/usr/include/eigen3/Eigen/src/Core/util/Meta.h:
 
 /usr/include/c++/11/bits/ostream.tcc:
 
@@ -1662,6 +1660,8 @@ CMakeFiles/s.dir/main.cpp.o: ../main.cpp \
 /usr/include/eigen3/Eigen/src/Core/CwiseBinaryOp.h:
 
 /usr/include/c++/11/bits/algorithmfwd.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h:
 
 /usr/include/c++/11/bits/cxxabi_forced.h:
 

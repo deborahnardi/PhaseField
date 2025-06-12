@@ -157,28 +157,26 @@ void FEM::deleteResults(bool deleteFiles)
                 Assembling and solving problem PETSc
 ----------------------------------------------------------------------------------
 */
-std::array<Tensor, 3> FEM::computeConstitutiveTensors()
-{
-    Tensor tensorK = {};
-    Tensor tensorI = {};
-    Tensor tensorJ = {};
+// void FEM::computeConstitutiveTensors(double tensorK[3][3], double tensorI[3][3], double tensorJ[3][3])
+// {
+//     Tensor tensorK = {};
+//     Tensor tensorI = {};
+//     Tensor tensorJ = {};
 
-    for (int i = 0; i < 2; i++)
-        for (int j = 0; j < 2; j++)
-            tensorK[i][j] = 1.0;
+//     for (int i = 0; i < 2; i++)
+//         for (int j = 0; j < 2; j++)
+//             tensorK[i][j] = 1.0;
 
-    for (int i = 0; i < 3; i++)
-        tensorI[i][i] = 1.0;
+//     for (int i = 0; i < 3; i++)
+//         tensorI[i][i] = 1.0;
 
-    tensorI[2][2] = 0.5;
+//     tensorI[2][2] = 0.5;
 
-    // J = I - 1/3 * K
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++)
-            tensorJ[i][j] = tensorI[i][j] - 1.0 / 3.0 * tensorK[i][j];
-
-    return {tensorK, tensorI, tensorJ};
-}
+//     // J = I - 1/3 * K
+//     for (int i = 0; i < 3; i++)
+//         for (int j = 0; j < 3; j++)
+//             tensorJ[i][j] = tensorI[i][j] - 1.0 / 3.0 * tensorK[i][j];
+// }
 
 double FEM::computeNorm(const double *vec1, const double *vec2, const int &size)
 {
@@ -210,10 +208,10 @@ PetscErrorCode FEM::solveFEMProblem()
         totalVecq = new double[numNodes]{};
 
         updateFieldDistribution();
-        updateFieldVariables(solutionPF);
+        // updateFieldVariables(solutionPF);
         params->setCalculateReactionForces(true);
 
-        delete[] totalVecq;
+        // delete[] totalVecq;
     }
 
     for (int iStep = 0; iStep < params->getNSteps(); iStep++)
@@ -239,7 +237,7 @@ PetscErrorCode FEM::solveFEMProblem()
             assembleProblem();
             solveLinearSystem(matrix, rhs, solution); // right hand side is the residual
             updateVariables(matrix, solution, rhs, res);
-            res = res / norm;
+            // res = res / norm;
             PetscPrintf(PETSC_COMM_WORLD, "Residual: %.12e\n", res);
         } while (res > params->getTolNR() && it < params->getMaxNewtonRaphsonIt());
 
@@ -277,7 +275,7 @@ PetscErrorCode FEM::performLineSearch(Vec &copyRHS) // solution = delta_u, rhs =
     eta = (alpha > 0
                ? 0.5 * alpha
                : 0.5 * alpha + std::sqrt(alpha * alpha / 4.0 - alpha));
-    eta = std::clamp(eta, 1e-8, 1.0);
+    // eta = std::clamp(eta, 1e-8, 1.0);
 
     // std::cout << "R0: " << R0 << " R1: " << R1 << " eta: " << eta << std::endl;
     std::cout << (1 - eta) * R0 + R1 * eta * eta << std::endl; // verification
@@ -417,9 +415,7 @@ PetscErrorCode FEM::assembleProblem()
 
 PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
 {
-    std::array<Tensor, 3> tensors = computeConstitutiveTensors(); // tensor[0] = K, tensor[1] = I, tensor[2] = C;
     int kk = 0;
-    SplitModel splitModel = params->getSplitModel();
 
     // #pragma omp parallel
     //     {
@@ -466,7 +462,7 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
                     const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                     const int idxLocalNode2 = elemInfo[3 * iElem + 2];
 
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel, stepGlobal);
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(idxLocalNode1, idxLocalNode2, stepGlobal);
 
                     localVal[p1] += localStiffValue[0];
                     localVal[p2] += localStiffValue[1];
@@ -498,7 +494,7 @@ PetscErrorCode FEM::assembleSymmStiffMatrix(Mat &A)
                     const int elemIndex = elemInfo[3 * iElem];
                     const int idxLocalNode1 = elemInfo[3 * iElem + 1];
                     const int idxLocalNode2 = elemInfo[3 * iElem + 2];
-                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(tensors, idxLocalNode1, idxLocalNode2, splitModel, stepGlobal);
+                    std::vector<double> localStiffValue = elements[elemIndex]->getStiffnessIIOrIJ(idxLocalNode1, idxLocalNode2, stepGlobal);
 
                     localVal[p1] += localStiffValue[0];
                     localVal[p2] += localStiffValue[1];

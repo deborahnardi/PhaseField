@@ -679,8 +679,28 @@ MULTIPASS_TEST_4_petsc_works_allincludes:INTERNAL=1
 MULTIPASS_TEST_4_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
 //Result of TRY_RUN
 MULTIPASS_TEST_4_petsc_works_allincludes_EXITCODE:INTERNAL=0
+//Test MULTIPASS_TEST_5_petsc_works_minimal
+MULTIPASS_TEST_5_petsc_works_minimal:INTERNAL=
+//Result of TRY_COMPILE
+MULTIPASS_TEST_5_petsc_works_minimal_COMPILED:INTERNAL=FALSE
+//Test MULTIPASS_TEST_6_petsc_works_allincludes
+MULTIPASS_TEST_6_petsc_works_allincludes:INTERNAL=1
+//Result of TRY_COMPILE
+MULTIPASS_TEST_6_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
+//Result of TRY_RUN
+MULTIPASS_TEST_6_petsc_works_allincludes_EXITCODE:INTERNAL=0
+//Test MULTIPASS_TEST_7_petsc_works_minimal
+MULTIPASS_TEST_7_petsc_works_minimal:INTERNAL=
+//Result of TRY_COMPILE
+MULTIPASS_TEST_7_petsc_works_minimal_COMPILED:INTERNAL=FALSE
+//Test MULTIPASS_TEST_8_petsc_works_allincludes
+MULTIPASS_TEST_8_petsc_works_allincludes:INTERNAL=1
+//Result of TRY_COMPILE
+MULTIPASS_TEST_8_petsc_works_allincludes_COMPILED:INTERNAL=TRUE
+//Result of TRY_RUN
+MULTIPASS_TEST_8_petsc_works_allincludes_EXITCODE:INTERNAL=0
 //Unique test ID
-MULTIPASS_TEST_COUNT:INTERNAL=4
+MULTIPASS_TEST_COUNT:INTERNAL=8
 //ADVANCED property for variable: M_LIBRARY
 M_LIBRARY-ADVANCED:INTERNAL=1
 //Result of TRY_COMPILE
@@ -729,8 +749,12 @@ PETSC_INCLUDE_CONF-ADVANCED:INTERNAL=1
 PETSC_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PETSC_LIBRARIES
 PETSC_LIBRARIES-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PETSC_LIBRARY_SINGLE
+PETSC_LIBRARY_SINGLE-ADVANCED:INTERNAL=1
 //Cleared
 PETSC_LIBRARY_SINGLE:INTERNAL=/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/lib/libpetsc.so
+//ADVANCED property for variable: PETSC_LIBRARY_VEC
+PETSC_LIBRARY_VEC-ADVANCED:INTERNAL=1
 //Cleared
 PETSC_LIBRARY_VEC:INTERNAL=NOTFOUND
 //ADVANCED property for variable: PETSC_MPIEXEC

@@ -1153,3 +1153,107 @@ gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelea
 
 
 
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_18144/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_18144.dir/build.make CMakeFiles/cmTC_18144.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_18144.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_18144.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_18144
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_18144.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_18144.dir/CheckFunctionExists.c.o -o cmTC_18144  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_6_petsc_works_allincludes succeeded with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_26833/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_26833.dir/build.make CMakeFiles/cmTC_26833.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_26833.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_6_petsc_works_allincludes -I/home/deborah/petsc-2/petsc-3.22.0/include -I/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include -I/opt/intel/oneapi/mkl/2025.1/lib/intel64/../include -I/home/deborah/mpich-install/include  -o CMakeFiles/cmTC_26833.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_26833
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_26833.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_26833.dir/src.c.o -o cmTC_26833  -Wl,-rpath,/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/lib /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/lib/libpetsc.so 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_0f26d/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_0f26d.dir/build.make CMakeFiles/cmTC_0f26d.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0f26d.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_0f26d.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_0f26d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0f26d.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_0f26d.dir/CheckFunctionExists.c.o -o cmTC_0f26d  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
+Performing C SOURCE FILE Test MULTIPASS_TEST_8_petsc_works_allincludes succeeded with the following compile output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_cf1e0/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_cf1e0.dir/build.make CMakeFiles/cmTC_cf1e0.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cf1e0.dir/src.c.o
+/usr/bin/cc -DMULTIPASS_TEST_8_petsc_works_allincludes -I/home/deborah/petsc-2/petsc-3.22.0/include -I/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include -I/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/suitesparse -I/home/deborah/mpich-install/include  -o CMakeFiles/cmTC_cf1e0.dir/src.c.o -c /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_cf1e0
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cf1e0.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_cf1e0.dir/src.c.o -o cmTC_cf1e0  -Wl,-rpath,/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/lib /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/lib/libpetsc.so 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+static const char help[] = "PETSc test program.";
+#include <petscts.h>
+int main(int argc,char *argv[]) {
+  PetscErrorCode ierr;
+  TS ts;
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = TSDestroy(&ts);CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
+  return 0;
+}
+
+Determining if the function METIS_NodeND exists passed with the following output:
+Change Dir: /home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_998ef/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_998ef.dir/build.make CMakeFiles/cmTC_998ef.dir/build
+gmake[1]: Entering directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_998ef.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=METIS_NodeND -o CMakeFiles/cmTC_998ef.dir/CheckFunctionExists.c.o -c /usr/share/cmake-3.22/Modules/CheckFunctionExists.c
+Linking C executable cmTC_998ef
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_998ef.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=METIS_NodeND CMakeFiles/cmTC_998ef.dir/CheckFunctionExists.c.o -o cmTC_998ef  -L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libmetis.so -lm 
+gmake[1]: Leaving directory '/home/deborah/Desktop/cppCodes/PFHardFEM/buildRelease/CMakeFiles/CMakeTmp'
+
+
+
