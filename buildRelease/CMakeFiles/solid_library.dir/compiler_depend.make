@@ -667,10 +667,10 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/Geometry.cpp.o: ../mesh_inte
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -2372,10 +2372,10 @@ CMakeFiles/solid_library.dir/mesh_interface/sources/WriteMirFile.cpp.o: ../mesh_
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -2470,10 +2470,10 @@ CMakeFiles/solid_library.dir/petsc/sources/PETScExs.cpp.o: ../petsc/sources/PETS
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -3136,10 +3136,10 @@ CMakeFiles/solid_library.dir/solid/sources/BoundaryElement.cpp.o: ../solid/sourc
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -3220,7 +3220,7 @@ CMakeFiles/solid_library.dir/solid/sources/BoundaryElement.cpp.o: ../solid/sourc
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -3733,10 +3733,10 @@ CMakeFiles/solid_library.dir/solid/sources/DataRead.cpp.o: ../solid/sources/Data
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -3798,7 +3798,7 @@ CMakeFiles/solid_library.dir/solid/sources/DataRead.cpp.o: ../solid/sources/Data
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmatcoarsen.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdmtypes.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscpctypes.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/refwrap.h \
   /usr/include/c++/11/bits/std_function.h \
@@ -4251,10 +4251,10 @@ CMakeFiles/solid_library.dir/solid/sources/Element.cpp.o: ../solid/sources/Eleme
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -4335,7 +4335,7 @@ CMakeFiles/solid_library.dir/solid/sources/Element.cpp.o: ../solid/sources/Eleme
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -4778,10 +4778,10 @@ CMakeFiles/solid_library.dir/solid/sources/ElementSet.cpp.o: ../solid/sources/El
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -4862,7 +4862,7 @@ CMakeFiles/solid_library.dir/solid/sources/ElementSet.cpp.o: ../solid/sources/El
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -5370,10 +5370,10 @@ CMakeFiles/solid_library.dir/solid/sources/FEM.cpp.o: ../solid/sources/FEM.cpp \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -5435,7 +5435,7 @@ CMakeFiles/solid_library.dir/solid/sources/FEM.cpp.o: ../solid/sources/FEM.cpp \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmatcoarsen.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdmtypes.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscpctypes.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/refwrap.h \
   /usr/include/c++/11/bits/std_function.h \
@@ -5954,10 +5954,10 @@ CMakeFiles/solid_library.dir/solid/sources/FEMNoPetscMethods.cpp.o: ../solid/sou
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -6019,7 +6019,7 @@ CMakeFiles/solid_library.dir/solid/sources/FEMNoPetscMethods.cpp.o: ../solid/sou
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmatcoarsen.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdmtypes.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscpctypes.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/refwrap.h \
   /usr/include/c++/11/bits/std_function.h \
@@ -6471,10 +6471,10 @@ CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o: ../solid/sources/Node.cpp
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -6555,7 +6555,7 @@ CMakeFiles/solid_library.dir/solid/sources/Node.cpp.o: ../solid/sources/Node.cpp
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -6788,10 +6788,10 @@ CMakeFiles/solid_library.dir/solid/sources/NodeSet.cpp.o: ../solid/sources/NodeS
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -6872,7 +6872,7 @@ CMakeFiles/solid_library.dir/solid/sources/NodeSet.cpp.o: ../solid/sources/NodeS
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -7171,10 +7171,10 @@ CMakeFiles/solid_library.dir/solid/sources/Paraview.cpp.o: ../solid/sources/Para
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -7236,7 +7236,7 @@ CMakeFiles/solid_library.dir/solid/sources/Paraview.cpp.o: ../solid/sources/Para
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmatcoarsen.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdmtypes.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscpctypes.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/refwrap.h \
   /usr/include/c++/11/bits/std_function.h \
@@ -7755,10 +7755,10 @@ CMakeFiles/solid_library.dir/solid/sources/PhaseField.cpp.o: ../solid/sources/Ph
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -7820,7 +7820,7 @@ CMakeFiles/solid_library.dir/solid/sources/PhaseField.cpp.o: ../solid/sources/Ph
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmatcoarsen.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdmtypes.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscpctypes.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/refwrap.h \
   /usr/include/c++/11/bits/std_function.h \
@@ -8339,10 +8339,10 @@ CMakeFiles/solid_library.dir/solid/sources/PostProc.cpp.o: ../solid/sources/Post
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -8404,7 +8404,7 @@ CMakeFiles/solid_library.dir/solid/sources/PostProc.cpp.o: ../solid/sources/Post
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmatcoarsen.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdmtypes.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscpctypes.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/functional \
   /usr/include/c++/11/bits/refwrap.h \
   /usr/include/c++/11/bits/std_function.h \
@@ -9145,10 +9145,10 @@ CMakeFiles/solid_library.dir/solid/sources/Solid2D.cpp.o: ../solid/sources/Solid
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -9229,7 +9229,7 @@ CMakeFiles/solid_library.dir/solid/sources/Solid2D.cpp.o: ../solid/sources/Solid
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -9682,10 +9682,10 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h \
+  /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h \
   /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h \
   /usr/include/c++/11/cstddef \
@@ -9766,7 +9766,7 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
   /home/deborah/petsc-2/petsc-3.22.0/include/petscdraw.h \
   /usr/include/setjmp.h \
   /usr/include/x86_64-linux-gnu/bits/setjmp2.h \
-  /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h \
+  /usr/include/metis.h \
   /usr/include/c++/11/algorithm \
   /usr/include/c++/11/utility \
   /usr/include/c++/11/bits/stl_relops.h \
@@ -10115,6 +10115,8 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 
 /usr/include/c++/11/bits/erase_if.h:
 
+/usr/include/metis.h:
+
 /usr/include/hdf5/serial/H5Spublic.h:
 
 /usr/include/hdf5/serial/H5PLpublic.h:
@@ -10148,6 +10150,8 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 /usr/include/c++/11/backward/binders.h:
 
 /usr/include/inttypes.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h:
 
 /usr/include/x86_64-linux-gnu/bits/uio_lim.h:
 
@@ -10188,6 +10192,8 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 ../mesh_interface/headers/Circle.h:
 
 /usr/include/hdf5/serial/H5Zpublic.h:
+
+/usr/include/x86_64-linux-gnu/bits/types.h:
 
 /usr/include/eigen3/Eigen/src/Geometry/AlignedBox.h:
 
@@ -10250,6 +10256,8 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 ../mesh_interface/sources/Circle.cpp:
 
 /usr/include/hdf5/serial/hdf5.h:
+
+/usr/include/hdf5/serial/H5FDfamily.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/ctype_base.h:
 
@@ -10326,10 +10334,6 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 /usr/include/eigen3/Eigen/src/Core/VectorwiseOp.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
-
-/usr/include/hdf5/serial/H5FDfamily.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h:
 
 /usr/include/c++/11/istream:
 
@@ -10434,8 +10438,6 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 /usr/include/c++/11/bits/nested_exception.h:
 
 /usr/include/c++/11/bits/stl_algobase.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/11/include/stdint.h:
 
@@ -10807,9 +10809,13 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 
 /usr/include/c++/11/limits:
 
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h:
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h:
 
-/home/deborah/petsc-2/petsc-3.22.0/include/petsclogdeprecated.h:
+/usr/include/eigen3/Eigen/src/Core/util/Meta.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h:
 
 /usr/include/eigen3/Eigen/src/Geometry/EulerAngles.h:
 
@@ -10894,6 +10900,8 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 /home/deborah/petsc-2/petsc-3.22.0/include/petsclogtypes.h:
 
 /usr/include/eigen3/Eigen/src/Core/functors/NullaryFunctors.h:
+
+/home/deborah/petsc-2/petsc-3.22.0/include/petsclogdeprecated.h:
 
 /usr/include/c++/11/stdlib.h:
 
@@ -10989,10 +10997,6 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 
 ../solid/sources/AnalysisParameters.cpp:
 
-/usr/include/x86_64-linux-gnu/bits/types.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h:
-
 ../solid/headers/DenseEigen.h:
 
 /usr/include/eigen3/Eigen/Dense:
@@ -11032,8 +11036,6 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 /usr/include/eigen3/Eigen/Householder:
 
 /usr/include/eigen3/Eigen/src/Core/util/Constants.h:
-
-/usr/include/eigen3/Eigen/src/Core/util/Meta.h:
 
 /usr/include/c++/11/bits/ostream.tcc:
 
@@ -11124,8 +11126,6 @@ CMakeFiles/solid_library.dir/solid/sources/Truss.cpp.o: ../solid/sources/Truss.c
 /usr/include/eigen3/Eigen/src/Core/CwiseBinaryOp.h:
 
 /usr/include/c++/11/bits/algorithmfwd.h:
-
-/home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h:
 
 /usr/include/hdf5/serial/H5Lpublic.h:
 

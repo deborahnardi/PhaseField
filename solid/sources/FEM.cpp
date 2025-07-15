@@ -677,14 +677,33 @@ PetscErrorCode FEM::computeNorm(Vec &b, double &_res)
     PetscCall(VecScatterDestroy(&ctx));
     PetscCall(VecDot(All, All, &_res));
 
-    // double resAux = 0.0;
-    // for (auto dof : globalDOFs)
-    // {
-    //     PetscInt Ii = dof->getIndex();
-    //     PetscScalar val;
-    //     PetscCall(VecGetValues(All, 1, &Ii, &val));
-    //     resAux += val * val;
-    // }
+    double resAux = 0.0;
+    for (auto dof : globalDOFs)
+    {
+        PetscInt Ii = dof->getIndex();
+        PetscScalar val;
+        PetscCall(VecGetValues(All, 1, &Ii, &val));
+        // check if the value is not NaN
+        if (std::isnan(val))
+        {
+            for (auto dof2 : globalDOFs)
+                for (auto dof3 : globalDOFs)
+                {
+                    PetscScalar valM;
+                    MatGetValue(matrix, dof2->getIndex(), dof3->getIndex(), &valM);
+                    if (std::isnan(valM))
+                        std::cout << "NaN value found in matrix at DOF " << dof2->getIndex() << " and " << dof3->getIndex() << std::endl;
+
+                    PetscScalar valVec;
+                    PetscInt index = dof2->getIndex();
+                    VecGetValues(solution, 1, &index, &valVec);
+                    if (std::isnan(valVec))
+                        std::cout << "NaN value found in vector at DOF " << dof2->getIndex() << std::endl;
+                }
+            std::cout << "NaN value found in DOF number " << dof->getIndex() << std::endl;
+        }
+        // resAux += val * val;
+    }
     //_res = std::sqrt(_res);
     PetscCall(VecDestroy(&All));
     return ierr;

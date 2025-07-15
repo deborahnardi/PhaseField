@@ -278,10 +278,10 @@ CMakeFiles/s.dir/main.cpp.o
  /home/deborah/petsc-2/petsc-3.22.0/include/petscmat.h
  /home/deborah/petsc-2/petsc-3.22.0/include/petscvec.h
  /home/deborah/petsc-2/petsc-3.22.0/include/petscsys.h
- /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf.h
- /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscpkg_version.h
- /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscconf_poison.h
- /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/petscfix.h
+ /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf.h
+ /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscpkg_version.h
+ /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscconf_poison.h
+ /home/deborah/petsc-2/petsc-3.22.0/arch-linux2-c-opt/include/petscfix.h
  /home/deborah/petsc-2/petsc-3.22.0/include/petscmacros.h
  /home/deborah/petsc-2/petsc-3.22.0/include/petscversion.h
  /usr/include/c++/11/cstddef
@@ -381,7 +381,7 @@ CMakeFiles/s.dir/main.cpp.o
  /usr/include/c++/11/bits/locale_conv.h
  /usr/include/c++/11/bits/unique_ptr.h
  /usr/include/c++/11/bits/quoted_string.h
- /home/deborah/petsc-2/petsc-3.22.0/arch-linux-pardiso-opt/include/metis.h
+ /usr/include/metis.h
  /usr/lib/gcc/x86_64-linux-gnu/11/include/omp.h
  /home/deborah/Desktop/cppCodes/PFHardFEM/solid/headers/Node.h
  /home/deborah/Desktop/cppCodes/PFHardFEM/solid/headers/DOF.h

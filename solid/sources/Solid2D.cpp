@@ -353,7 +353,7 @@ std::vector<double> Solid2D::getStiffnessIIOrIJ(const int idxLocalNode1, const i
         for (PetscInt a = 0; a < numElNodes; a++)
             damageValue += N[a] * elemConnectivity[a]->getDOFs()[2]->getDamageValue(); // DamageValue -> dstag = dn + delta_d^i
 
-        PetscReal dCoeff = pow(1 - damageValue, 2.);
+        PetscReal dCoeff = pow(1.0 - damageValue, 2.0);
 
         // ASSEMBLING CONSTITUTIVE MATRIX CONSIDERING THE ENERGY SPLIT
         // COMPUTING THE CONSTITUTIVE TENSOR
@@ -487,6 +487,17 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
             for (int j = 0; j < 3; j++)
                 tensorC[i][j] = tensorCPlus[i][j] + tensorCMinus[i][j];
 
+        if (dCoeff != 1.0)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                    std::cout << tensorC[i][j] << " ";
+                std::cout << std::endl;
+            }
+            std::cout << "------------------------------------------" << std::endl;
+        }
+
         break;
     }
 
@@ -503,11 +514,16 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
             strain[2][2] = -(_poisson / (1.0 - _poisson)) * (strain[0][0] + strain[1][1]);
         }
 
-        // PetscPrintf(PETSC_COMM_WORLD, "divU: %.12e\n", divU);
+        // strain[0][0] = 2.0;
+        // strain[1][1] = 2.0;
+        // strain[0][1] = 0.0;
+        // strain[1][0] = strain[0][1];
+        // strain[2][2] = 0.0;
 
-        // strain[0][0] = 4.201433961241174e-004;
-        // strain[1][1] = 1.803278624210739e-004;
-        // strain[0][1] = 1.479491857090474e-003;
+        // strain[0][0] = 2.0;
+        // strain[1][1] = 3.0;
+        // strain[0][1] = 1.0;
+        // strain[2][2] = 1.0;
         // strain[1][0] = strain[0][1];
         /*
             delta < 0 -> there are 3 distinct real eigenvalues; delta = 0 -> there are 2 equal eigenvalues; delta > 0 -> there is one real eigenvalue and two complex conjugate eigenvalues; we only work with cases where delta < 0 and delta = 0
@@ -528,21 +544,30 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
         double d31 = strain[2][0];
         double d13 = strain[0][2];
 
+        double dd[3][3] = {
+            {d11, d12, d13},
+            {d21, d22, d23},
+            {d31, d32, d33}};
+
+        double detdd = d11 * (d22 * d33 - d23 * d32) -
+                       d12 * (d21 * d33 - d23 * d31) +
+                       d13 * (d21 * d32 - d22 * d31);
+
         double eeq = sqrt(2.0 / 3.0 * (d11 * d11 + d22 * d22 + d33 * d33 + 2.0 * (d12 * d12 + d13 * d13 + d23 * d23))); // Equivalent strain
 
-        const double tol = 1e-12;
+        const double tol = 1e-8;
         double etaReal = 0.0, cos3eta = 0.0;
 
         // Cofactor matrix of the deviatoric strain tensor
-        const double a11 = strain[0][0] / eeq;
-        const double a22 = strain[1][1] / eeq;
-        const double a12 = strain[0][1] / eeq;
-        const double a33 = strain[2][2] / eeq;
-        const double a21 = strain[1][0] / eeq;
-        const double a23 = strain[1][2] / eeq;
-        const double a32 = strain[2][1] / eeq;
-        const double a31 = strain[2][0] / eeq;
-        const double a13 = strain[0][2] / eeq;
+        double a11 = strain[0][0] / eeq;
+        double a22 = strain[1][1] / eeq;
+        double a12 = strain[0][1] / eeq;
+        double a33 = strain[2][2] / eeq;
+        double a21 = strain[1][0] / eeq;
+        double a23 = strain[1][2] / eeq;
+        double a32 = strain[2][1] / eeq;
+        double a31 = strain[2][0] / eeq;
+        double a13 = strain[0][2] / eeq;
 
         double volStrainA = (1.0 / 3.0) * (a11 + a22 + a33);
 
@@ -556,17 +581,11 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
         double ad31 = a31;
         double ad13 = a13;
 
-        double adCof11 = ad22 * ad33 - ad23 * ad23;
-        double adCof12 = ad23 * ad31 - ad12 * ad33;
-        double adCof13 = ad12 * ad23 - ad22 * ad31;
-        double adCof21 = adCof12;
-        double adCof22 = ad11 * ad33 - ad31 * ad31;
-        double adCof23 = ad12 * ad31 - ad11 * ad23;
-        double adCof31 = adCof13;
-        double adCof32 = adCof23;
-        double adCof33 = ad11 * ad22 - ad12 * ad12;
+        double dda[3][3] = {
+            {ad11, ad12, ad13},
+            {ad21, ad22, ad23},
+            {ad31, ad32, ad33}};
 
-        double adCofTrace = adCof11 + adCof22 + adCof33;
         double detddA =
             ad11 * (ad22 * ad33 - ad23 * ad32) -
             ad12 * (ad21 * ad33 - ad23 * ad31) +
@@ -575,11 +594,8 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
         if (std::abs(eeq) > tol)
         {
             cos3eta = 4.0 * detddA;
-
-            //  cos3eta = std::round(cos3eta * 1e10) / 1e10;
-            // cos3eta = std::clamp(cos3eta, -1.0, 1.0);
+            cos3eta = std::clamp(cos3eta, -1.0, 1.0);
             etaReal = (1.0 / 3.0) * std::acos(cos3eta);
-            // PetscPrintf(PETSC_COMM_WORLD, "cos3eta: %.12e\n", cos3eta);
         }
 
         double etaStar[3] = {};
@@ -599,78 +615,6 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
         principalValues[1] = volStrain + eeq * std::cos(etaStar[1]); // ep2
         principalValues[2] = volStrain + eeq * std::cos(etaStar[2]); // ep3
 
-        // d_eeq_deij--------------------------------------------
-        double d_eeq_de[3] = {};
-
-        d_eeq_de[0] = 2.0 / 3.0 * ad11;
-        d_eeq_de[1] = 2.0 / 3.0 * ad22;
-        d_eeq_de[2] = 2.0 / 3.0 * ad12;
-
-        // d2_eeq_deij_dekl -------------------------------------------------
-
-        double d2_eeq_de2[3][3] = {};
-
-        // d2_eeq_de2[0][0] = 4.0 / (9.0 * eeq) * (1.0 - d11 * d11 / (eeq * eeq));
-        // d2_eeq_de2[0][1] = -2.0 / (9.0 * eeq) * (1.0 + 2.0 * d11 * d22 / (eeq * eeq));
-        // d2_eeq_de2[0][2] = -4.0 / 9.0 * (d11 * d12 / (eeq * eeq * eeq));
-
-        // d2_eeq_de2[1][0] = d2_eeq_de2[0][1];
-        // d2_eeq_de2[1][1] = 4.0 / (9.0 * eeq) * (1.0 - d22 * d22 / (eeq * eeq));
-        // d2_eeq_de2[1][2] = -4.0 / 9.0 * (d22 * d12 / (eeq * eeq * eeq));
-
-        // d2_eeq_de2[2][0] = d2_eeq_de2[0][2];
-        // d2_eeq_de2[2][1] = d2_eeq_de2[1][2];
-        // d2_eeq_de2[2][2] = 1.0 / (3.0 * eeq) - 4.0 / 9.0 * d12 * d12 / (eeq * eeq * eeq);
-
-        d2_eeq_de2[0][0] = 4.0 / 9.0 / eeq * (1.0 - ad11 * ad11);
-        d2_eeq_de2[0][1] = -2.0 / 9.0 / eeq * (1.0 + 2.0 * ad11 * ad22);
-        d2_eeq_de2[0][2] = -4.0 / 9.0 / eeq * (ad11 * ad12);
-
-        d2_eeq_de2[1][0] = d2_eeq_de2[0][1];
-        d2_eeq_de2[1][1] = 4.0 / 9.0 / eeq * (1.0 - ad22 * ad22);
-        d2_eeq_de2[1][2] = -4.0 / 9.0 / eeq * (ad22 * ad12);
-
-        d2_eeq_de2[2][0] = d2_eeq_de2[0][2];
-        d2_eeq_de2[2][1] = d2_eeq_de2[1][2];
-        d2_eeq_de2[2][2] = 1.0 / 3.0 / eeq - 4.0 / 9.0 / eeq * (ad12 * ad12);
-
-        //--
-        double d_cos3eta_de[3] = {};
-        // d_cos3eta_de[0] = 4.0 * ((eeq * eeq * dcof11 - 2.0 * detdd * d11) / pow(eeq, 5.0) - 1.0 / 3.0 * dcofTrace / pow(eeq, 3.0));
-        // d_cos3eta_de[1] = 4.0 * ((eeq * eeq * dcof22 - 2.0 * detdd * d22) / pow(eeq, 5.0) - 1.0 / 3.0 * dcofTrace / pow(eeq, 3.0));
-        // d_cos3eta_de[2] = 4.0 * ((eeq * eeq * dcof12 - 2.0 * detdd * d12) / (pow(eeq, 5.0)));
-
-        d_cos3eta_de[0] = 4.0 / eeq * (adCof11 - 2.0 * ad11 * detddA - 1.0 / 3.0 * adCofTrace);
-        d_cos3eta_de[1] = 4.0 / eeq * (adCof22 - 2.0 * ad22 * detddA - 1.0 / 3.0 * adCofTrace);
-        d_cos3eta_de[2] = 4.0 / eeq * (adCof12 - 2.0 * ad12 * detddA);
-
-        double d2_cos3eta_de2[3][3] = {};
-        // d2_cos3eta_de2[0][0] = 4.0 * (-2.0 / 3.0 * dcof11 * d11 / pow(eeq, 5.0) - 4.0 * detdd / (3.0 * pow(eeq, 5.0)) + 2.0 / 3.0 * d11 * dcofTrace / pow(eeq, 5.0) - 10.0 / 3.0 * d11 / pow(eeq, 7.0) * (pow(eeq, 2.0) * dcof11 - 2.0 * d11 * detdd) + 2.0 / 3.0 * d11 / pow(eeq, 3.0) * (1.0 + dcofTrace / pow(eeq, 2.0)));
-        // d2_cos3eta_de2[0][1] = 4.0 * (1.0 / pow(eeq, 3.0) * (d33 + d11 / 3.0) + 4.0 / 3.0 * dcof11 * d22 / pow(eeq, 5.0) + 2.0 / 3.0 * detdd / pow(eeq, 5.0) - 2.0 * d11 / pow(eeq, 5.0) * (dcof22 - dcofTrace / 3.0) - 10.0 / 3.0 * d22 / pow(eeq, 7.0) * (eeq * eeq * dcof11 - 2.0 * d11 * detdd) + d22 / pow(eeq, 3.0) / 3.0 * (1.0 + 2.0 * dcofTrace / pow(eeq, 2.0)));
-        // d2_cos3eta_de2[0][2] = 4.0 * (4.0 / 3.0 * dcof11 * d12 / pow(eeq, 5.0) - 2.0 * d11 * dcof12 / pow(eeq, 5.0) - 10.0 * d12 / (3.0 * pow(eeq, 7)) * (eeq * eeq * dcof11 - 2.0 * d11 * detdd) + d12 / (3.0 * pow(eeq, 3.0)) * (1.0 + 2.0 * dcofTrace / pow(eeq, 2.0)));
-
-        // d2_cos3eta_de2[1][0] = d2_cos3eta_de2[0][1];
-        // d2_cos3eta_de2[1][1] = 4.0 * (-2.0 / 3.0 * dcof22 * d22 / pow(eeq, 5.0) - 4.0 / 3.0 * detdd / pow(eeq, 5.0) + 2.0 / 3.0 * d22 * dcofTrace / pow(eeq, 5.0) - 10.0 / 3.0 * d22 / pow(eeq, 7.0) * (eeq * eeq * dcof22 - 2.0 * d22 * detdd) + 2.0 / 3.0 * d22 / pow(eeq, 3.0) * (1.0 + dcofTrace / pow(eeq, 2.0)));
-        // d2_cos3eta_de2[1][2] = 4.0 * (4.0 / 3.0 * dcof22 * d12 / pow(eeq, 5.0) - 2.0 * d22 * dcof12 / pow(eeq, 5.0) - 10.0 / 3.0 * d12 / pow(eeq, 7.0) * (eeq * eeq * dcof22 - 2.0 * d22 * detdd) + d12 / (3.0 * pow(eeq, 3.0)) * (1.0 + 2.0 * dcofTrace / pow(eeq, 2.0)));
-
-        // d2_cos3eta_de2[2][1] = d2_cos3eta_de2[1][2];
-        // d2_cos3eta_de2[2][0] = d2_cos3eta_de2[0][2];
-        // d2_cos3eta_de2[2][2] = 4.0 * (-d33 / 2.0 / pow(eeq, 3.0) - 2.0 / 3.0 * dcof12 * d12 / pow(eeq, 5.0) - detdd / pow(eeq, 5.0) - 10.0 / 3.0 * d12 / pow(eeq, 7.0) * (eeq * eeq * dcof12 - 2.0 * d12 * detdd));
-
-        d2_cos3eta_de2[0][0] = 4.0 / (eeq * eeq) * (-2.0 / 3.0 * adCof11 * ad11 - 4.0 * detddA / 3.0 + 2.0 / 3.0 * ad11 * adCofTrace - 10.0 / 3.0 * ad11 * (adCof11 - 2.0 * ad11 * detddA) + 2.0 / 3.0 * ad11 * (1.0 + adCofTrace));
-        d2_cos3eta_de2[0][1] = 4.0 / (eeq * eeq) * (ad33 + ad11 / 3.0 + 4.0 / 3.0 * adCof11 * ad22 + 2.0 / 3.0 * detddA - 2.0 * ad11 * (adCof22 - adCofTrace / 3.0) - 10.0 / 3.0 * ad22 * (adCof11 - 2.0 * ad11 * detddA) + ad22 / 3.0 * (1.0 + 2.0 * adCofTrace));
-        d2_cos3eta_de2[0][2] = 4.0 / (eeq * eeq) * (4.0 / 3.0 * adCof11 * ad12 - 2 * ad11 * adCof12 - 10.0 * ad12 / 3.0 * (adCof11 - 2.0 * ad11 * detddA) + ad12 / 3.0 * (1.0 + 2.0 * adCofTrace));
-
-        d2_cos3eta_de2[1][0] = d2_cos3eta_de2[0][1];
-        d2_cos3eta_de2[1][1] = 4.0 / (eeq * eeq) * (-2.0 / 3.0 * adCof22 * ad22 - 4.0 / 3.0 * detddA + 2.0 / 3.0 * ad22 * adCofTrace - 10.0 / 3.0 * ad22 * (adCof22 - 2.0 * ad22 * detddA) + 2.0 / 3.0 * ad22 * (1.0 + adCofTrace));
-        d2_cos3eta_de2[1][2] = 4.0 / (eeq * eeq) * (4.0 / 3.0 * adCof22 * ad12 - 2.0 * ad22 * adCof12 - 10.0 / 3.0 * ad12 * (adCof22 - 2.0 * ad22 * detddA) + ad12 / 3.0 * (1.0 + 2.0 * adCofTrace));
-
-        d2_cos3eta_de2[2][0] = d2_cos3eta_de2[0][2];
-        d2_cos3eta_de2[2][1] = d2_cos3eta_de2[1][2];
-        d2_cos3eta_de2[2][2] = 4.0 / (eeq * eeq) * (-ad33 / 2.0 - 2.0 / 3.0 * adCof12 * ad12 - detddA - 10.0 / 3.0 * ad12 * (adCof12 - 2.0 * ad12 * detddA));
-
-        //--
-
         bool strainIsNull = true;
         const double pTol = 1e-12;
 
@@ -683,369 +627,350 @@ void Solid2D::computeConstitutiveTensor(PetscScalar gradU[2][2], double divU, do
 
         if (strainIsNull)
         {
-            // Tensor tensorI = tensors[1]; // Fourth order identity tensor
-
-            for (int i = 0; i < 3; ++i)
-                for (int j = 0; j < 3; ++j)
-                {
-                    double outerProductIdent = ident[i] * ident[j];
-                    tensorC[i][j] = lame * outerProductIdent + 2.0 * mu * tensorI[i][j];
-                }
-
-            // // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
-            double detCPlusMinus = 0.0;
-            detCPlusMinus = tensorC[0][0] * (tensorC[1][1] * tensorC[2][2] - tensorC[1][2] * tensorC[2][1]) -
-                            tensorC[0][1] * (tensorC[1][0] * tensorC[2][2] - tensorC[1][2] * tensorC[2][0]) +
-                            tensorC[0][2] * (tensorC[1][0] * tensorC[2][1] - tensorC[1][1] * tensorC[2][0]);
-
-            // const double tolTeste = 1e-8; // ou outro valor adequado ao seu problema
-            // if (std::fabs(tensorC[0][1] - tensorC[1][0]) > tolTeste)
-            // {
-            //     PetscPrintf(PETSC_COMM_WORLD,
-            //                 "tensorC[0][1] = %.12e != tensorC[1][0] = %.12e  (|Δ| = %.12e)\n",
-            //                 tensorC[0][1],
-            //                 tensorC[1][0],
-            //                 std::fabs(tensorC[0][1] - tensorC[1][0]));
-            // }
-
-            // if (tensorC[0][1] != tensorC[1][0])
-            // {
-            //     PetscPrintf(PETSC_COMM_WORLD,
-            //                 "tensorC[0][1] = %.12e != tensorC[1][0] = %.12e\n",
-            //                 tensorC[0][1], tensorC[1][0]);
-            // }
-
-            if (detCPlusMinus <= 0.0)
+            if (divU >= 0)
             {
-                PetscPrintf(PETSC_COMM_WORLD,
-                            "detCPlusMinus = %.16e\n",
-                            detCPlusMinus);
-                std::cout << "-----------------------------------------" << std::endl;
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        tensorC[i][j] = dCoeff * (lame * ident[i] * ident[j] + 2.0 * mu * tensorI[i][j]);
             }
+            else
+            {
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                    {
+                        tensorC[i][j] = lame * ident[i] * ident[j] + dCoeff * 2.0 * mu * tensorI[i][j];
+                        if (std::isnan(tensorC[i][j]))
+                            std::cout << "⚠️  NaN detected in tensorC[" << i << "][" << j << "]!" << std::endl;
+                    }
+            }
+
+            // if (dCoeff != 1.0)
+            // {
+            //     for (int i = 0; i < 3; i++)
+            //     {
+            //         for (int j = 0; j < 3; j++)
+            //             std::cout << tensorC[i][j] << " ";
+            //         std::cout << std::endl;
+            //     }
+            //     std::cout << "------------------------------------------" << std::endl;
+            // }
 
             break;
         }
 
-        if ((abs(principalValues[1] - principalValues[2]) > tol) &&
-            (abs(principalValues[0] - principalValues[1]) > tol) &&
-            (abs(principalValues[0] - principalValues[2]) > tol)) // THERE ARE 3 DISTINCT REAL EIGENVALUES
-            for (int ip = 0; ip < 3; ip++)                        // ip stands for the principal value
+        double detEps = strain[0][0] * (strain[1][1] * strain[2][2] - strain[1][2] * strain[2][1]) -
+                        strain[0][1] * (strain[1][0] * strain[2][2] - strain[1][2] * strain[2][0]) +
+                        strain[0][2] * (strain[1][0] * strain[2][1] - strain[1][1] * strain[2][0]);
+
+        if (strain[1][1] == strain[2][2] && detEps == strain[0][0] * strain[1][1] * strain[2][2])
+        {
+            std::runtime_error("⚠️  varDeRta should be imposed in e22");
+        }
+
+        // d_eeq_deij--------------------------------------------
+        double d_eeq_de[3] = {};
+        d_eeq_de[0] = 2.0 / 3.0 * ad11;
+        d_eeq_de[1] = 2.0 / 3.0 * ad22;
+        d_eeq_de[2] = 2.0 / 3.0 * ad12;
+
+        // d2_eeq_deij_dekl -------------------------------------------------
+
+        double d2_eeq_de2[3][3] = {};
+        d2_eeq_de2[0][0] = 4.0 / 9.0 * (1.0 - ad11 * ad11);
+        d2_eeq_de2[0][1] = -2.0 / 9.0 * (1.0 + 2.0 * ad11 * ad22);
+        d2_eeq_de2[0][2] = -4.0 / 9.0 * (ad11 * ad12);
+
+        d2_eeq_de2[1][0] = d2_eeq_de2[0][1];
+        d2_eeq_de2[1][1] = 4.0 / 9.0 * (1.0 - ad22 * ad22);
+        d2_eeq_de2[1][2] = -4.0 / 9.0 * (ad22 * ad12);
+
+        d2_eeq_de2[2][0] = d2_eeq_de2[0][2];
+        d2_eeq_de2[2][1] = d2_eeq_de2[1][2];
+        d2_eeq_de2[2][2] = 1.0 / 3.0 - 4.0 / 9.0 * (ad12 * ad12);
+
+        double dd2[3][3] = {};
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                for (int k = 0; k < 3; k++)
+                    dd2[i][j] += dd[i][k] * dd[k][j];
+
+        double dd2a[3][3] = {};
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 3; j++)
+                for (int k = 0; k < 3; k++)
+                    dd2a[i][j] += dda[i][k] * dda[k][j];
+
+        const double EE11 = dd2[0][0];
+        const double EE22 = dd2[1][1];
+        const double EE12 = dd2[0][1];
+
+        const double aEE11 = dd2a[0][0];
+        const double aEE22 = dd2a[1][1];
+        const double aEE12 = dd2a[0][1];
+
+        double dv_de[3][3] = {};
+
+        dv_de[0][0] = 2.0 / 3.0 * (3.0 * ad11 - 2.0 * aEE11 * ad11 - 4.0 * detddA);
+        dv_de[0][1] = 2.0 / 3.0 * (ad11 + 4.0 * ad22 * aEE11 - 6.0 * ad11 * aEE22 + 2.0 * detddA - 4.0 * ad22);
+        dv_de[0][2] = 2.0 / 3.0 * (4.0 * ad12 * aEE11 - 6.0 * ad11 * aEE12 - ad12);
+
+        dv_de[1][0] = dv_de[0][1];
+        dv_de[1][1] = 2.0 / 3.0 * (3.0 * ad22 - 2.0 * aEE22 * ad22 - 4.0 * detddA);
+        dv_de[1][2] = 2.0 / 3.0 * (4.0 * ad12 * aEE22 - 6.0 * ad22 * aEE12 - ad12);
+
+        dv_de[2][0] = 2.0 / 3.0 * (4.0 * ad12 + 4.0 * aEE12 * ad11 - 6.0 * aEE11 * ad12);
+        dv_de[2][1] = dv_de[1][2];
+        dv_de[2][2] = (ad22 + ad11) - 4.0 / 3.0 * aEE12 * ad12 - 2.0 * detddA;
+
+        double v11 = 2.0 * aEE11 - 4.0 * detddA * ad11 - 1.0;
+        double v22 = 2.0 * aEE22 - 4.0 * detddA * ad22 - 1.0;
+        double v12 = 2.0 * aEE12 - 4.0 * detddA * ad12;
+
+        //--
+
+        if (principalValues[0] == 0.0051896648754571322)
+            std::cout << "the value is here" << std::endl;
+
+        if (std::fabs(principalValues[1] - principalValues[0]) > tol &&
+            std::fabs(principalValues[2] - principalValues[1]) > tol)
+        // if ((abs(principalValues[1] - principalValues[2]) > tol) &&
+        //     (abs(principalValues[0] - principalValues[1]) > tol) &&
+        //     (abs(principalValues[0] - principalValues[2]) > tol)) // THERE ARE 3 DISTINCT REAL EIGENVALUES
+        // {
+        // GENERAL CASE - 3 DISTINCT REAL EIGENVALUES
+        {
+            double sin3eta = std::sin(3.0 * etaStar[0]);
+            double cos3eta = std::cos(3.0 * etaStar[0]);
+
+            double d_eta_de[3] = {};
+            // d_eta_de[0] = -2.0 / 3.0 * (1.0 / (sin3eta * pow(eeq, 5.0))) * (2.0 * EE11 * eeq * eeq - 4.0 * detdd * d11 - pow(eeq, 4.0));
+            // d_eta_de[1] = -2.0 / 3.0 * (1.0 / (sin3eta * pow(eeq, 5.0))) * (2.0 * EE22 * eeq * eeq - 4.0 * detdd * d22 - pow(eeq, 4.0));
+            // d_eta_de[2] = -2.0 / 3.0 * (1.0 / (sin3eta * pow(eeq, 5.0))) * (2.0 * EE12 * eeq * eeq - 4.0 * detdd * d12);
+
+            d_eta_de[0] = -2.0 / 3.0 * (1.0 / (sin3eta)) * (2.0 * aEE11 - 4.0 * detddA * ad11 - 1.0);
+            d_eta_de[1] = -2.0 / 3.0 * (1.0 / (sin3eta)) * (2.0 * aEE22 - 4.0 * detddA * ad22 - 1.0);
+            d_eta_de[2] = -2.0 / 3.0 * (1.0 / (sin3eta)) * (2.0 * aEE12 - 4.0 * detddA * ad12);
+
+            // FIRST DERIVATIVE
+            for (int ip = 0; ip < 3; ip++)
             {
-                // std::cout << "Entered the case 3 distinct real eigenvalues! " << std::endl;
-                double eta = etaStar[ip];
-                double cosEta = std::cos(eta);
-                // cosEta = std::round(cosEta * 1e10) / 1e10;
-
-                // -------------------------------------------------
-
-                double d_coseta_de[3] = {};
-                for (int i = 0; i < 3; i++)
-                    d_coseta_de[i] = d_cos3eta_de[i] / (12.0 * cosEta * cosEta - 3.0);
-
-                // -------------------------------------------------
-
-                double d2_coseta_de2[3][3] = {};
+                double cosEta = std::cos(etaStar[ip]);
+                double sinEta = std::sin(etaStar[ip]);
 
                 for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                    {
-                        double outerProduct1 = d_cos3eta_de[i] * d_coseta_de[j];
-                        d2_coseta_de2[i][j] = (d2_cos3eta_de2[i][j] * (12.0 * cosEta * cosEta - 3.0) - 24.0 * cosEta * outerProduct1) / pow((12.0 * cosEta * cosEta - 3.0), 2.0);
-                    }
-
-                // -------------------------------------------------
-
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                    {
-                        double outerProduct2 = d_eeq_de[i] * d_coseta_de[j];
-                        double outerProduct3 = d_coseta_de[i] * d_eeq_de[j];
-                        d2_ep_de2[ip][i][j] = cosEta * d2_eeq_de2[i][j] + outerProduct2 + outerProduct3 + eeq * d2_coseta_de2[i][j];
-                    }
-
-                // -------------------------------------------------
-
-                for (int i = 0; i < 3; i++)
-                    d_ep_de[ip][i] = 1.0 / 3.0 * ident[i] + cosEta * d_eeq_de[i] + eeq * d_coseta_de[i];
+                    d_ep_de[ip][i] = 1.0 / 3.0 * ident[i] + d_eeq_de[i] * cosEta - sinEta * d_eta_de[i];
             }
+
+            // SECOND DERIVATIVE
+            double const1 = 2.0 / 3.0 * (1.0 / sin3eta);
+            double const2 = -9.0 / 2.0 * cos3eta;
+
+            double d2_eta_de2[3][3] = {};
+            d2_eta_de2[0][0] = const1 * (const2 * d_eta_de[0] * d_eta_de[0] + 10.0 / 3.0 * ad11 * v11 - dv_de[0][0]);
+            d2_eta_de2[0][1] = const1 * (const2 * d_eta_de[0] * d_eta_de[1] + 10.0 / 3.0 * ad22 * v11 - dv_de[0][1]);
+            d2_eta_de2[0][2] = const1 * (const2 * d_eta_de[0] * d_eta_de[2] + 10.0 / 3.0 * ad12 * v11 - dv_de[0][2]);
+
+            d2_eta_de2[1][0] = d2_eta_de2[0][1];
+            d2_eta_de2[1][1] = const1 * (const2 * d_eta_de[1] * d_eta_de[1] + 10.0 / 3.0 * ad22 * v22 - dv_de[1][1]);
+            d2_eta_de2[1][2] = const1 * (const2 * d_eta_de[1] * d_eta_de[2] + 10.0 / 3.0 * ad12 * v22 - dv_de[1][2]);
+
+            d2_eta_de2[2][0] = d2_eta_de2[0][2];
+            d2_eta_de2[2][1] = d2_eta_de2[1][2];
+            d2_eta_de2[2][2] = const1 * (const2 * d_eta_de[2] * d_eta_de[2] + 10.0 / 3.0 * ad12 * v12 - dv_de[2][2]);
+
+            for (int ip = 0; ip < 3; ip++)
+            {
+                double cosEta = std::cos(etaStar[ip]);
+                double sinEta = std::sin(etaStar[ip]);
+
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        d2_ep_de2[ip][i][j] = (1.0 / eeq) * ((d2_eeq_de2[i][j] - d_eta_de[i] * d_eta_de[j]) * cosEta - (d_eeq_de[i] * d_eta_de[j] + d_eta_de[i] * d_eeq_de[j] + d2_eta_de2[i][j]) * sinEta);
+                // d2_ep_de2[ip][i][j] = d2_eeq_de2[i][j];
+            }
+
+            // COMPUTING THE CONSTITUTIVE TENSOR
+            for (int ip = 0; ip < 3; ip++)
+                if (principalValues[ip] > 0.0)
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCPlus[i][j] += 2.0 * mu * (d_ep_de[ip][i] * d_ep_de[ip][j] + principalValues[ip] * d2_ep_de2[ip][i][j]);
+                }
+                else // principalValues[i] <= 0.0
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCMinus[i][j] += 2.0 * mu * (d_ep_de[ip][i] * d_ep_de[ip][j] + principalValues[ip] * d2_ep_de2[ip][i][j]);
+                }
+        }
         else // THERE ARE 2 EQUAL EIGENVALUES
         {
-            if (abs(principalValues[1] - principalValues[2]) < tol) // cos(3eta)=1; eta =0
+            double denum = sqrt(ad11 * ad11 + 2.0 * aEE11 - 3.0 * aEE11 * aEE11);
+            double coef = -1.0 / (3.0 * sqrt(3));
+
+            double d_eta_de[3] = {};
+            d_eta_de[0] = coef / denum * (3.0 * ad11 - 2.0 * aEE11 * ad11 - 4.0 * detddA);
+            d_eta_de[1] = coef / denum * (4.0 * aEE22 * ad11 - 6.0 * aEE11 * ad22 + (-4.0 * ad11 + ad22) + 2.0 * detddA);
+            d_eta_de[2] = coef / denum * (4.0 * aEE12 * ad11 - 6.0 * aEE11 * ad12 + 4.0 * ad12);
+
+            for (int ip = 0; ip < 3; ip++)
             {
-                d_ep_de[0][0] = 1.0 / 3.0 + d_eeq_de[0];
-                d_ep_de[0][1] = 1.0 / 3.0 + d_eeq_de[1];
-                d_ep_de[0][2] = d_eeq_de[2];
+                double cosEta = std::cos(etaStar[ip]);
+                double sinEta = std::sin(etaStar[ip]);
 
-                d_ep_de[2][0] = 2.0 / 3.0 - d_eeq_de[0];
-                d_ep_de[2][1] = 2.0 / 3.0 - d_eeq_de[1];
-                d_ep_de[2][2] = -d_eeq_de[2];
+                for (int i = 0; i < 3; i++)
+                    d_ep_de[ip][i] = 1.0 / 3.0 * ident[i] + d_eeq_de[i] * cosEta - sinEta * d_eta_de[i];
+            }
 
-                d_ep_de[1][0] = 0.0;
-                d_ep_de[1][1] = 0.0;
-                d_ep_de[1][2] = 0.0;
+            double cos3eta = std::cos(3.0 * etaStar[0]);
+            double sin3eta = std::sin(3.0 * etaStar[0]);
 
-                // ------------------------------------------------
-                double d_eta_de[3] = {};
-                d_eta_de[0] = -2.0 / (3.0 * sqrt(3.0) * eeq) + 1.0 / (sqrt(3.0) * eeq) * d_eeq_de[0];
-                d_eta_de[1] = -2.0 / (3.0 * sqrt(3.0) * eeq) + 1.0 / (sqrt(3.0) * eeq) * d_eeq_de[1];
-                d_eta_de[2] = 1.0 / (sqrt(3.0) * eeq) * d_eeq_de[2];
-                // ------------------------------------------------
+            if (abs(etaStar[0]) < tol) // cos(3eta)=1; eta =0
+            {
+                /*
+                    IF eta = 0 -> ep2 = ep3
+                    We must check either if they are negative or positive;
+                    We must check the signal of ep1 as well.
+                */
 
-                d2_ep_de2[0][0][0] = d2_eeq_de2[0][0] - eeq * d_eta_de[0] * d_eta_de[0];
-                d2_ep_de2[0][0][1] = d2_eeq_de2[0][1] - eeq * d_eta_de[1] * d_eta_de[0];
-                d2_ep_de2[0][0][2] = d2_eeq_de2[0][2] - eeq * d_eta_de[2] * d_eta_de[0];
+                double sum[3][3] = {};
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        sum[i][j] = 1.0 / eeq * ((d_eta_de[i] * d_eta_de[j] - d2_eeq_de2[i][j]) * principalValues[1] - (2.0 / 9.0 * dv_de[i][j] + d_eta_de[i] * d_eta_de[j]) * principalValues[0]);
 
-                d2_ep_de2[0][1][0] = d2_eeq_de2[1][0] - eeq * d_eta_de[0] * d_eta_de[1];
-                d2_ep_de2[0][1][1] = d2_eeq_de2[1][1] - eeq * d_eta_de[1] * d_eta_de[1];
-                d2_ep_de2[0][1][2] = d2_eeq_de2[1][2] - eeq * d_eta_de[2] * d_eta_de[1];
+                double sumEp1[3][3] = {};
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        sumEp1[i][j] = principalValues[0] / eeq * (d2_eeq_de2[i][j] + 2.0 / 9.0 * dv_de[i][j]);
 
-                d2_ep_de2[0][2][0] = d2_eeq_de2[2][0] - eeq * d_eta_de[0] * d_eta_de[2];
-                d2_ep_de2[0][2][1] = d2_eeq_de2[2][1] - eeq * d_eta_de[1] * d_eta_de[2];
-                d2_ep_de2[0][2][2] = d2_eeq_de2[2][2] - eeq * d_eta_de[2] * d_eta_de[2];
-                //
-                d2_ep_de2[2][0][0] = -d2_ep_de2[0][0][0];
-                d2_ep_de2[2][0][1] = -d2_ep_de2[0][0][1];
-                d2_ep_de2[2][0][2] = -d2_ep_de2[0][0][2];
-                d2_ep_de2[2][1][0] = -d2_ep_de2[0][1][0];
-                d2_ep_de2[2][1][1] = -d2_ep_de2[0][1][1];
-                d2_ep_de2[2][1][2] = -d2_ep_de2[0][1][2];
-                d2_ep_de2[2][2][0] = -d2_ep_de2[0][2][0];
-                d2_ep_de2[2][2][1] = -d2_ep_de2[0][2][1];
-                d2_ep_de2[2][2][2] = -d2_ep_de2[0][2][2];
-                //
-                d2_ep_de2[1][0][0] = 0.0;
-                d2_ep_de2[1][0][1] = 0.0;
-                d2_ep_de2[1][0][2] = 0.0;
-                d2_ep_de2[1][1][0] = 0.0;
-                d2_ep_de2[1][1][1] = 0.0;
-                d2_ep_de2[1][1][2] = 0.0;
-                d2_ep_de2[1][2][0] = 0.0;
-                d2_ep_de2[1][2][1] = 0.0;
-                d2_ep_de2[1][2][2] = 0.0;
+                if (principalValues[1] > pTol && principalValues[2] > pTol) // ep2 and ep3 are positive
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCPlus[i][j] = 2.0 * mu * (d_ep_de[1][i] * d_ep_de[1][j] + d_ep_de[2][i] * d_ep_de[2][j] + sum[i][j]);
+                }
+                else // ep2 and ep3 are negative
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCMinus[i][j] = 2.0 * mu * (d_ep_de[1][i] * d_ep_de[1][j] + d_ep_de[2][i] * d_ep_de[2][j] + sum[i][j]);
+                }
+
+                if (principalValues[0] > pTol) // ep1 is positive
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCPlus[i][j] += 2.0 * mu * (d_ep_de[0][i] * d_ep_de[0][j] + sumEp1[i][j]);
+                }
+                else // ep1 is negative
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                        {
+                            tensorCMinus[i][j] += 2.0 * mu * (d_ep_de[0][i] * d_ep_de[0][j] + sumEp1[i][j]);
+                            if (std::isnan(tensorCMinus[i][j]))
+                            {
+                                std::cout << "⚠️  NaN detected in tensorCMinus[" << i << "][" << j << "]!" << std::endl;
+                                std::cout << "ep1: " << principalValues[0] << ", ep2: " << principalValues[1] << ", ep3: " << principalValues[2] << std::endl;
+                                std::cout << strain[0][0] << ", " << strain[1][1] << ", " << strain[1][2] << std::endl;
+                                throw std::runtime_error("NaN detected in tensorCMinus");
+                            }
+                        }
+                }
             }
             else // eta = n Pi / 3, where n is an integer (multiple of 60 degrees)
             {
-                // del ep1 del eij
-                d_ep_de[0][0] = 2.0 / 3.0 + d_eeq_de[0];
-                d_ep_de[0][1] = 2.0 / 3.0 + d_eeq_de[1];
-                d_ep_de[0][2] = d_eeq_de[2];
-                // del ep2 del eij
-                d_ep_de[2][0] = 1.0 / 3.0 - d_eeq_de[0];
-                d_ep_de[2][1] = 1.0 / 3.0 - d_eeq_de[1];
-                d_ep_de[2][2] = -d_eeq_de[2];
-                // del ep3 del eij
-                d_ep_de[1][0] = 0.0;
-                d_ep_de[1][1] = 0.0;
-                d_ep_de[1][2] = 0.0;
-                // ------------------------------------------------
-
-                double d_eta_de[3] = {};
-                d_eta_de[0] = -2.0 / (3.0 * sqrt(3.0) * eeq) - 1.0 / (sqrt(3) * eeq) * d_eeq_de[0];
-                d_eta_de[1] = -2.0 / (3.0 * sqrt(3.0) * eeq) - 1.0 / (sqrt(3) * eeq) * d_eeq_de[1];
-                d_eta_de[2] = -1.0 / (sqrt(3.0) * eeq) * d_eeq_de[2];
-                // ------------------------------------------------
-
-                // # d2_ep_de2
-                d2_ep_de2[0][0][0] = d2_eeq_de2[0][0] - eeq * d_eta_de[0] * d_eta_de[0];
-                d2_ep_de2[0][0][1] = d2_eeq_de2[0][1] - eeq * d_eta_de[1] * d_eta_de[0];
-                d2_ep_de2[0][0][2] = d2_eeq_de2[0][2] - eeq * d_eta_de[2] * d_eta_de[0];
-
-                d2_ep_de2[0][1][0] = d2_eeq_de2[1][0] - eeq * d_eta_de[0] * d_eta_de[1];
-                d2_ep_de2[0][1][1] = d2_eeq_de2[1][1] - eeq * d_eta_de[1] * d_eta_de[1];
-                d2_ep_de2[0][1][2] = d2_eeq_de2[1][2] - eeq * d_eta_de[2] * d_eta_de[1];
-
-                d2_ep_de2[0][2][0] = d2_eeq_de2[2][0] - eeq * d_eta_de[2] * d_eta_de[0];
-                d2_ep_de2[0][2][1] = d2_eeq_de2[2][1] - eeq * d_eta_de[2] * d_eta_de[1];
-                d2_ep_de2[0][2][2] = d2_eeq_de2[2][2] - eeq * d_eta_de[2] * d_eta_de[2];
-                //
-                d2_ep_de2[2][0][0] = -d2_ep_de2[0][0][0];
-                d2_ep_de2[2][0][1] = -d2_ep_de2[0][0][1];
-                d2_ep_de2[2][0][2] = -d2_ep_de2[0][0][2];
-                d2_ep_de2[2][1][0] = -d2_ep_de2[0][1][0];
-                d2_ep_de2[2][1][1] = -d2_ep_de2[0][1][1];
-                d2_ep_de2[2][1][2] = -d2_ep_de2[0][1][2];
-                d2_ep_de2[2][2][0] = -d2_ep_de2[0][2][0];
-                d2_ep_de2[2][2][1] = -d2_ep_de2[0][2][1];
-                d2_ep_de2[2][2][2] = -d2_ep_de2[0][2][2];
-                //
-                d2_ep_de2[1][0][0] = 0.0;
-                d2_ep_de2[1][0][1] = 0.0;
-                d2_ep_de2[1][0][2] = 0.0;
-                d2_ep_de2[1][1][0] = 0.0;
-                d2_ep_de2[1][1][1] = 0.0;
-                d2_ep_de2[1][1][2] = 0.0;
-                d2_ep_de2[1][2][0] = 0.0;
-                d2_ep_de2[1][2][1] = 0.0;
-                d2_ep_de2[1][2][2] = 0.0;
-            }
-        }
-        // -------------------------------------------------
-
-        // COMPUTING THE CONSTITUTIVE TENSOR D
-
-        double d_ep_de_pos[3][3] = {};
-        double d_ep_de_neg[3][3] = {};
-
-        for (int ip = 0; ip < 3; ip++)
-        {
-            if (principalValues[ip] > pTol)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    d_ep_de_pos[ip][j] = d_ep_de[ip][j];
-                    d_ep_de_neg[ip][j] = 0.0;
-                }
-            }
-            else
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    d_ep_de_pos[ip][j] = 0.0;
-                    d_ep_de_neg[ip][j] = d_ep_de[ip][j];
-                }
-            }
-        }
-
-        double d2_ep_de2_pos[3][3][3] = {};
-        double d2_ep_de2_neg[3][3][3] = {};
-
-        for (int ip = 0; ip < 3; ip++)
-        {
-            if (principalValues[ip] > pTol)
-            {
+                /*
+                    IF eta = pi/3 -> ep1 = ep2
+                    We must check either if they are negative or positive;
+                    We must check the signal of ep3 as well.
+                */
+                double sum[3][3] = {};
                 for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
-                    {
-                        d2_ep_de2_pos[ip][i][j] = d2_ep_de2[ip][i][j];
-                        d2_ep_de2_neg[ip][i][j] = 0.0;
-                    }
-            }
-            else
-            {
+                        sum[i][j] = 1.0 / eeq * ((-d_eta_de[i] * d_eta_de[j] + d2_eeq_de2[i][j]) * principalValues[0] + (-2.0 / 9.0 * dv_de[i][j] + d_eta_de[i] * d_eta_de[j]) * principalValues[2]);
+
+                double sumEp3[3][3] = {};
                 for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
-                    {
-                        d2_ep_de2_pos[ip][i][j] = 0.0;
-                        d2_ep_de2_neg[ip][i][j] = d2_ep_de2[ip][i][j];
-                    }
+                        sumEp3[i][j] = principalValues[2] / eeq * (-d2_eeq_de2[i][j] + 2.0 / 9.0 * dv_de[i][j]);
+
+                if (principalValues[0] > pTol && principalValues[1] > pTol) // ep1 and ep2 are positive
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCPlus[i][j] = 2.0 * mu * (d_ep_de[0][i] * d_ep_de[0][j] + d_ep_de[1][i] * d_ep_de[1][j] + sum[i][j]);
+                }
+                else // ep1 and ep2 are negative
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCMinus[i][j] = 2.0 * mu * (d_ep_de[0][i] * d_ep_de[0][j] + d_ep_de[1][i] * d_ep_de[1][j] + sum[i][j]);
+                }
+
+                if (principalValues[2] > pTol) // ep3 is positive
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                            tensorCPlus[i][j] += 2.0 * mu * (d_ep_de[2][i] * d_ep_de[2][j] + sumEp3[i][j]);
+                }
+                else // ep3 is negative
+                {
+                    for (int i = 0; i < 3; i++)
+                        for (int j = 0; j < 3; j++)
+                        {
+                            tensorCMinus[i][j] += 2.0 * mu * (d_ep_de[2][i] * d_ep_de[2][j] + sumEp3[i][j]);
+                            if (std::isnan(tensorCMinus[i][j]))
+                            {
+                                std::cout << "⚠️  NaN detected in tensorCMinus[" << i << "][" << j << "]!" << std::endl;
+                                std::cout << "ep1: " << principalValues[0] << ", ep2: " << principalValues[1] << ", ep3: " << principalValues[2] << std::endl;
+                                std::cout << "etaStar[0]: " << etaStar[0] << ", etaStar[1]: " << etaStar[1] << ", etaStar[2]: " << etaStar[2] << std::endl;
+                                std::cout << strain[0][0] << ", " << strain[1][1] << ", " << strain[1][2] << std::endl;
+                                throw std::runtime_error("NaN detected in tensorCMinus");
+                            }
+                        }
+                }
             }
         }
 
-        double outerProductEpEpPos[3][3][3] = {};
-        double outerProductEpEpNeg[3][3][3] = {};
-        for (int ip = 0; ip < 3; ip++)
+        if (divU > 0.0)
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
-                {
-                    outerProductEpEpPos[ip][i][j] = d_ep_de_pos[ip][i] * d_ep_de_pos[ip][j];
-                    outerProductEpEpNeg[ip][i][j] = d_ep_de_neg[ip][i] * d_ep_de_neg[ip][j];
-                }
-
-        // COMPUTING THE POSITIVE AND NEGATIVE PART OF THE TENSOR
-        for (int ip = 0; ip < 3; ip++)
-        {
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
-                {
-                    tensorCPlus[i][j] += 2 * mu * (outerProductEpEpPos[ip][i][j] + principalValues[ip] * d2_ep_de2_pos[ip][i][j]);
-                    tensorCMinus[i][j] += 2 * mu * (outerProductEpEpNeg[ip][i][j] + principalValues[ip] * d2_ep_de2_neg[ip][i][j]);
-                }
-        }
-
-        if (divU > pTol)
-            for (int i = 0; i < 3; i++)
-                for (int j = 0; j < 3; j++)
-                {
-                    double outerProductIdent = ident[i] * ident[j];
-                    tensorCPlus[i][j] += lame * outerProductIdent;
-                }
+                    tensorCPlus[i][j] += lame * ident[i] * ident[j];
         else
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
-                {
-                    double outerProductIdent = ident[i] * ident[j];
-                    tensorCMinus[i][j] += lame * outerProductIdent;
-                }
+                    tensorCMinus[i][j] += lame * ident[i] * ident[j];
 
-        double tensorCaux[3][3] = {};
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
             {
                 tensorC[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
-                tensorCaux[i][j] = dCoeff * tensorCPlus[i][j] + tensorCMinus[i][j];
+                if (std::isnan(tensorC[i][j]))
+                {
+                    std::cout << "⚠️  NaN detected in tensorC[" << i << "][" << j << "]!" << std::endl;
+                }
             }
 
-        // COMPUTE DETERMINANT OF THE TENSORCPLUS + TENSORCMINUS
-        double detCPlusMinus = 0.0;
-        detCPlusMinus = tensorCaux[0][0] * (tensorCaux[1][1] * tensorCaux[2][2] - tensorCaux[1][2] * tensorCaux[2][1]) -
-                        tensorCaux[0][1] * (tensorCaux[1][0] * tensorCaux[2][2] - tensorCaux[1][2] * tensorCaux[2][0]) +
-                        tensorCaux[0][2] * (tensorCaux[1][0] * tensorCaux[2][1] - tensorCaux[1][1] * tensorCaux[2][0]);
-
-        // if (!strainIsNull)
-        // {
-        //     incrementGlobalCounter();
-        //     PetscPrintf(PETSC_COMM_WORLD,
-        //                 "%d d: %.16e det = %.16e\n",
-        //                 getGlobalCounter(), dCoeff, detCPlusMinus);
-        // }
-
-        // if (detCPlusMinus <= 0.0)
-        // std::cout << detCPlusMinus << std::endl;
-
-        // const double tolTeste = 1e-8; // ou outro valor adequado ao seu problema
-        // if (std::fabs(tensorC[0][1] - tensorC[1][0]) > tolTeste)
-        // {
-        //     PetscPrintf(PETSC_COMM_WORLD,
-        //                 "tensorC[0][1] = %.12e != tensorC[1][0] = %.12e  (|Δ| = %.12e)\n",
-        //                 tensorC[0][1],
-        //                 tensorC[1][0],
-        //                 std::fabs(tensorC[0][1] - tensorC[1][0]));
-        // }
-
-        // if (tensorC[0][1] != tensorC[1][0])
-        // {
-        //     // PetscPrintf(PETSC_COMM_WORLD,
-        //     //             "tensorC[0][1] = %.12e != tensorC[1][0] = %.12e\n",
-        //     //             tensorC[0][1], tensorC[1][0]);
-
-        //     PetscPrintf(PETSC_COMM_WORLD,
-        //                 "tensorC[0][1] = %.12e != tensorC[1][0] = %.12e  (|Δ| = %.12e)\n",
-        //                 tensorC[0][1],
-        //                 tensorC[1][0],
-        //                 std::fabs(tensorC[0][1] - tensorC[1][0]));
-        // }
-
-        // -------------------------------------------------
-        // DIVIDING BY THE COEFFICIENTS OF THE TENSOR
-
-        // tensorC[0][2] *= 0.5;
-        // tensorC[1][2] *= 0.5;
-        // tensorC[2][0] *= 0.5;
-        // tensorC[2][1] *= 0.5;
-        // tensorC[2][2] *= 0.25;
-
-        // if (tensorC[0][2] < 0.0 && std::abs(tensorC[0][2]) > 1e-3)
-        //     std::cout << tensorC[0][2] << std::endl;
-
-        // for (int i = 0; i < 3; i++)
-        //     for (int j = 0; j < 3; j++)
-        //     {
-        //         PetscPrintf(PETSC_COMM_WORLD,
-        //                     "tensorC[%d][%d] = %.16e\n",
-        //                     i, j, tensorC[i][j]);
-        //     }
-        // PetscPrintf(PETSC_COMM_WORLD,
-        //             "detCPlusMinus = %.16e\n",
-        //             detCPlusMinus);
-        // std::cout << "-----------------------------------------" << std::endl;
-
-        if (detCPlusMinus <= 0.0)
+        if (dCoeff != 1.0)
         {
-            PetscPrintf(PETSC_COMM_WORLD,
-                        "detCPlusMinus = %.16e\n",
-                        detCPlusMinus);
-            std::cout << "-----------------------------------------" << std::endl;
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                    std::cout << tensorC[i][j] << " ";
+                std::cout << std::endl;
+            }
+            std::cout << "------------------------------------------" << std::endl;
         }
+
+        // compute det tensorC
+        double detC = tensorC[0][0] * (tensorC[1][1] * tensorC[2][2] - tensorC[1][2] * tensorC[2][1]) -
+                      tensorC[0][1] * (tensorC[1][0] * tensorC[2][2] - tensorC[1][2] * tensorC[2][0]) +
+                      tensorC[0][2] * (tensorC[1][0] * tensorC[2][1] - tensorC[1][1] * tensorC[2][0]);
+
+        if (detC <= pTol)
+            std::cout << "⚠️  Det tensorC < 0.0: " << detC << std::endl;
 
         break;
     }
@@ -1478,9 +1403,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
             if (std::abs(eeq) > tol)
             {
                 cos3eta = 4.0 * detddA;
-                // PestcPrintf("cos3eta: %.12e\n", cos3eta);
-                //  cos3eta = std::clamp(cos3eta, -1.0, 1.0);
-                //   cos3eta = std::round(cos3eta * 1e10) / 1e10;
+                cos3eta = std::clamp(cos3eta, -1.0, 1.0);
                 etaReal = (1.0 / 3.0) * std::acos(cos3eta);
             }
 
@@ -1509,7 +1432,7 @@ PetscErrorCode Solid2D::getPhaseFieldContribution(Mat &A, Vec &rhs, bool _Prescr
         for (PetscInt c = 0; c < numElNodes; c++)
             damageValue += N[c] * elemConnectivity[c]->getDOFs()[2]->getValue(); // dn
 
-        const PetscScalar dCoeff = -2 * (1 - damageValue);
+        const PetscScalar dCoeff = -2.0 * (1.0 - damageValue);
 
         for (PetscInt a = 0; a < numElNodes; a++)
             firstInt[a] += dCoeff * N[a] * psiPlus;

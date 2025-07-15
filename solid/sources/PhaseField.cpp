@@ -191,11 +191,6 @@ void FEM::solveDisplacementField(int _iStep)
         assembleProblem();
         computeNorm(rhs, currentRes);
 
-        // if (it == 5)
-        // {
-        //     throw ::std::runtime_error("Stopping the code for debugging purposes");
-        // }
-
         if (it != 1)
         {
             PetscPrintf(PETSC_COMM_WORLD,
@@ -228,9 +223,14 @@ void FEM::solveDisplacementField(int _iStep)
         // e) Decides if line search is necessary
         if ((resTrial > currentRes) && it > 5)
         {
+            PetscPrintf(PETSC_COMM_WORLD,
+                        "Line search needed, resTrial: %e, currentRes: %e\n",
+                        resTrial, currentRes);
+
             performLineSearch(copyRHS);
             computeNorm(rhs, currentRes);
-            currentRes = resTrial;
+            // PetscPrintf(PETSC_COMM_WORLD, "Exited LS w/ res - %e\n", currentRes);
+            //  currentRes = resTrial;
         }
         else
         {
